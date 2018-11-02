@@ -1,5 +1,11 @@
-# Object file
-*.o
+# Ignore config files
+*.ini
 
-# Ada Library Information
-*.ali
+# Ignore working copies
+Production/
+TEMPLATE/files/chatlogs/*.txt
+TEMPLATE/files/errorlog/*.txt
+TEMPLATE/files/raffle/*.txt
+
+# Ignore python project files
+.idea
