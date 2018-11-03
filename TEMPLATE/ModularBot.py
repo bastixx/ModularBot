@@ -25,6 +25,7 @@ from RimworldAutomessage import load_rimworldautomessage, rimworldautomessage
 from Paddle import paddle
 from Questions import load_questions, question, add_question, remove_question
 from Modlog import load_modlog, modlog
+from Conversions import convert
 
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
@@ -61,6 +62,7 @@ module_rimworldautomessage = modules.getboolean('Rimworld automessage')
 module_paddle = modules.getboolean('Paddle')
 module_questions = modules.getboolean('Questions')
 module_modlog = modules.getboolean('Modlog')
+module_conversion = modules.getboolean('Conversions')
 
 # setting the name of the window to bot name for easier distinguishing
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
@@ -153,6 +155,8 @@ def main():
     if module_modlog:
         load_modlog(channel_id, headers, FOLDER)
         modules.append("Modlog")
+    if module_conversion:
+        modules.append("Conversions")
 
     # Infinite loop waiting for commands
     while True:
@@ -387,6 +391,10 @@ def main():
                                 if "!bot" in message.lower():
                                     send_message(s, "This bot is made by Bastixx669. Feel free to message him with "
                                                     "questions, idea's or cookies!")
+
+                                if module_conversion:
+                                    if "!convert" in message.lower():
+                                        convert(s, message)
 
                                 elif message.lower() == '!restart' and username == 'bastixx669':
                                     nopong()

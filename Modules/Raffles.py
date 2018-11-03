@@ -86,10 +86,10 @@ def raffle(s, message):
                 raffles[raffle].remove(rafflewinner)
                 rafflewinners[raffle].append(rafflewinner)
 
-                with open("raffle/%s.txt" % raffle, 'w') as f:
+                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle, 'w') as f:
                     for i in raffles[raffle]:
                         f.write("%s\n" % i)
-                with open("raffle/%swinners.txt" % raffle, 'a') as f:
+                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt" % raffle, 'a') as f:
                     f.write("%s\n" % rafflewinner)
                 send_message(s, "The winner is: %s!" % rafflewinner)
         elif arguments[1] == "adduser":

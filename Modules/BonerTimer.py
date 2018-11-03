@@ -16,6 +16,7 @@ def load_bonertimer(FOLDER):
     folder = FOLDER
     bets = {}
     timers = {}
+    endings = []
 
     try:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Endings.txt', 'w') as f:
@@ -34,7 +35,10 @@ def load_bonertimer(FOLDER):
 def announcer(s, displayname, bettime):
     global bets; global timers
     try:
-        ending = random.choice(endings)
+        try:
+            ending = random.choice(endings)
+        except:
+            ending = ""
         send_message(s, "%s's time has come with %s minutes! %s" % (displayname, bettime, ending))
         # bets.pop(displayname)
         timers.pop(displayname)
@@ -90,7 +94,6 @@ def stoptimer(s):
                         if i[1] == str(winningtime):
                             winners.append(i[0])
                     winnerstr = " and ".join(winners)
-                    print(winnerstr)
                     send_message(s, "Bones have been broken! The timer is on " +
                                  endtime + " minute(s)! The winners are: " + winnerstr +
                                  " with " + str(winningtime) + " minutes!")
@@ -142,11 +145,9 @@ def timer(s):
             timenow = datetime.time(datetime.now())
             timer = datetime.combine(date.today(), timenow) - datetime.combine(date.today(),
                                                                                starttime)
-            print(timer)
             timer = str(timer).split('.')[0]
             timersplit = timer.split(':')
             endtime = ":".join(timersplit)
-            print(endtime)
             send_message(s, "Fid has been alive for: " + endtime)
         else:
             send_message(s, "There is currently no timer active!")
@@ -304,7 +305,6 @@ def betstats(s):
                          + str(highest) + " minutes. The average is " + str(avg) +
                          " minutes.")
         except Exception as errormsg:
-            print("Error: " + str(errormsg))
             errorlog(errormsg, 'Bonertimer/betstats', '')
             send_message(s, "Error calculating numbers")
     else:
@@ -348,7 +348,6 @@ def bet(s, displayname, message):
             else:
                 send_message(s, "%s is not a valid bet. Please use whole numbers only." % bet)
         except Exception as errormsg:
-            print("Error: " + str(errormsg))
             errorlog(errormsg, 'Bonertimer/bet()', message)
             send_message(s, "There was an error registering your bet. Please try again.")
     else:
