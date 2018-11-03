@@ -84,7 +84,7 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 def logline(line):  # Debug setting to save the raw data recieved to a file
     try:
         line = unidecode(line)
-        with open("chatlogs/raw-" + time.strftime("%d-%m-%Y") + ".txt", 'a+') as f:
+        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime("%d-%m-%Y") + ".txt", 'a+') as f:
             f.write("[%s] %s\n" % (str(time.strftime("%H:%M:%S")), line))
     except Exception as errormsg:
         errorlog(errormsg, "logline()", line)
