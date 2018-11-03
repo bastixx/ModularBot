@@ -20,9 +20,6 @@ def load_modlog(CHANNEL_ID, headers, FOLDER):
 
     with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Modlog.txt', 'w'):
         pass
-    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime("%d-%m-%Y")
-              + ".txt", 'w'):
-        pass
 
 
 def modlog(s, parts):

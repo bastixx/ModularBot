@@ -16,6 +16,9 @@ def load_raffles(FOLDER, CLIENTID, CHANNELID):
     client_id = CLIENTID
     channel_id = CHANNELID
 
+    if not os.path.isdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle'):
+        os.mkdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle')
+
     try:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt') as f:
             for line in f:

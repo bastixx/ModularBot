@@ -60,7 +60,7 @@ module_bonertimer = modules.getboolean('BonerTimer')
 module_rimworldautomessage = modules.getboolean('Rimworld automessage')
 module_paddle = modules.getboolean('Paddle')
 module_questions = modules.getboolean('Questions')
-module_modlog = settings.getboolean('Modlog')
+module_modlog = modules.getboolean('Modlog')
 
 # setting the name of the window to bot name for easier distinguishing
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
@@ -103,6 +103,7 @@ def main():
     ismod = False
     issub = False
     comlimits = []
+    modules = []
 
     # Starting the timer in case of a disconnect
     keepalivetimer = threading.Timer(310, nopong)
@@ -127,22 +128,31 @@ def main():
     # Load all the modules that were enabled in the config file
     if module_rules:
         load_rules(s, FOLDER)
+        modules.append("Rules")
     if module_backseatmessage:
         backseating = load_bsmessage(FOLDER)
+        modules.append("Backseatmessage")
     if module_deathcounter:
         load_deaths(FOLDER)
+        modules.append("Deathcounter")
     if module_quotes:
         load_quotes(FOLDER)
+        modules.append("Quotes")
     if module_raffles:
         load_raffles(FOLDER, CLIENTID, channel_id)
+        modules.append("Raffles")
     if module_bonertimer:
         load_bonertimer(FOLDER)
+        modules.append("Bonertimer")
     if module_rimworldautomessage:
         load_rimworldautomessage(s, FOLDER, channel_id, CLIENTID)
+        modules.append("RimWorldMessage")
     if module_questions:
         load_questions(FOLDER)
+        modules.append("Questions")
     if module_modlog:
         load_modlog(channel_id, headers, FOLDER)
+        modules.append("Modlog")
 
     # Infinite loop waiting for commands
     while True:
@@ -386,6 +396,7 @@ def main():
                                 modt = True
                                 print(">>>Bot ready in channel: %s" % CHANNEL.decode())
                                 logger('>>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True)
+                                print("modules loaded: %s" % ", ".join(modules))
         except Exception as errormsg:
             try:
                 errorlog(errormsg, 'Main()', temp)

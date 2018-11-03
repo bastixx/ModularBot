@@ -5,6 +5,8 @@ import os
 def load_errorlog(FOLDER):
     global folder
     folder = FOLDER
+    if not os.path.isdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog'):
+        os.mkdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog')
 
 
 def errorlog(error, functionname, message):
