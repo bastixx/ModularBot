@@ -5,8 +5,7 @@ Nickname =
 Port = 6667
 Password = 
 Channel = 
-Folder = 
-Mod log on twitch = False
+Folder =
 
 [Debug]
 # Debugging settings. Enabling these can help troubleshooting

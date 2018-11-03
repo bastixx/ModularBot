@@ -17,9 +17,18 @@ def load_bonertimer(FOLDER):
     bets = {}
     timers = {}
 
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Endings.txt') as f:
-        endings = f.readlines()
-        endings = [x.strip('\n') for x in endings]
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Endings.txt', 'w') as f:
+            endings = f.readlines()
+            endings = [x.strip('\n') for x in endings]
+        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "r"):
+            pass
+
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Endings.txt', 'w'):
+            pass
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt', 'w') as f:
+            f.write("No titleholder yet")
 
 
 def announcer(s, displayname, bettime):
@@ -85,7 +94,7 @@ def stoptimer(s):
                     send_message(s, "Bones have been broken! The timer is on " +
                                  endtime + " minute(s)! The winners are: " + winnerstr +
                                  " with " + str(winningtime) + " minutes!")
-                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevWinners.txt', 'a') as f:
+                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevWinners.txt', 'a+') as f:
                         for i in winners:
                             f.write(i + ":" + str(winningtime) + "\n")
                     with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "w") as f:
@@ -97,7 +106,7 @@ def stoptimer(s):
                     send_message(s, "Bones have been broken! The timer is on " +
                                  endtime + " minute(s)! The winner is: " + winner +
                                  " with " + str(winningtime) + " minutes!")
-                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevWinners.txt', 'a') as f:
+                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevWinners.txt', 'a+') as f:
                         f.write(winner + ":" + str(winningtime) + "\n")
                     with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "w") as f:
                         f.write(winner)
@@ -113,7 +122,7 @@ def stoptimer(s):
         except Exception as errormsg:
             errorlog(errormsg, 'Bonertimer/stoptimer()', message)
         else:
-            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a')as f:
+            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
                 f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
                         str(time.strftime("%X")) + "\n")
                 f.write("Endtime: %s minutes\n" % endtime)
@@ -186,7 +195,7 @@ def fidwins(s):
         send_message(s, "Error lettting fid win.")
         errorlog(errormsg, 'Bonertimer/fidwins', '')
     else:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a')as f:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
             f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
                     str(time.strftime("%X")) + "\n")
             f.write("Endtime: %s minutes\n" % endtime)
@@ -218,7 +227,7 @@ def winner(s, message):
         send_message(s, "There was an error setting %s as winner." % winner)
         errorlog(errormsg, 'Bonertimer/winner()', message)
     else:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a')as f:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
             f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
                     str(time.strftime("%X")) + "\n")
             f.write("No endtime available\n")
@@ -262,8 +271,8 @@ def setboner(s, message):
 
 def currentboner(s):
     try:
-        f = open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "r")
-        titleholder = f.read()
+        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "r") as f:
+            titleholder = f.read()
         send_message(s, "The current owner of the title \"Broken Boner\" is: " +
                      titleholder + "!")
     except Exception as errormsg:

@@ -3,17 +3,24 @@ from Send_message import send_message
 import os
 
 
-def load_rules(folder):
+def load_rules(s, folder):
+    global rules; global warnings
     rules = {}
     warnings = {}
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt') as f:
-        for line in f:
-            split = line.split(":")
-            rules[split[0]] = {"rule": split[1], "1": split[2], "2": split[3], "3": split[4].strip("\n")}
-    return rules, warnings
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'r') as f:
+            for line in f:
+                split = line.split(":")
+                rules[split[0]] = {"rule": split[1], "1": split[2], "2": split[3], "3": split[4].strip("\n")}
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'w'):
+            pass
+
+    if not rules:
+        send_message(s, "No rules yet!")
 
 
-def func_rules(s, warnings, rules, message):
+def func_rules(s, message):
     arguments = message.split(" ")
     ruleno = arguments[1]
     ruletext = rules[ruleno]['rule']

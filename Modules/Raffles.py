@@ -16,26 +16,30 @@ def load_raffles(FOLDER, CLIENTID, CHANNELID):
     client_id = CLIENTID
     channel_id = CHANNELID
 
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt') as f:
-        for line in f:
-            key = line.strip("\n")
-            rafflelist.append(key)
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt') as f:
+            for line in f:
+                key = line.strip("\n")
+                rafflelist.append(key)
 
-    for i in rafflelist:
-        raffles[i] = []
-        rafflewinners[i] = []
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{i}.txt', "r") as f:
-            for line in f:
-                if raffles[i]:
-                    raffles[i].append(line.strip("\n"))
-                else:
-                    raffles[i] = [line.strip("\n")]
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{i}winners.txt', "r") as f:
-            for line in f:
-                if rafflewinners[i]:
-                    rafflewinners[i].append(line.strip("\n"))
-                else:
-                    rafflewinners[i] = [line.strip("\n")]
+        for i in rafflelist:
+            raffles[i] = []
+            rafflewinners[i] = []
+            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{i}.txt', "r") as f:
+                for line in f:
+                    if raffles[i]:
+                        raffles[i].append(line.strip("\n"))
+                    else:
+                        raffles[i] = [line.strip("\n")]
+            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{i}winners.txt', "r") as f:
+                for line in f:
+                    if rafflewinners[i]:
+                        rafflewinners[i].append(line.strip("\n"))
+                    else:
+                        rafflewinners[i] = [line.strip("\n")]
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', 'w'):
+            pass
 
 
 def raffle(s, message):

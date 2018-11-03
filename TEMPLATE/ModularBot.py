@@ -63,7 +63,7 @@ module_questions = modules.getboolean('Questions')
 module_modlog = settings.getboolean('Modlog')
 
 # setting the name of the window to bot name for easier distinguishing
-ctypes.windll.kernel32.SetConsoleTitleW(NICK)
+ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
 
 # Connecting to Twitch IRC by passing credentials and joining a certain channel
 s = socket.socket()
@@ -126,7 +126,7 @@ def main():
 
     # Load all the modules that were enabled in the config file
     if module_rules:
-        rules, warnings = load_rules(FOLDER)
+        load_rules(s, FOLDER)
     if module_backseatmessage:
         backseating = load_bsmessage(FOLDER)
     if module_deathcounter:

@@ -12,53 +12,61 @@ def load_quotes(FOLDER):
 
     folder = FOLDER
     quotes = {}
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt') as f:
-        for line in f:
-            split = line.split(":")
-            quotes[split[0]] = split[1].rstrip('\n')
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'r') as f:
+            for line in f:
+                split = line.split(":")
+                quotes[split[0]] = split[1].rstrip('\n')
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w'):
+            pass
 
 
 def get_quote(s, message):
     try:
-        if message == "!quote":
-            randomindex = random.randint(1, len(quotes))
-            randomquote = quotes[str(randomindex)]
-            send_message(s, "Quote %s: %s" % (randomindex, randomquote))
+        if quotes:
+            if message == "!quote":
+                randomindex = random.randint(1, len(quotes))
+                randomquote = quotes[str(randomindex)]
+                send_message(s, "Quote %s: %s" % (randomindex, randomquote))
 
-        elif "!quote" in message:
-            quotesplit = message.split(" ")
-            argument = quotesplit[1]
-            if argument == "list":
-                send_message(s, f"Quotelist can be found here: http://bastixx.nl/{folder}/files/quotes")
-            else:
-                try:
-                    int(argument)
-                    quoteindex = message.split(" ")[1]
-                    quote = quotes[quoteindex]
-                    send_message(s, "Quote %s: %s" % (quoteindex, quote))
-                except KeyError:
-                    send_message(s, "This quote does not exist.")
-                except ValueError:
-                    quotes_temp = {}
-                    for key, value in quotes.items():
-                        if argument.lower() in value.lower():
-                            quotes_temp[key] = value
-                    if len(quotes_temp) == 0:
-                        send_message(s, "No quotes found.")
-                    elif len(quotes_temp) == 1:
-                        for key, value in quotes_temp.items():
-                            send_message(s, "Quote %s: %s" % (key, value))
-                    else:
-                        keylist = []
-                        for key in quotes_temp:
-                            keylist.append(key)
+            elif "!quote" in message:
+                quotesplit = message.split(" ")
+                argument = quotesplit[1]
+                if argument == "list":
+                    send_message(s, f"Quotelist can be found here: http://bastixx.nl/{folder}/files/quotes")
+                else:
+                    try:
+                        int(argument)
+                        quoteindex = message.split(" ")[1]
+                        quote = quotes[quoteindex]
+                        send_message(s, "Quote %s: %s" % (quoteindex, quote))
+                    except KeyError:
+                        send_message(s, "This quote does not exist.")
+                    except ValueError:
+                        quotes_temp = {}
+                        for key, value in quotes.items():
+                            if argument.lower() in value.lower():
+                                quotes_temp[key] = value
+                        if len(quotes_temp) == 0:
+                            send_message(s, "No quotes found.")
+                        elif len(quotes_temp) == 1:
+                            for key, value in quotes_temp.items():
+                                send_message(s, "Quote %s: %s" % (key, value))
+                        else:
+                            keylist = []
+                            for key in quotes_temp:
+                                keylist.append(key)
 
-                        randomindex = random.choice(keylist)
-                        randomquote = quotes_temp[str(randomindex)]
-                        send_message(s, "Quote %s: %s" % (randomindex, randomquote))
-                except Exception as errormsg:
-                    errorlog(errormsg, "Quotes/quote()", message)
-                    send_message(s, "Something went wrong, check your command.")
+                            randomindex = random.choice(keylist)
+                            randomquote = quotes_temp[str(randomindex)]
+                            send_message(s, "Quote %s: %s" % (randomindex, randomquote))
+                    except Exception as errormsg:
+                        errorlog(errormsg, "Quotes/quote()", message)
+                        send_message(s, "Something went wrong, check your command.")
+        else:
+            send_message(s, "No quotes yet!")
+
 
     except IndexError:
         send_message(s, "Error finding your searchterms. Check your command.")

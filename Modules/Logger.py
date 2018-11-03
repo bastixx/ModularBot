@@ -8,6 +8,9 @@ from Errorlog import errorlog
 def load_logger(FOLDER):
     global folder
     folder = FOLDER
+    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime("%d-%m-%Y")
+              + ".txt", 'w'):
+        pass
 
 
 def logger(displayname, message, issub, ismod):

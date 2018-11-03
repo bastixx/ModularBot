@@ -1,5 +1,6 @@
 # Ignore config files
 *.ini
+*.bat
 
 # Ignore working copies
 Production/
@@ -9,3 +10,4 @@ TEMPLATE/files/raffle/*.txt
 
 # Ignore python project files
 .idea
+

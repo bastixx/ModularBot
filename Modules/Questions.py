@@ -10,15 +10,19 @@ def load_questions(FOLDER):
     global folder
     folder = FOLDER
     questions = {}
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt') as f:
-        for line in f:
-            split = line.split(":")
-            questions[split[0]] = split[1].rstrip('\n')
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'r') as f:
+            for line in f:
+                split = line.split(":")
+                questions[split[0]] = split[1].rstrip('\n')
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'w'):
+            pass
 
 
 def question(s, message):
     try:
-        if len(questions) > 0:
+        if questions:
             randomindex = random.randint(1, len(questions))
             randomquestion = questions[str(randomindex)]
             send_message(s, "%s: %s" % (randomindex, randomquestion))

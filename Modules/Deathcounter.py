@@ -10,10 +10,15 @@ def load_deaths(FOLDER):
     global deaths
     folder = FOLDER
     deaths = {}
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt') as f:
-        for line in f:
-            key, value = line.strip("\n").split(":")
-            deaths[key.lower()] = int(value)
+
+    try:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'r') as f:
+            for line in f:
+                key, value = line.strip("\n").split(":")
+                deaths[key.lower()] = int(value)
+    except:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'w'):
+            pass
 
 
 def func_deaths(s, message, game, ismod):
