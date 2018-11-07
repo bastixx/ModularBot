@@ -131,7 +131,7 @@ def raffle(s, message):
         elif arguments[1] == "stats":
             raffle = " ".join(arguments[2:])
             if raffle in raffles.keys():
-                send_message(s, f"The current number of people in this raffle are: {len(raffles[raffle])}")
+                send_message(s, f"There are currently {len(raffles[raffle])} people in this raffle.")
 
     except IndexError:
         send_message(s, "To join a raffle, use !join <raffle name>. Current raffles are: "

@@ -9,5 +9,5 @@ TEMPLATE/files/errorlog/*.txt
 TEMPLATE/files/raffle/*.txt
 
 # Ignore python project files
-.idea
+/.idea
 

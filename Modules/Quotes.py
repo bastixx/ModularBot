@@ -34,7 +34,7 @@ def get_quote(s, message):
                 quotesplit = message.split(" ")
                 argument = quotesplit[1]
                 if argument == "list":
-                    send_message(s, f"Quotelist can be found here: http://bastixx.nl/{folder}/files/quotes")
+                    send_message(s, f"Quotelist can be found here: http://bastixx.nl/{folder}/quotes")
                 else:
                     try:
                         int(argument)
@@ -66,8 +66,6 @@ def get_quote(s, message):
                         send_message(s, "Something went wrong, check your command.")
         else:
             send_message(s, "No quotes yet!")
-
-
     except IndexError:
         send_message(s, "Error finding your searchterms. Check your command.")
     except Exception as errormsg:
@@ -103,7 +101,7 @@ def remove_quote(s, message):
                 f.write("%s:%s\n" % (counter, val))
                 counter += 1
         quotes = {}
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/files/Quotes.txt') as f:
+        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt') as f:
             for line in f:
                 split = line.split(":")
                 quotes[split[0]] = split[1].rstrip('\n')

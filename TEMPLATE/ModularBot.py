@@ -6,6 +6,7 @@ import configparser
 import threading
 import time
 import requests
+import validators
 from unidecode import unidecode
 
 # Append path do modules to path variable and load custom modules
@@ -26,6 +27,7 @@ from Paddle import paddle
 from Questions import load_questions, question, add_question, remove_question
 from Modlog import load_modlog, modlog
 from Conversions import convert
+from Random_stuff import unshorten, followergoal
 
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
@@ -182,6 +184,11 @@ def main():
                     except Exception as errormsg:
                         errorlog(errormsg, "keepalivetimer", '')
 
+                    try:
+                        followergoal(s, channel_id, CHANNEL, CLIENTID)
+                    except Exception as errormsg:
+                        errorlog(errormsg, "")
+
                 else:
                     # Splits the given string so we can work with it better
                     if modt and "ACK" not in line:
@@ -248,6 +255,11 @@ def main():
 
                             if message != "":
                                 logger(displayname, message, issub, ismod)
+
+                            tempmessage = message.split(" ")
+                            for shorturl in tempmessage:
+                                if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
+                                    unshorten(s, shorturl)
 
                             # These are the actual commands
                             if message == "":
@@ -405,6 +417,7 @@ def main():
                                 print(">>>Bot ready in channel: %s" % CHANNEL.decode())
                                 logger('>>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True)
                                 print("modules loaded: %s" % ", ".join(modules))
+
         except Exception as errormsg:
             try:
                 errorlog(errormsg, 'Main()', temp)

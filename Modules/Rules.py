@@ -16,8 +16,8 @@ def load_rules(s, folder):
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'w'):
             pass
 
-    if not rules:
-        send_message(s, "No rules yet!")
+    # if not rules:
+        # send_message(s, "No rules yet!")
 
 
 def func_rules(s, message):
