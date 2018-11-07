@@ -168,7 +168,7 @@ def join_raffle(s, displayname, message, ismod):
                 if displayname not in raffles[raffle]:
                     if displayname not in rafflewinners[raffle]:
                         raffles[raffle].append(displayname)
-                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/%s.txt" % raffle, 'a') as f:
+                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle, 'a') as f:
                             f.write("%s\n" % displayname)
                         send_message(s, "@%s joined raffle: \"%s\"!" % (displayname, raffle))
                     else:

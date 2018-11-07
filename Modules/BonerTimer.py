@@ -314,42 +314,57 @@ def betstats(s):
 def bet(s, displayname, message):
     global bets; global timers
     if betsopen:
-        keyword = "!bet "
-        try:
-            bet = message[message.index(keyword) + len(keyword):]
-            if isinstance(int(bet), numbers.Number):
-                if int(bet) <= 0:
-                    send_message(s, "Please don't try to invoke the apocalypse. Thanks.")
-                elif displayname in bets.keys():
-                    bets[displayname] = bet
-                    betsec = int(bet) * 60
-                    t = threading.Timer(betsec, announcer, [s, displayname, bet])
-                    timers[displayname] = t
-                    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-                        for key in bets:
-                            f.write(key + ":" + str(bets[key]) + "\n")
-                    send_message(s, "@" + displayname + " Bet updated! Your new bet is: "
-                                 + bet + " minutes!")
+        if ismod:
+            followed_at = '2010-01-01T22:33:44Z'
+        else:
+            url = 'https://api.twitch.tv/helix/users/follows?from_id=%s&to_id=%s' % (userid, channel_id)
+            headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+            r = requests.get(url, headers=headers).json()
+            followed_at = r["data"][0]['followed_at']
+
+        followed_at_formatted = datetime.strptime(followed_at, '%Y-%m-%dT%H:%M:%SZ')
+        time_now = datetime.now()
+
+        if time_now - followed_at_formatted >= timedelta(days=7):
+
+            keyword = "!bet "
+            try:
+                bet = message[message.index(keyword) + len(keyword):]
+                if isinstance(int(bet), numbers.Number):
+                    if int(bet) <= 0:
+                        send_message(s, "Please don't try to invoke the apocalypse. Thanks.")
+                    elif displayname in bets.keys():
+                        bets[displayname] = bet
+                        betsec = int(bet) * 60
+                        t = threading.Timer(betsec, announcer, [s, displayname, bet])
+                        timers[displayname] = t
+                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
+                            for key in bets:
+                                f.write(key + ":" + str(bets[key]) + "\n")
+                        send_message(s, "@" + displayname + " Bet updated! Your new bet is: "
+                                     + bet + " minutes!")
+                    else:
+                        bets[displayname] = bet
+                        betsec = int(bet) * 60
+                        t = threading.Timer(betsec, announcer, [s, displayname, bet])
+                        timers[displayname] = t
+                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
+                            for key in bets:
+                                f.write(key + ":" + str(bets[key]) + "\n")
+                        send_message(s,
+                            "@" + displayname + " Bet registered: " + bet + " minutes!")
                 else:
-                    bets[displayname] = bet
-                    betsec = int(bet) * 60
-                    t = threading.Timer(betsec, announcer, [s, displayname, bet])
-                    timers[displayname] = t
-                    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-                        for key in bets:
-                            f.write(key + ":" + str(bets[key]) + "\n")
-                    send_message(s, 
-                        "@" + displayname + " Bet registered: " + bet + " minutes!")
-            else:
-                send_message(s, "Bet is not a number")
-        except ValueError as e:
-            if str(e) == 'substring not found':
-                send_message(s, "Use !bet <number> to enter the competition!")
-            else:
-                send_message(s, "%s is not a valid bet. Please use whole numbers only." % bet)
-        except Exception as errormsg:
-            errorlog(errormsg, 'Bonertimer/bet()', message)
-            send_message(s, "There was an error registering your bet. Please try again.")
+                    send_message(s, "Bet is not a number")
+            except ValueError as e:
+                if str(e) == 'substring not found':
+                    send_message(s, "Use !bet <number> to enter the competition!")
+                else:
+                    send_message(s, "%s is not a valid bet. Please use whole numbers only." % bet)
+            except Exception as errormsg:
+                errorlog(errormsg, 'Bonertimer/bet()', message)
+                send_message(s, "There was an error registering your bet. Please try again.")
+        else:
+            send_message(s, "This is a community game. You most be following for at least 7 days before you can join!")
     else:
         send_message(s, "Bets are not currently opened.")
 
