@@ -1,6 +1,5 @@
 from Errorlog import errorlog
 from Send_message import send_message
-import os
 import requests
 
 
@@ -14,7 +13,7 @@ def unshorten(s, shorturl):
         url = f'https://unshorten.me/json/https://{shorturl}'
         r = requests.get(url).json()
         longurl = r["resolved_url"]
-        if shorturl not in longurl:
+        if shorturl not in longurl and longurl != "":
             send_message(s, f"This link expands to: {longurl}")
     except Exception as errormsg:
         errorlog(errormsg, "unshorten()", "")
@@ -26,7 +25,6 @@ def followergoal(s, channel_id, channel, client_id):
         headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
         r = requests.get(url, headers=headers).json()
         total = r["total"]
-        print(total)
         if int(total) % 250 == 0:
             send_message(s, f"@{channel.decode()} congrats on {total} followers!")
     except Exception as errormsg:

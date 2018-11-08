@@ -123,7 +123,7 @@ def stoptimer(s):
             print("endtime + 5: " + str(int(endtime) + 5))
             print("winning time: " + str(winningtime))
         except Exception as errormsg:
-            errorlog(errormsg, 'Bonertimer/stoptimer()', message)
+            errorlog(errormsg, 'Bonertimer/stoptimer()', "")
         else:
             with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
                 f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
