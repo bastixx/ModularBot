@@ -30,3 +30,5 @@ Rimworld automessage = False
 Paddle = False
 Questions = False
 Modlog = True
+Unshorten = False
+Follower goals = False

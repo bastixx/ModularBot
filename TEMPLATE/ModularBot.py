@@ -27,7 +27,7 @@ from Paddle import paddle
 from Questions import load_questions, question, add_question, remove_question
 from Modlog import load_modlog, modlog
 from Conversions import convert
-from Random_stuff import unshorten, followergoal
+from Random_stuff import unshorten, followergoal, load_followergoals
 
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
@@ -65,6 +65,8 @@ module_paddle = modules.getboolean('Paddle')
 module_questions = modules.getboolean('Questions')
 module_modlog = modules.getboolean('Modlog')
 module_conversion = modules.getboolean('Conversions')
+module_unshorten = modules.getboolean('Unshorten')
+module_followergoal = modules.getboolean('Follower goals')
 
 # setting the name of the window to bot name for easier distinguishing
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
@@ -104,8 +106,6 @@ def main():
     global comlimits
     readbuffer = ""
     modt = False
-    ismod = False
-    issub = False
     comlimits = []
     modules = []
 
@@ -159,6 +159,8 @@ def main():
         modules.append("Modlog")
     if module_conversion:
         modules.append("Conversions")
+    if module_followergoal:
+        load_followergoals()
 
     # Infinite loop waiting for commands
     while True:
@@ -184,10 +186,11 @@ def main():
                     except Exception as errormsg:
                         errorlog(errormsg, "keepalivetimer", '')
 
-                    try:
-                        followergoal(s, channel_id, CHANNEL, CLIENTID)
-                    except Exception as errormsg:
-                        errorlog(errormsg, "")
+                    if module_unshorten:
+                        try:
+                            followergoal(s, channel_id, CHANNEL, CLIENTID)
+                        except Exception as errormsg:
+                            errorlog(errormsg, "")
 
                 else:
                     # Splits the given string so we can work with it better
@@ -256,10 +259,11 @@ def main():
                             if message != "":
                                 logger(displayname, message, issub, ismod)
 
-                            tempmessage = message.split(" ")
-                            for shorturl in tempmessage:
-                                if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
-                                    unshorten(s, shorturl)
+                            if module_unshorten:
+                                tempmessage = message.split(" ")
+                                for shorturl in tempmessage:
+                                    if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
+                                        unshorten(s, shorturl)
 
                             # These are the actual commands
                             if message == "":
@@ -293,7 +297,7 @@ def main():
                                         raffle(s, message)
 
                                     elif "!join" in message.lower():
-                                        join_raffle(s, displayname, message, ismod)
+                                        join_raffle(s, displayname, message, issub, ismod)
 
                                 if module_roulette:
                                     if "!roulette" in message.lower() and "!roulette" not in comlimits and module_roulette:
