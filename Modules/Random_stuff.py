@@ -4,7 +4,7 @@ import os
 import requests
 
 
-def load_followergoals():
+def load_followergoals(folder):
     global goals
     goals = []
     try:

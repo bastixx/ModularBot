@@ -15,7 +15,7 @@ def load_quotes(FOLDER):
     try:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'r') as f:
             for line in f:
-                split = line.split("%")
+                split = line.split("$")
                 quotes[split[0]] = split[1].rstrip('\n')
     except:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w'):

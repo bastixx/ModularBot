@@ -160,7 +160,7 @@ def main():
     if module_conversion:
         modules.append("Conversions")
     if module_followergoal:
-        load_followergoals()
+        load_followergoals(FOLDER)
 
     # Infinite loop waiting for commands
     while True:
@@ -237,6 +237,7 @@ def main():
                                 if tags[displayindex] != 'display-name=':
                                     displayname = tags[displayindex]
                                     displayname = displayname.split("=")[1]
+                                    displayname = displayname.replace("\\s", '')
                             except:
                                 pass
 

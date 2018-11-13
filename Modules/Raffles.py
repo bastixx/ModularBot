@@ -172,6 +172,7 @@ def join_raffle(s, displayname, message, issub, ismod):
     arguments = message.split(" ")
     raffle = " ".join(arguments[1:])
 
+    time_now = datetime.now()
     try:
         url = 'https://api.twitch.tv/helix/users?login=%s' % displayname
         headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
@@ -187,11 +188,12 @@ def join_raffle(s, displayname, message, issub, ismod):
             followed_at = r["data"][0]['followed_at']
 
         followed_at_formatted = datetime.strptime(followed_at, '%Y-%m-%dT%H:%M:%SZ')
-        time_now = datetime.now()
+
         following = True
     except IndexError:
         following = False
     except Exception as errormsg:
+        following = False
         errorlog(errormsg, "Raffles/join()", message)
 
     mode = rafflelist[raffle]
@@ -199,7 +201,7 @@ def join_raffle(s, displayname, message, issub, ismod):
         allowed = True
     elif mode == "follower" and following:
         allowed = True
-    elif mode == "follower_7":
+    elif mode == "follower_7" and following:
         if time_now - followed_at_formatted >= timedelta(days=7):
             allowed = True
     else:
