@@ -14,7 +14,7 @@ sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\
 from Roulette import roulette
 from Send_message import send_message, load_send_message
 from Getgame import getgame
-from Backseatmessage import backseatmessage, load_bsmessage
+from Backseatmessage import backseatmessage, load_bsmessage, bsmcheck
 from Errorlog import load_errorlog, errorlog
 from Logger import logger, load_logger
 from Quotes import load_quotes, get_quote, add_quote, remove_quote, last_quote
@@ -28,6 +28,7 @@ from Questions import load_questions, question, add_question, remove_question
 from Modlog import load_modlog, modlog
 from Conversions import convert
 from Random_stuff import unshorten, followergoal, load_followergoals
+from SteamModLinker import load_mod, mod
 
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
@@ -43,6 +44,7 @@ CHANNEL = b"%s" % settings['Channel'].encode()
 CLIENTID = settings['Client ID']
 OAUTH = PASS.decode().split(":")[1]
 FOLDER = settings['Folder']
+STEAMAPIKEY = settings['SteamApiKey']
 
 # For debugging purposes
 debug = config['Debug']
@@ -67,6 +69,7 @@ module_modlog = modules.getboolean('Modlog')
 module_conversion = modules.getboolean('Conversions')
 module_unshorten = modules.getboolean('Unshorten')
 module_followergoal = modules.getboolean('Follower goals')
+module_rimmods = modules.getboolean('Rimworld mod search')
 
 # setting the name of the window to bot name for easier distinguishing
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
@@ -161,6 +164,10 @@ def main():
         modules.append("Conversions")
     if module_followergoal:
         load_followergoals(FOLDER)
+        modules.append("followergoals")
+    if module_rimmods:
+        load_mod(STEAMAPIKEY)
+        modules.append("rimmods")
 
     # Infinite loop waiting for commands
     while True:
@@ -191,6 +198,9 @@ def main():
                             followergoal(s, channel_id, CHANNEL, CLIENTID)
                         except Exception as errormsg:
                             errorlog(errormsg, "")
+
+                    if module_backseatmessage:
+                        bsmcheck(channel_id, CLIENTID)
 
                 else:
                     # Splits the given string so we can work with it better
@@ -332,8 +342,8 @@ def main():
                                         get_quote(s, message)
 
                                 if module_backseatmessage:
-                                    if "!backseatmessage" in message.lower() and ismod:
-                                        backseating = backseatmessage(s, FOLDER, backseating, message)
+                                    if "!backseatmessage" in message.lower() or '!bsm' in message.lower() and ismod:
+                                        backseatmessage(s, message)
 
                                 if module_bonertimer:
                                     if "!starttimer" in message.lower() and ismod and ismod:
@@ -412,6 +422,13 @@ def main():
                                 if module_conversion:
                                     if "!convert" in message.lower():
                                         convert(s, message)
+
+                                if module_rimmods:
+                                    if "!mod" in message.lower() and "!mod" not in comlimits and\
+                                            "!mods" not in message.lower():
+                                        threading.Timer(15, command_limiter, ['!mod']).start()
+                                        comlimits.append('!mod')
+                                        mod(s, message)
 
                                 elif message.lower() == '!restart' and username == 'bastixx669':
                                     nopong()

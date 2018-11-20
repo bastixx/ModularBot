@@ -1,5 +1,6 @@
 import threading
 import os
+import requests
 
 from Send_message import send_message
 from Errorlog import errorlog
@@ -23,7 +24,7 @@ def bsmessage(s):
     global bstimer
     if backseating:
         try:
-            bstimer = threading.Timer(10, bsmessage, [s])
+            bstimer = threading.Timer(60, bsmessage, [s])
             bstimer.start()
             send_message(s, bsmessagestr)
         except Exception as errormsg:
@@ -34,16 +35,20 @@ def backseatmessage(s, message):
     global bstimer; global bsmessagestr; global backseating
     messageparts = message.split(" ")
     if messageparts[1] == "on":
-        backseating = True
-        threading.Timer(10, bsmessage, [s]).start()
-        send_message(s, "Backseating message enabled.")
+        if not backseating:
+            backseating = True
+            bstimer = threading.Timer(60, bsmessage, [s])
+            bstimer.start()
+            send_message(s, "Backseating message enabled.")
+        else:
+            send_message(s, "BSM already enabled.")
     elif messageparts[1] == "off":
-        try:
+        if backseating:
             backseating = False
             bstimer.cancel()
             send_message(s, "Backseating message disabled.")
-        except:
-            send_message(s, "Backseating message already off.")
+        else:
+            send_message(s, "BSM already off.")
     elif messageparts[1] == "set":
         try:
             newbsmessage = " ".join(messageparts[2:])
@@ -54,3 +59,16 @@ def backseatmessage(s, message):
         except Exception as errormsg:
             errorlog(errormsg, 'backseatmessage/set()', message)
             send_message(s, "There was an error chaning the backseatmessage. Please try again.")
+
+
+def bsmcheck(channel_id, client_id):
+    global backseating
+    url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
+    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+    r = requests.get(url, headers=headers).json()
+    response = r["data"]
+    try:
+        if response[0]["type"] == "live":
+            pass
+    except:
+        backseating = False
