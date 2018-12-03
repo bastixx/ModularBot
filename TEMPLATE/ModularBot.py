@@ -29,6 +29,7 @@ from Modlog import load_modlog, modlog
 from Conversions import convert
 from Random_stuff import unshorten, followergoal, load_followergoals
 from SteamModLinker import load_mod, mod
+from SongSuggestions import load_suggestions, suggest, clearsuggestions
 
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
@@ -70,6 +71,7 @@ module_conversion = modules.getboolean('Conversions')
 module_unshorten = modules.getboolean('Unshorten')
 module_followergoal = modules.getboolean('Follower goals')
 module_rimmods = modules.getboolean('Rimworld mod search')
+module_SongSuggestions = modules.getboolean('Song suggestions')
 
 # setting the name of the window to bot name for easier distinguishing
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
@@ -137,7 +139,7 @@ def main():
         load_rules(s, FOLDER)
         modules.append("Rules")
     if module_backseatmessage:
-        backseating = load_bsmessage(FOLDER)
+        load_bsmessage(FOLDER)
         modules.append("Backseatmessage")
     if module_deathcounter:
         load_deaths(FOLDER)
@@ -168,6 +170,9 @@ def main():
     if module_rimmods:
         load_mod(STEAMAPIKEY)
         modules.append("rimmods")
+    if module_SongSuggestions:
+        load_suggestions(FOLDER)
+        modules.append("SongSuggestions")
 
     # Infinite loop waiting for commands
     while True:
@@ -297,7 +302,7 @@ def main():
                                         threading.Timer(cooldown_time, command_limiter, ['!deaths']).start()
                                         comlimits.append('!deaths')
 
-                                    elif message.lower() == "!dead" and "!dead" not in comlimits and (ismod or issub):
+                                if message.lower() == "!dead" and "!dead" not in comlimits and (ismod or issub):
                                         threading.Timer(30, command_limiter, ['!dead']).start()
                                         comlimits.append('!dead')
                                         game = str(getgame(channel_id, CLIENTID)).lower()
@@ -424,13 +429,19 @@ def main():
                                         convert(s, message)
 
                                 if module_rimmods:
-                                    if "!mod" in message.lower() and "!mod" not in comlimits and\
-                                            "!mods" not in message.lower():
-                                        threading.Timer(15, command_limiter, ['!mod']).start()
-                                        comlimits.append('!mod')
+                                    if "!linkmod" in message.lower() and "!linkmod" not in comlimits:
+                                        threading.Timer(15, command_limiter, ['!linkmod']).start()
+                                        comlimits.append('!linkmod')
                                         mod(s, message)
+                                if module_SongSuggestions:
+                                    if "!suggest" in message.lower() and "!suggest" not in comlimits:
+                                        threading.Timer(10, command_limiter, ['!linkmod']).start()
+                                        comlimits.append('!linkmod')
+                                        suggest(s, message)
+                                    elif "!clearsuggestions" in message.lower() and ismod:
+                                        clearsuggestions(s)
 
-                                elif message.lower() == '!restart' and username == 'bastixx669':
+                                if message.lower() == '!restart' and username == 'bastixx669':
                                     nopong()
 
                         for l in parts:

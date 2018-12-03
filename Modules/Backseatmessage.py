@@ -24,7 +24,7 @@ def bsmessage(s):
     global bstimer
     if backseating:
         try:
-            bstimer = threading.Timer(60, bsmessage, [s])
+            bstimer = threading.Timer(900, bsmessage, [s])
             bstimer.start()
             send_message(s, bsmessagestr)
         except Exception as errormsg:
@@ -37,7 +37,7 @@ def backseatmessage(s, message):
     if messageparts[1] == "on":
         if not backseating:
             backseating = True
-            bstimer = threading.Timer(60, bsmessage, [s])
+            bstimer = threading.Timer(900, bsmessage, [s])
             bstimer.start()
             send_message(s, "Backseating message enabled.")
         else:

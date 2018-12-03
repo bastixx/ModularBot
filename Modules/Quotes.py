@@ -34,7 +34,7 @@ def get_quote(s, message):
                 quotesplit = message.split(" ")
                 argument = quotesplit[1]
                 if argument == "list":
-                    send_message(s, f"Quotelist can be found here: http://bastixx.nl/{folder}/quotes")
+                    send_message(s, f"Quotelist can be found here: http://www.bastixx.nl/twitch/{folder}/quotes.php")
                 else:
                     try:
                         int(argument)
