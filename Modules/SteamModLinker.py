@@ -12,7 +12,7 @@ def load_mod(STEAMAPIKEY):
     steamAPIkey = STEAMAPIKEY
 
 
-def mod(s, message):
+def linkmod(s, message):
     messagesplit = message.split(" ")
     searchterm = "+".join(messagesplit[1:])
 

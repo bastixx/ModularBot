@@ -8,7 +8,12 @@ from Send_message import send_message
 
 
 def load_raffles(FOLDER, CLIENTID, CHANNELID):
-    global raffles; global rafflewinners; global rafflelist; global folder; global client_id; global channel_id
+    global raffles
+    global rafflewinners
+    global rafflelist
+    global folder
+    global client_id
+    global channel_id
     raffles = {}
     rafflelist = {}
     rafflewinners = {}
@@ -47,7 +52,8 @@ def load_raffles(FOLDER, CLIENTID, CHANNELID):
 
 
 def raffle(s, message):
-    global raffles; global rafflewinners
+    global raffles
+    global rafflewinners
     try:
         arguments = message.split(" ")
         raffle = " ".join(arguments[2:])
@@ -59,7 +65,8 @@ def raffle(s, message):
                 rafflelist[raffle] = mode
                 with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{raffle}.txt', 'w'):
                     pass
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{raffle}winners.txt', 'w'):
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/{raffle}winners.txt',
+                          'w'):
                     pass
                 with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', "a") as f:
                     f.write(f"{raffle}:{mode}\n")
@@ -85,7 +92,7 @@ def raffle(s, message):
                     mode = arguments[2]
                     raffle = " ".join(arguments[3:])
                     rafflelist[raffle] = mode
-                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', "w")\
+                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', "w") \
                             as f:
                         for key in rafflelist.keys():
                             f.write(f"{key}:{rafflelist[key]}\n")
@@ -108,10 +115,12 @@ def raffle(s, message):
                 raffles[raffle].remove(rafflewinner)
                 rafflewinners[raffle].append(rafflewinner)
 
-                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle, 'w') as f:
+                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle,
+                          'w') as f:
                     for i in raffles[raffle]:
                         f.write("%s\n" % i)
-                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt" % raffle, 'a') as f:
+                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt" % raffle,
+                          'a') as f:
                     f.write("%s\n" % rafflewinner)
                 send_message(s, "The winner is: %s!" % rafflewinner)
         elif arguments[1] == "adduser":
@@ -121,7 +130,8 @@ def raffle(s, message):
             if user not in raffles[raffle]:
                 if user not in rafflewinners[raffle]:
                     raffles[raffle].append(user)
-                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt' % raffle, 'a') as f:
+                    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt' % raffle,
+                              'a') as f:
                         f.write("%s\n" % user)
                     send_message(s,
                                  "@%s joined raffle: \"%s\"!" % (user, raffle))
@@ -135,7 +145,8 @@ def raffle(s, message):
 
             if user in raffles[raffle]:
                 raffles[raffle].remove(user)
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt' % raffle, 'w') as f:
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt' % raffle,
+                          'w') as f:
                     for i in raffles[raffle]:
                         f.write("%s\n" % i)
                 send_message(s, "@%s removed from raffle: \"%s\"!" % (user, raffle))
@@ -145,7 +156,8 @@ def raffle(s, message):
             raffle = " ".join(arguments[2:])
             if raffle in rafflewinners.keys():
                 rafflewinners[raffle] = []
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt' % raffle, 'w') as f:
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt' % raffle,
+                          'w') as f:
                     f.write("")
                 send_message(s, "Rafflewinners \"%s\" cleared!" % raffle)
             else:
@@ -196,7 +208,14 @@ def join_raffle(s, displayname, message, issub, ismod):
         following = False
         errorlog(errormsg, "Raffles/join()", message)
 
-    mode = rafflelist[raffle]
+
+    try:
+        mode = rafflelist[raffle]
+    except:
+        send_message(s, "To join a raffle, use !join <raffle name>. Current raffles are: "
+                        "%s" % ", ".join(raffles.keys()))
+        return
+
     if mode == "sub" and issub:
         allowed = True
     elif mode == "follower" and following:
@@ -204,6 +223,8 @@ def join_raffle(s, displayname, message, issub, ismod):
     elif mode == "follower_7" and following:
         if time_now - followed_at_formatted >= timedelta(days=7):
             allowed = True
+    elif mode == "all":
+        allowed = True
     else:
         allowed = False
 
@@ -212,7 +233,8 @@ def join_raffle(s, displayname, message, issub, ismod):
             if displayname not in raffles[raffle]:
                 if displayname not in rafflewinners[raffle]:
                     raffles[raffle].append(displayname)
-                    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle, 'a') as f:
+                    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle,
+                              'a') as f:
                         f.write("%s\n" % displayname)
                     send_message(s, "@%s joined raffle: \"%s\"!" % (displayname, raffle))
                 else:
@@ -224,11 +246,11 @@ def join_raffle(s, displayname, message, issub, ismod):
                             "%s" % ", ".join(raffles.keys()))
         except Exception:
             send_message(s, "Error adding user %s to raffle: \"%s\". Check if you spelled the "
-                         "raffle name correctly." % (displayname, raffle))
+                            "raffle name correctly." % (displayname, raffle))
     else:
         if mode == 'sub':
             send_message(s, "This raffle is for subscribers only.")
         elif mode == 'follower':
             send_message(s, "You have to be following this channel to join this raffle.")
         elif mode == 'follower_7':
-            send_message("You have to be following this channel for at least 7 days to join this raffle")
+            send_message(s, "You have to be following this channel for at least 7 days to join this raffle")

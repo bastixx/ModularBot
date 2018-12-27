@@ -1,9 +1,9 @@
+import os
 import random
 import time
-import os
 
-from Send_message import send_message
 from Errorlog import errorlog
+from Send_message import send_message
 
 
 def load_quotes(FOLDER):
@@ -22,23 +22,48 @@ def load_quotes(FOLDER):
             pass
 
 
-def get_quote(s, message):
+def quote(s, message, game):
+    global quotes
+    arguments = message.split(" ")
     try:
-        if quotes:
-            if message == "!quote":
-                randomindex = random.randint(1, len(quotes))
-                randomquote = quotes[str(randomindex)]
-                send_message(s, "Quote %s: %s" % (randomindex, randomquote))
+        if arguments[1].lower() == "list":
+            send_message(s,
+                         f"Quotelist can be found here: http://www.bastixx.nl/twitch/{folder}/quotes.php")
+        elif arguments[1].lower() == "add":
+            try:
+                currentdate = time.strftime("%d/%m/%Y")
 
-            elif "!quote" in message:
-                quotesplit = message.split(" ")
-                argument = quotesplit[1]
-                if argument == "list":
-                    send_message(s, f"Quotelist can be found here: http://www.bastixx.nl/twitch/{folder}/quotes.php")
-                else:
+                newquote = " ".join(arguments[2:])
+                quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'a') as f:
+                    f.write("%s$%s [%s] [%s]\n" % (len(quotes), newquote, game, currentdate))
+                send_message(s, "Quote %d added!" % len(quotes))
+            except Exception as errormsg:
+                send_message(s, "There was an error adding this quote. Please try again!")
+                errorlog(errormsg, "Quotes/addquote()", message)
+        elif arguments[1].lower() == "remove":
+            try:
+                del quotes[arguments[2]]
+                counter = 1
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w') as f:
+                    for key, val in quotes.items():
+                        f.write("%s$%s\n" % (counter, val))
+                        counter += 1
+                quotes = {}
+                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt') as f:
+                    for line in f:
+                        split = line.split("$")
+                        quotes[split[0]] = split[1].rstrip('\n')
+                send_message(s, "Quote %s removed!" % arguments[2])
+
+            except Exception as errormsg:
+                errorlog(errormsg, "Quotes/removequote()", message)
+        else:
+            try:
+                if quotes:
                     try:
-                        int(argument)
-                        quoteindex = message.split(" ")[1]
+                        quoteindex = arguments[1]
+                        quoteindex = int(quoteindex)
                         quote = quotes[quoteindex]
                         send_message(s, "Quote %s: %s" % (quoteindex, quote))
                     except KeyError:
@@ -46,7 +71,7 @@ def get_quote(s, message):
                     except ValueError:
                         quotes_temp = {}
                         for key, value in quotes.items():
-                            if argument.lower() in value.lower():
+                            if arguments[1].lower() in value.lower():
                                 quotes_temp[key] = value
                         if len(quotes_temp) == 0:
                             send_message(s, "No quotes found.")
@@ -64,51 +89,17 @@ def get_quote(s, message):
                     except Exception as errormsg:
                         errorlog(errormsg, "Quotes/quote()", message)
                         send_message(s, "Something went wrong, check your command.")
-        else:
-            send_message(s, "No quotes yet!")
-    except IndexError:
-        send_message(s, "Error finding your searchterms. Check your command.")
-    except Exception as errormsg:
-        errorlog(errormsg, "Quotes/quote()", message)
-        send_message(s, "Something went wrong, check your command.")
-
-
-def add_quote(s, message, game):
-    global quotes
-    try:
-
-        currentdate = time.strftime("%d/%m/%Y")
-
-        keyword = "!addquote "
-        newquote = message[message.index(keyword) + len(keyword):]
-        quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'a') as f:
-            f.write("%s$%s [%s] [%s]\n" % (len(quotes), newquote, game, currentdate))
-        send_message(s, "Quote %d added!" % len(quotes))
-    except Exception as errormsg:
-        send_message(s, "There was an error adding this quote. Please try again!")
-        errorlog(errormsg, "Quotes/addquote()", message)
-
-
-def remove_quote(s, message):
-    global quotes
-    try:
-        messageparts = message.split(" ")
-        del quotes[messageparts[1]]
-        counter = 1
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w') as f:
-            for key, val in quotes.items():
-                f.write("%s$%s\n" % (counter, val))
-                counter += 1
-        quotes = {}
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt') as f:
-            for line in f:
-                split = line.split("$")
-                quotes[split[0]] = split[1].rstrip('\n')
-        send_message(s, "Quote %s removed!" % messageparts[1])
-
-    except Exception as errormsg:
-        errorlog(errormsg, "Quotes/removequote()", message)
+                else:
+                    send_message(s, "No quotes yet!")
+            except IndexError:
+                send_message(s, "Error finding your searchterms. Check your command.")
+            except Exception as errormsg:
+                errorlog(errormsg, "Quotes/quote()", message)
+                send_message(s, "Something went wrong, check your command.")
+    except:
+        randomindex = random.randint(1, len(quotes))
+        randomquote = quotes[str(randomindex)]
+        send_message(s, "Quote %s: %s" % (randomindex, randomquote))
 
 
 def last_quote(s):
@@ -117,5 +108,5 @@ def last_quote(s):
         quote = quotes[str(quoteindex)]
         send_message(s, "Quote %s: %s" % (quoteindex, quote))
     except Exception as errormsg:
-        errorlog(errormsg, "Quotes/removequote()", "")
+        errorlog(errormsg, "Quotes/lastquote()", "")
         send_message(s, "There was an error retrieving the last quote. Error logged.")

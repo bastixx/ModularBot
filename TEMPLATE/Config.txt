@@ -1,11 +1,14 @@
 [Settings]
-Client ID = 
+Client ID = qeejeizy9g0ubsp2kdpwmbu47m5uk7
 Host = irc.twitch.tv
-Nickname = 
+Nickname = Hannahbot
 Port = 6667
-Password = 
-Channel = 
-Folder =
+Password = oauth:0la5dqq4rqo85rahrdio7f8ctievbg
+Channel = bastixx669
+Folder = TEMPLATE
+SteamAPIkey = 6577D50C868083DB74D6C40233A1D513
+
+# louiseyhannah
 
 [Debug]
 # Debugging settings. Enabling these can help troubleshooting
@@ -15,13 +18,13 @@ Folder =
 
 Print message = True
 Print raw = False
-Log raw = True
+Log raw = False
 Print tags = False
 
 [Modules]
-Quotes = True
-Raffles = True
-Roulette = True
+Quotes = False
+Raffles = False
+Roulette = False
 Deathcounter = False
 Backseatmessage = True
 Rules = False
@@ -29,6 +32,6 @@ BonerTimer = False
 Rimworld automessage = False
 Paddle = False
 Questions = False
-Modlog = True
-Unshorten = False
-Follower goals = False
+Modlog = False
+Conversions = True
+Rimworld mod search = True

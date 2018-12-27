@@ -54,3 +54,9 @@ def convert(s, message):
                                 celsius = float(match.group(1))
                                 fahrenheit = (celsius * 1.8) + 32
                                 send_message(s, f"{celsius} °C is {round(fahrenheit, 2)} °F!")
+                            else:
+                                match = re.search('([0-9,\.]+)k', messagesplit[1], flags=re.I)
+                                if match:
+                                    kelvin = float(match.group(1))
+                                    celsius = kelvin - 273.15
+                                    send_message(s, f"{kelvin} °K is {round(celsius, 2)} °C!")

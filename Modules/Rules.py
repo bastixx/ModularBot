@@ -3,7 +3,7 @@ from Send_message import send_message
 import os
 
 
-def load_rules(s, folder):
+def load_rules(folder):
     global rules; global warnings
     rules = {}
     warnings = {}
@@ -15,9 +15,6 @@ def load_rules(s, folder):
     except:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'w'):
             pass
-
-    # if not rules:
-        # send_message(s, "No rules yet!")
 
 
 def func_rules(s, message):

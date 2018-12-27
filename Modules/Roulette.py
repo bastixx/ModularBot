@@ -15,5 +15,5 @@ def roulette(displayname, s):
             send_message(s, "/timeout %s 1" % displayname)
         else:
             send_message(s, "A CLICK can be heard as nothing happends. %s lives!" % displayname)
-    except exception as errormsg:
+    except Exception as errormsg:
         errorlog(errormsg, "roulette()", '')

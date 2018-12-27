@@ -9,7 +9,7 @@ import requests
 import validators
 from unidecode import unidecode
 
-# Append path do modules to path variable and load custom modules
+# Append path to modules to path variable and load custom modules
 sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
 from Roulette import roulette
 from Send_message import send_message, load_send_message
@@ -17,20 +17,19 @@ from Getgame import getgame
 from Backseatmessage import backseatmessage, load_bsmessage, bsmcheck
 from Errorlog import load_errorlog, errorlog
 from Logger import logger, load_logger
-from Quotes import load_quotes, get_quote, add_quote, remove_quote, last_quote
+from Quotes import load_quotes, quote, last_quote
 from Raffles import load_raffles, raffle, join_raffle
 from Deathcounter import load_deaths, func_deaths, dead
 from Rules import load_rules, func_rules
 from BonerTimer import *
-from RimworldAutomessage import load_rimworldautomessage, rimworldautomessage
+from RimworldAutomessage import load_rimworldautomessage
 from Paddle import paddle
 from Questions import load_questions, question, add_question, remove_question
 from Modlog import load_modlog, modlog
 from Conversions import convert
 from Random_stuff import unshorten, followergoal, load_followergoals
-from SteamModLinker import load_mod, mod
+from SteamModLinker import load_mod, linkmod
 from SongSuggestions import load_suggestions, suggest, clearsuggestions
-
 
 # Load all the variables necessary to connect to Twitch IRC from a config file
 config = configparser.ConfigParser()
@@ -77,16 +76,18 @@ module_SongSuggestions = modules.getboolean('Song suggestions')
 ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
 
 # Connecting to Twitch IRC by passing credentials and joining a certain channel
-s = socket.socket()
-s.connect((HOST, PORT))
-s.send(b"PASS " + PASS + b"\r\n")
-s.send(b"NICK " + NICK + b"\r\n")
+sock = socket.socket()
+sock.connect((HOST, PORT))
+sock.send(b"PASS " + PASS + b"\r\n")
+sock.send(b"NICK " + NICK + b"\r\n")
 # Sending a command to make twitch return tags with each message
-s.send(b"CAP REQ :twitch.tv/tags \r\n")
-s.send(b"CAP REQ :twitch.tv/commands \r\n")
-s.send(b"JOIN #" + CHANNEL + b"\r\n")
+sock.send(b"CAP REQ :twitch.tv/tags \r\n")
+sock.send(b"CAP REQ :twitch.tv/commands \r\n")
+# Join the IRC channel of the channel
+sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
 
+# noinspection PyGlobalUndefined
 def command_limiter(command):  # Allows for cooldowns to be set on commands
     global comlimits
     comlimits.remove(command)
@@ -95,24 +96,24 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 def logline(line):  # Debug setting to save the raw data recieved to a file
     try:
         line = unidecode(line)
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime("%d-%m-%Y") + ".txt", 'a+') as f:
+        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime(
+                "%d-%m-%Y") + ".txt", 'a+') as f:
             f.write("[%s] %s\n" % (str(time.strftime("%H:%M:%S")), line))
     except Exception as errormsg:
         errorlog(errormsg, "logline()", line)
 
 
 def nopong():  # Function to restart the bot in case of connection lost
-    print(">>>Connection lost, restarting bot!")
     errorlog("Connection lost, bot restarted", "nopong", '')
     os.execv(sys.executable, [sys.executable, f"{os.path.dirname(__file__)}/{FOLDER}/{FOLDER}.py"] + sys.argv)
 
 
-def main():
+def main(s=sock):
     global comlimits
     readbuffer = ""
     modt = False
     comlimits = []
-    modules = []
+    moduleslist = []
 
     # Starting the timer in case of a disconnect
     keepalivetimer = threading.Timer(310, nopong)
@@ -136,48 +137,49 @@ def main():
 
     # Load all the modules that were enabled in the config file
     if module_rules:
-        load_rules(s, FOLDER)
-        modules.append("Rules")
+        load_rules(FOLDER)
+        moduleslist.append("Rules")
     if module_backseatmessage:
         load_bsmessage(FOLDER)
-        modules.append("Backseatmessage")
+        moduleslist.append("Backseatmessage")
     if module_deathcounter:
         load_deaths(FOLDER)
-        modules.append("Deathcounter")
+        moduleslist.append("Deathcounter")
     if module_quotes:
         load_quotes(FOLDER)
-        modules.append("Quotes")
+        moduleslist.append("Quotes")
     if module_raffles:
         load_raffles(FOLDER, CLIENTID, channel_id)
-        modules.append("Raffles")
+        moduleslist.append("Raffles")
     if module_bonertimer:
         load_bonertimer(FOLDER)
-        modules.append("Bonertimer")
+        moduleslist.append("Bonertimer")
     if module_rimworldautomessage:
         load_rimworldautomessage(s, FOLDER, channel_id, CLIENTID)
-        modules.append("RimWorldMessage")
+        moduleslist.append("RimWorldMessage")
     if module_questions:
         load_questions(FOLDER)
-        modules.append("Questions")
+        moduleslist.append("Questions")
     if module_modlog:
         load_modlog(channel_id, headers, FOLDER)
-        modules.append("Modlog")
+        moduleslist.append("Modlog")
     if module_conversion:
-        modules.append("Conversions")
+        moduleslist.append("Conversions")
     if module_followergoal:
         load_followergoals(FOLDER)
-        modules.append("followergoals")
+        moduleslist.append("followergoals")
     if module_rimmods:
         load_mod(STEAMAPIKEY)
-        modules.append("rimmods")
+        moduleslist.append("rimmods")
     if module_SongSuggestions:
         load_suggestions(FOLDER)
-        modules.append("SongSuggestions")
-
+        moduleslist.append("SongSuggestions")
+    if module_paddle:
+        moduleslist.append("Paddle")
     # Infinite loop waiting for commands
     while True:
         try:
-            # Recieving messages
+            # Read messages from buffer to temp, which we then line by line disect.
             readbuffer = readbuffer + s.recv(1024).decode()
             temp = readbuffer.split("\n")
             readbuffer = temp.pop()
@@ -194,7 +196,6 @@ def main():
                         keepalivetimer.cancel()
                         keepalivetimer = threading.Timer(310, nopong)
                         keepalivetimer.start()
-
                     except Exception as errormsg:
                         errorlog(errormsg, "keepalivetimer", '')
 
@@ -202,7 +203,7 @@ def main():
                         try:
                             followergoal(s, channel_id, CHANNEL, CLIENTID)
                         except Exception as errormsg:
-                            errorlog(errormsg, "")
+                            errorlog(errormsg, "Main/followergoal()", "")
 
                     if module_backseatmessage:
                         bsmcheck(channel_id, CLIENTID)
@@ -215,18 +216,26 @@ def main():
                         parts = line.split(":", 2)
                     if printparts:
                         print(parts)
-                    if "QUIT" not in parts[1] and "JOIN" not in parts[1] and "PART" not in parts[1] and "ACK" not in parts[1]:
+                    if "QUIT" not in parts[1] and "JOIN" not in parts[1] and "PART" not in parts[1] and "ACK" not in \
+                            parts[1]:
                         issub = False
                         ismod = False
 
                     if "CLEARCHAT" in parts[1] and module_modlog:
                         modlog(s, parts)
 
-                    templist = ['QUIT', 'JOIN', 'PART', 'ACK', 'USERSTATE', 'ROOMSTATE', 'CLEARCHAT']
-                    tempparts = parts[1].split(" ")
+                    templist = ['QUIT', 'JOIN', 'PART', 'ACK', 'USERSTATE', 'ROOMSTATE', 'CLEARCHAT', "NOTICE",
+                                'HOSTTARGET']
+                    try:
+                        tempparts = parts[1].split(" ")
+                    except:
+                        tempparts = parts[0].split(" ")
+
+                    if "NOTICE" in tempparts[1]:
+                        print(">>>" + parts[2][:len(parts[2]) - 1])
 
                     if not any(s in tempparts[1] for s in templist):
-
+                        # noinspection PyBroadException
                         try:
                             # Sets the message variable to the actual message sent
                             message = parts[2][:len(parts[2]) - 1]
@@ -245,29 +254,24 @@ def main():
 
                         # Only works after twitch is done announcing stuff (modt = Message of the day)
                         if modt:
-                            try:
-                                subindex = subindex[0]
-                                modindex = modindex[0]
-                                displayindex = displayindex[0]
-                                if tags[displayindex] != 'display-name=':
-                                    displayname = tags[displayindex]
-                                    displayname = displayname.split("=")[1]
-                                    displayname = displayname.replace("\\s", '')
-                            except:
-                                pass
+                            subindex = subindex[0]
+                            modindex = modindex[0]
+                            displayindex = displayindex[0]
+                            if tags[displayindex] != 'display-name=':
+                                displayname = tags[displayindex]
+                                displayname = displayname.split("=")[1]
+                                displayname = displayname.replace("\\s", '')
 
-                            try:
-                                if tags[subindex] == 'subscriber=1' or 'subscriber' in tags[0]:
-                                    issub = True
-                                else:
-                                    issub = False
+                            if tags[subindex] == 'subscriber=1' or 'subscriber' in tags[0]:
+                                issub = True
+                            else:
+                                issub = False
 
-                                if tags[modindex] == 'mod=1' or 'mod' in tags[0] or 'broadcaster' in tags[0]:
-                                    ismod = True
-                                else:
-                                    ismod = False
-                            except Exception:
-                                pass
+                            if tags[modindex] == 'mod=1' or 'mod' in tags[0] or 'broadcaster' in tags[0]:
+                                ismod = True
+                            else:
+                                ismod = False
+
                             if printmessage:
                                 if message != "":
                                     print(displayname + ": " + message)
@@ -284,15 +288,24 @@ def main():
                             # These are the actual commands
                             if message == "":
                                 pass
+                            # elif messagekeywords in QAlist:
+                            #     pass
+
                             elif message[0] == '!':
                                 if message.lower() == "!test":
                                     send_message(s, "Test successful. Bot is online!")
+
+                                elif "!commandlist" in message.lower() and "!commandlist" not in comlimits:
+                                    threading.Timer(15, command_limiter, ['!commandlist']).start()
+                                    comlimits.append('!commandlist')
+                                    send_message(s, f"Commands for this channel can be found here: "
+                                                    f"http://www.bastixx.nl/twitch/{FOLDER}/commands.php")
 
                                 if module_rules:
                                     if "!rule" in message.lower() and ismod and '!rule' not in comlimits:
                                         threading.Timer(5, command_limiter, ['!rule']).start()
                                         comlimits.append('!rule')
-                                        rules, warnings = func_rules(s, rules, warnings, message)
+                                        func_rules(s, message)
 
                                 if module_deathcounter:
                                     if "!deaths" in message.lower() and "!deaths" not in comlimits:
@@ -303,10 +316,10 @@ def main():
                                         comlimits.append('!deaths')
 
                                 if message.lower() == "!dead" and "!dead" not in comlimits and (ismod or issub):
-                                        threading.Timer(30, command_limiter, ['!dead']).start()
-                                        comlimits.append('!dead')
-                                        game = str(getgame(channel_id, CLIENTID)).lower()
-                                        dead(s, game)
+                                    threading.Timer(30, command_limiter, ['!dead']).start()
+                                    comlimits.append('!dead')
+                                    game = str(getgame(channel_id, CLIENTID)).lower()
+                                    dead(s, game)
 
                                 if module_raffles:
                                     if "!raffle" in message.lower() and ismod:
@@ -316,7 +329,8 @@ def main():
                                         join_raffle(s, displayname, message, issub, ismod)
 
                                 if module_roulette:
-                                    if "!roulette" in message.lower() and "!roulette" not in comlimits and module_roulette:
+                                    if "!roulette" in message.lower() and "!roulette" not in comlimits and \
+                                            module_roulette:
                                         threading.Timer(20, command_limiter, ['!roulette']).start()
                                         comlimits.append('!roulette')
                                         roulette(displayname, s)
@@ -328,23 +342,17 @@ def main():
                                         paddle(s, displayname, message)
 
                                 if module_quotes:
-                                    if message.lower() == "!lastquote" and "!quote" not in comlimits:
+                                    if message.lower() == "!lastquote" and ("!quote" not in comlimits or ismod):
                                         threading.Timer(15, command_limiter, ['!quote']).start()
                                         comlimits.append('!quote')
                                         last_quote(s)
 
-                                    elif "!addquote" in message.lower() and ismod:
+                                    elif "!quote" in message.lower() and ("!quote" not in comlimits or ismod):
+                                        threading.Timer(15, command_limiter, ['!quote']).start()
+                                        comlimits.append('!quote')
                                         game = getgame(channel_id, CLIENTID)
-                                        add_quote(s, message, game)
+                                        quote(s, message, game)
 
-                                    elif "!removequote" in message.lower() and ismod:
-                                        remove_quote(s, message)
-
-                                    elif"!quote" in message.lower() and "!quote" not in comlimits:
-                                        if not ismod:
-                                            threading.Timer(15, command_limiter, ['!quote']).start()
-                                            comlimits.append('!quote')
-                                        get_quote(s, message)
 
                                 if module_backseatmessage:
                                     if "!backseatmessage" in message.lower() or '!bsm' in message.lower() and ismod:
@@ -432,7 +440,8 @@ def main():
                                     if "!linkmod" in message.lower() and "!linkmod" not in comlimits:
                                         threading.Timer(15, command_limiter, ['!linkmod']).start()
                                         comlimits.append('!linkmod')
-                                        mod(s, message)
+                                        linkmod(s, message)
+
                                 if module_SongSuggestions:
                                     if "!suggest" in message.lower() and "!suggest" not in comlimits:
                                         threading.Timer(10, command_limiter, ['!linkmod']).start()
@@ -444,12 +453,60 @@ def main():
                                 if message.lower() == '!restart' and username == 'bastixx669':
                                     nopong()
 
+                                elif "!module" in message.lower() and username == 'bastixx669':
+                                    messageparts = message.split(" ")
+                                    var_break = False
+                                    if messageparts[1] == "enable":
+                                        try:
+                                            templist = []
+                                            keyword = " ".join(messageparts[2:])
+                                            with open('config.ini', 'r+') as f:
+                                                for lineinfile in f:
+                                                    if keyword in lineinfile:
+                                                        if "False" in lineinfile:
+                                                            lineinfile = lineinfile.replace('False', 'True')
+                                                        else:
+                                                            send_message(s, "Module already enabled.")
+                                                            var_break = True
+                                                    templist.append(lineinfile)
+                                                f.seek(0)
+                                                for lineinfile in templist:
+                                                    f.write(lineinfile)
+                                            if not var_break:
+                                                send_message(s, f"Module {keyword} enabled.")
+                                                nopong()
+                                        except Exception as errormsg:
+                                            errorlog(errormsg, "module/enable", message)
+                                            send_message(s, "Error enabling this module.")
+                                    elif messageparts[1] == "disable":
+                                        try:
+                                            templist = []
+                                            keyword = " ".join(messageparts[2:])
+                                            with open('config.ini', 'r+') as f:
+                                                for lineinfile in f:
+                                                    if keyword in lineinfile:
+                                                        if "True" in lineinfile:
+                                                            lineinfile = lineinfile.replace('True', 'False')
+                                                        else:
+                                                            send_message(s, "Module already disabled.")
+                                                            var_break = True
+                                                    templist.append(lineinfile)
+                                                f.seek(0)
+                                                for lineinfile in templist:
+                                                    f.write(lineinfile)
+                                            if not var_break:
+                                                send_message(s, f"Module {keyword} disabled.")
+                                                nopong()
+                                        except Exception as errormsg:
+                                            errorlog(errormsg, "module/disable", message)
+                                            send_message(s, "Error disabling this module.")
+
                         for l in parts:
                             if "End of /NAMES list" in l:
                                 modt = True
                                 print(">>>Bot ready in channel: %s" % CHANNEL.decode())
                                 logger('>>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True)
-                                print("modules loaded: %s" % ", ".join(modules))
+                                print(">>>modules loaded: %s" % ", ".join(moduleslist))
 
         except Exception as errormsg:
             try:
