@@ -63,29 +63,29 @@ def quote(s, message, game):
                 if quotes:
                     try:
                         quoteindex = arguments[1]
-                        quoteindex = int(quoteindex)
-                        quote = quotes[quoteindex]
-                        send_message(s, "Quote %s: %s" % (quoteindex, quote))
+                        try:
+                            int(quoteindex) / 1
+                            quote = quotes[quoteindex]
+                            send_message(s, "Quote %s: %s" % (quoteindex, quote))
+                        except:
+                            quotes_temp = {}
+                            for key, value in quotes.items():
+                                if arguments[1].lower() in value.lower():
+                                    quotes_temp[key] = value
+                            if len(quotes_temp) == 0:
+                                send_message(s, "No quotes found.")
+                            elif len(quotes_temp) == 1:
+                                for key, value in quotes_temp.items():
+                                    send_message(s, "Quote %s: %s" % (key, value))
+                            else:
+                                keylist = []
+                                for key in quotes_temp:
+                                    keylist.append(key)
+                                randomindex = random.choice(keylist)
+                                randomquote = quotes_temp[str(randomindex)]
+                                send_message(s, "Quote %s: %s" % (randomindex, randomquote))
                     except KeyError:
                         send_message(s, "This quote does not exist.")
-                    except ValueError:
-                        quotes_temp = {}
-                        for key, value in quotes.items():
-                            if arguments[1].lower() in value.lower():
-                                quotes_temp[key] = value
-                        if len(quotes_temp) == 0:
-                            send_message(s, "No quotes found.")
-                        elif len(quotes_temp) == 1:
-                            for key, value in quotes_temp.items():
-                                send_message(s, "Quote %s: %s" % (key, value))
-                        else:
-                            keylist = []
-                            for key in quotes_temp:
-                                keylist.append(key)
-
-                            randomindex = random.choice(keylist)
-                            randomquote = quotes_temp[str(randomindex)]
-                            send_message(s, "Quote %s: %s" % (randomindex, randomquote))
                     except Exception as errormsg:
                         errorlog(errormsg, "Quotes/quote()", message)
                         send_message(s, "Something went wrong, check your command.")

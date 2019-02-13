@@ -37,9 +37,16 @@ def followergoal(s, channel_id, channel, client_id):
         headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
         r = requests.get(url, headers=headers).json()
         total = r["total"]
-        total = '250'
         if int(total) % 250 == 0 and total not in goals:
             send_message(s, f"@{channel.decode()} congrats on {total} followers!")
             goals.append(total)
     except Exception as errormsg:
         errorlog(errormsg, "followergoals()", "")
+
+
+def pun(s):
+    try:
+        joke = requests.get('https://icanhazdadjoke.com/', headers={"Accept": "application/json", "User-Agent": ""}).json()
+        send_message(s, joke['joke'])
+    except Exception as errormsg:
+        errorlog(errormsg, "pun()", "")

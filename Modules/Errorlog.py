@@ -10,7 +10,9 @@ def load_errorlog(FOLDER):
 
 
 def errorlog(error, functionname, message):
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog/Errorlog.txt', 'a+') as f:
-        f.write(f"{datetime.date(datetime.now())} : {datetime.time(datetime.now())} : {functionname} : {error} : {message}\n")
+    now = datetime.date(datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
 
-    print(f"{datetime.date(datetime.now())} : {datetime.time(datetime.now())} : {error} : {functionname} : {message}")
+    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog/Errorlog.txt', 'a+') as f:
+        f.write(f"{now} : {functionname} : {error} : {message}\n")
+
+    print(f"{now} : {error} : {functionname} : {message}")

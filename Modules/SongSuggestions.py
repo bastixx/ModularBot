@@ -11,15 +11,15 @@ def load_suggestions(FOLDER):
 
 def suggest(s, message):
     try:
-        keyword = "!suggest "
-        suggestion = message[message.index(keyword) + len(keyword):]
+        messagesplit = message.split(" ")
+        suggestion = messagesplit[1:]
         wrongchars = ['<', '>', '{', '}', '(', ')', '#', '%', '*', '\:', "\"", "|"]
         for elem in wrongchars:
             if elem in suggestion:
                 suggestion = suggestion.replace(elem, "")
 
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/SongSuggestions.txt', 'a') as f:
-            f.write(suggestion + "\n")
+            f.write(" ".join(suggestion) + "\n")
         send_message(s, "Song suggestion registered!")
     except Exception as errormsg:
         send_message(s, "There was an error adding this. Please try again!")
