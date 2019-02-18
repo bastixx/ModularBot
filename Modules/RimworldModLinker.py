@@ -4,7 +4,7 @@ import re
 import json
 
 from Errorlog import errorlog
-from Send_message import send_message
+from Sendmessage import send_message
 
 
 def load_mod(STEAMAPIKEY):
@@ -31,8 +31,8 @@ def linkmod(s, message):
                 break
 
         try:
-            send_message(s, f'Found the mod: {modtitle} https://steamcommunity.com/sharedfiles/filedetails/?id={modid}')
+            send_message(f'Found the mod: {modtitle} https://steamcommunity.com/sharedfiles/filedetails/?id={modid}')
         except:
-            send_message(s, "No mods found.")
+            send_message("No mods found.")
     except Exception as errormsg:
         errorlog(errormsg, "ModSearch()", "")

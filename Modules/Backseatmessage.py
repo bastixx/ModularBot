@@ -2,7 +2,7 @@ import threading
 import os
 import requests
 
-from Send_message import send_message
+from Sendmessage import send_message
 from Errorlog import errorlog
 
 
@@ -26,7 +26,7 @@ def bsmessage(s):
         try:
             bstimer = threading.Timer(900, bsmessage, [s])
             bstimer.start()
-            send_message(s, bsmessagestr)
+            send_message(bsmessagestr)
         except Exception as errormsg:
             errorlog(errormsg, "Backseatmessage()", '')
 
@@ -39,26 +39,26 @@ def backseatmessage(s, message):
             backseating = True
             bstimer = threading.Timer(900, bsmessage, [s])
             bstimer.start()
-            send_message(s, "Backseating message enabled.")
+            send_message("Backseating message enabled.")
         else:
-            send_message(s, "BSM already enabled.")
+            send_message("BSM already enabled.")
     elif messageparts[1] == "off":
         if backseating:
             backseating = False
             bstimer.cancel()
-            send_message(s, "Backseating message disabled.")
+            send_message("Backseating message disabled.")
         else:
-            send_message(s, "BSM already off.")
+            send_message("BSM already off.")
     elif messageparts[1] == "set":
         try:
             newbsmessage = " ".join(messageparts[2:])
             bsmessagestr = newbsmessage
             with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Backseatmessage.txt', 'w') as f:
                 f.write(bsmessagestr)
-            send_message(s, "Backseat message changed.")
+            send_message("Backseat message changed.")
         except Exception as errormsg:
             errorlog(errormsg, 'backseatmessage/set()', message)
-            send_message(s, "There was an error chaning the backseatmessage. Please try again.")
+            send_message("There was an error chaning the backseatmessage. Please try again.")
 
 
 def bsmcheck(channel_id, client_id):

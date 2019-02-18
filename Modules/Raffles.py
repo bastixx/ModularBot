@@ -4,7 +4,7 @@ import random
 from datetime import datetime, timedelta
 
 from Errorlog import errorlog
-from Send_message import send_message
+from Sendmessage import send_message
 
 
 def load_raffles(FOLDER, CLIENTID, CHANNELID):
@@ -70,9 +70,9 @@ def raffle(s, message):
                     pass
                 with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', "a") as f:
                     f.write(f"{raffle}:{mode}\n")
-                send_message(s, "Raffle \"%s\" created!" % raffle)
+                send_message("Raffle \"%s\" created!" % raffle)
             except:
-                send_message(s, "Error creating raffle!")
+                send_message("Error creating raffle!")
         elif arguments[1] == "remove":
             try:
                 del raffles[raffle]
@@ -81,9 +81,9 @@ def raffle(s, message):
                 with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/Raffles.txt', "w") as f:
                     for i in raffles.keys():
                         f.write("%s\n" % i)
-                send_message(s, "Raffle \"%s\" deleted!" % raffle)
+                send_message("Raffle \"%s\" deleted!" % raffle)
             except Exception as e:
-                send_message(s, "Error removing raffle!")
+                send_message("Error removing raffle!")
                 print(e)
         elif arguments[1] == "set":
             # !raffle set mode raffle
@@ -97,19 +97,19 @@ def raffle(s, message):
                         for key in rafflelist.keys():
                             f.write(f"{key}:{rafflelist[key]}\n")
 
-                    send_message(s, f"Mode changed for raffle {raffle}.")
+                    send_message(f"Mode changed for raffle {raffle}.")
                 else:
-                    send_message(s, "Correct modes are: sub, follower, follower_7 and all")
+                    send_message("Correct modes are: sub, follower, follower_7 and all")
             except Exception as errormsg:
-                send_message(s, "Error changing mode for this raffle.")
+                send_message("Error changing mode for this raffle.")
                 errorlog(errormsg, "Raffle/set()", message)
 
         elif arguments[1] == "list":
-            send_message(s, "Current raffles are: %s." % ", ".join(raffles.keys()))
+            send_message("Current raffles are: %s." % ", ".join(raffles.keys()))
             print(raffles)
         elif arguments[1] == "roll":
             if len(raffles[raffle]) == 0:
-                send_message(s, "No contestants left!")
+                send_message("No contestants left!")
             else:
                 rafflewinner = random.choice(raffles[raffle])
                 raffles[raffle].remove(rafflewinner)
@@ -122,7 +122,7 @@ def raffle(s, message):
                 with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt" % raffle,
                           'a') as f:
                     f.write("%s\n" % rafflewinner)
-                send_message(s, "The winner is: %s!" % rafflewinner)
+                send_message("The winner is: %s!" % rafflewinner)
         elif arguments[1] == "adduser":
             user = arguments[2]
             raffle = " ".join(arguments[3:])
@@ -133,12 +133,11 @@ def raffle(s, message):
                     with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt' % raffle,
                               'a') as f:
                         f.write("%s\n" % user)
-                    send_message(s,
-                                 "@%s joined raffle: \"%s\"!" % (user, raffle))
+                    send_message("@%s joined raffle: \"%s\"!" % (user, raffle))
                 else:
-                    send_message(s, "user @%s already won this raffle!" % user)
+                    send_message("user @%s already won this raffle!" % user)
             else:
-                send_message(s, "User @%s is already in this raffle!" % user)
+                send_message("User @%s is already in this raffle!" % user)
         elif arguments[1] == "removeuser":
             user = arguments[2]
             raffle = " ".join(arguments[3:])
@@ -149,9 +148,9 @@ def raffle(s, message):
                           'w') as f:
                     for i in raffles[raffle]:
                         f.write("%s\n" % i)
-                send_message(s, "@%s removed from raffle: \"%s\"!" % (user, raffle))
+                send_message("@%s removed from raffle: \"%s\"!" % (user, raffle))
             else:
-                send_message(s, "User @%s is not in this raffle!" % user)
+                send_message("User @%s is not in this raffle!" % user)
         elif arguments[1] == "resetwinners":
             raffle = " ".join(arguments[2:])
             if raffle in rafflewinners.keys():
@@ -159,20 +158,20 @@ def raffle(s, message):
                 with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%swinners.txt' % raffle,
                           'w') as f:
                     f.write("")
-                send_message(s, "Rafflewinners \"%s\" cleared!" % raffle)
+                send_message("Rafflewinners \"%s\" cleared!" % raffle)
             else:
-                send_message(s, f"Raffle {raffle} has no winners or does not exist.")
+                send_message(f"Raffle {raffle} has no winners or does not exist.")
         elif arguments[1] == "stats":
             raffle = " ".join(arguments[2:])
             if raffle in raffles.keys():
-                send_message(s, f"There are currently {len(raffles[raffle])} people in this raffle.")
+                send_message(f"There are currently {len(raffles[raffle])} people in this raffle.")
 
         elif arguments[1] == "mode":
-            send_message(s, f"{rafflelist[raffle]}")
+            send_message(f"{rafflelist[raffle]}")
 
     except IndexError:
-        send_message(s, "To join a raffle, use !join <raffle name>. Current raffles are: "
-                        "%s" % ", ".join(raffles.keys()))
+        send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
+                     "%s" % ", ".join(raffles.keys()))
 
     except Exception as errormsg:
         errorlog(errormsg, "!raffle", message)
@@ -212,8 +211,8 @@ def join_raffle(s, displayname, message, issub, ismod):
     try:
         mode = rafflelist[raffle]
     except:
-        send_message(s, "To join a raffle, use !join <raffle name>. Current raffles are: "
-                        "%s" % ", ".join(raffles.keys()))
+        send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
+                     "%s" % ", ".join(raffles.keys()))
         return
 
     if mode == "sub" and issub:
@@ -236,21 +235,21 @@ def join_raffle(s, displayname, message, issub, ismod):
                     with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/raffle/%s.txt" % raffle,
                               'a') as f:
                         f.write("%s\n" % displayname)
-                    send_message(s, "@%s joined raffle: \"%s\"!" % (displayname, raffle))
+                    send_message("@%s joined raffle: \"%s\"!" % (displayname, raffle))
                 else:
-                    send_message(s, "@%s you already won this raffle!" % displayname)
+                    send_message("@%s you already won this raffle!" % displayname)
             else:
-                send_message(s, "@%s you are already in this raffle!" % displayname)
+                send_message("@%s you are already in this raffle!" % displayname)
         except IndexError:
-            send_message(s, "To join a raffle, use !join <raffle name>. Current raffles are: "
-                            "%s" % ", ".join(raffles.keys()))
+            send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
+                         "%s" % ", ".join(raffles.keys()))
         except Exception:
-            send_message(s, "Error adding user %s to raffle: \"%s\". Check if you spelled the "
-                            "raffle name correctly." % (displayname, raffle))
+            send_message("Error adding user %s to raffle: \"%s\". Check if you spelled the "
+                         "raffle name correctly." % (displayname, raffle))
     else:
         if mode == 'sub':
-            send_message(s, "This raffle is for subscribers only.")
+            send_message("This raffle is for subscribers only.")
         elif mode == 'follower':
-            send_message(s, "You have to be following this channel to join this raffle.")
+            send_message("You have to be following this channel to join this raffle.")
         elif mode == 'follower_7':
-            send_message(s, "You have to be following this channel for at least 7 days to join this raffle")
+            send_message("You have to be following this channel for at least 7 days to join this raffle")

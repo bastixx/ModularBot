@@ -1,6 +1,6 @@
 import os
 
-from Send_message import send_message
+from Sendmessage import send_message
 from Errorlog import errorlog
 
 
@@ -9,7 +9,7 @@ def load_suggestions(FOLDER):
     folder = FOLDER
 
 
-def suggest(s, message):
+def suggest(message):
     try:
         messagesplit = message.split(" ")
         suggestion = messagesplit[1:]
@@ -20,17 +20,17 @@ def suggest(s, message):
 
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/SongSuggestions.txt', 'a') as f:
             f.write(" ".join(suggestion) + "\n")
-        send_message(s, "Song suggestion registered!")
+        send_message("Song suggestion registered!")
     except Exception as errormsg:
-        send_message(s, "There was an error adding this. Please try again!")
+        send_message("There was an error adding this. Please try again!")
         errorlog(errormsg, "SongSuggestions/suggest()", message)
 
 
-def clearsuggestions(s):
+def clearsuggestions():
     try:
         with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/SongSuggestions.txt', 'w') as f:
             f.write("")
-        send_message(s, "List cleared!")
+        send_message("List cleared!")
     except Exception as errormsg:
-        send_message(s, "There was an error adding this. Please try again!")
+        send_message("There was an error adding this. Please try again!")
         errorlog(errormsg, "SongSuggestions/clearsuggestions()", "")

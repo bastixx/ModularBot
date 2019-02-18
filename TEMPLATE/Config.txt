@@ -22,6 +22,10 @@ Log raw = False
 Print tags = False
 
 [Modules]
+Sendmessage = True
+Errorlog = True
+
+Logger = True
 Quotes = False
 Raffles = False
 Roulette = False
@@ -29,9 +33,11 @@ Deathcounter = False
 Backseatmessage = True
 Rules = False
 BonerTimer = False
-Rimworld automessage = False
+RimworldAutomessage = False
 Paddle = False
 Questions = False
 Modlog = False
 Conversions = True
-Rimworld mod search = True
+RimworldModLinker = True
+FollowerGoals = False
+SongSuggestions = False

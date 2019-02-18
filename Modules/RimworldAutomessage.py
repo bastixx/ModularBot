@@ -1,7 +1,7 @@
 import threading
 import requests
 
-from Send_message import send_message
+from Sendmessage import send_message
 from Getgame import getgame
 from Errorlog import errorlog
 
@@ -30,7 +30,7 @@ def rimworldautomessage(s):
     response = r["data"]
     try:
         if response[0]["type"] == "live" and game == "RimWorld":
-            send_message(s, messagetext)
+            send_message(messagetext)
 
     except IndexError:
         pass

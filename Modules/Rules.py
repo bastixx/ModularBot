@@ -1,5 +1,5 @@
 from Errorlog import errorlog
-from Send_message import send_message
+from Sendmessage import send_message
 import os
 
 
@@ -40,13 +40,13 @@ def func_rules(s, message):
 
     timeouttime = rules[ruleno][warningno]
     if timeouttime != '0':
-        send_message(s, "/timeout %s %s broke rule %s (%s warning)" % (
+        send_message("/timeout %s %s broke rule %s (%s warning)" % (
             arguments[2], timeouttime, ruleno, warningnotext))
-        send_message(s, "@%s You have been timed out for %s seconds because "
-                        "you broke rule %s: %s."" This was your %s warning!" %
+        send_message("@%s You have been timed out for %s seconds because "
+                     "you broke rule %s: %s."" This was your %s warning!" %
                      (arguments[2], timeouttime, ruleno, ruletext, warningnotext))
     else:
-        send_message(s, "/ban %s  broke rule %s" % (arguments[2], ruleno))
-        send_message(s, "@%s You have been banned from this channel because "
-                        "you broke rule %s: %s. This was your %s warning!" %
+        send_message("/ban %s  broke rule %s" % (arguments[2], ruleno))
+        send_message("@%s You have been banned from this channel because "
+                     "you broke rule %s: %s. This was your %s warning!" %
                      (arguments[2], ruleno, ruletext, warningnotext))

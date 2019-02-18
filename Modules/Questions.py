@@ -2,7 +2,7 @@ import random
 import os
 
 from Errorlog import errorlog
-from Send_message import send_message
+from Sendmessage import send_message
 
 
 def load_questions(FOLDER):
@@ -25,12 +25,12 @@ def question(s, message):
         if questions:
             randomindex = random.randint(1, len(questions))
             randomquestion = questions[str(randomindex)]
-            send_message(s, "%s: %s" % (randomindex, randomquestion))
+            send_message("%s: %s" % (randomindex, randomquestion))
         else:
-            send_message(s, "No questions yet!")
+            send_message("No questions yet!")
     except Exception as errormsg:
         errorlog(errormsg, "Question/question()", message)
-        send_message(s, "Something went wrong, check your command.")
+        send_message("Something went wrong, check your command.")
 
 
 def add_question(s, message):
@@ -41,9 +41,9 @@ def add_question(s, message):
         questions[str(len(questions) + 1)] = newquestion
         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt", 'a') as f:
             f.write("%s:%s\n" % (len(questions), newquestion))
-        send_message(s, "question %d added!" % len(questions))
+        send_message("question %d added!" % len(questions))
     except Exception as errormsg:
-        send_message(s, "There was an error adding this question. Please try again!")
+        send_message("There was an error adding this question. Please try again!")
         errorlog(errormsg, "Questions/add_question()", message)
 
 
@@ -62,10 +62,10 @@ def remove_question(s, message):
             for line in f:
                 split = line.split(":")
                 questions[split[0]] = split[1].rstrip('\n')
-        send_message(s, "Question %s removed!" % messageparts[1])
+        send_message("Question %s removed!" % messageparts[1])
 
     except KeyError:
-        send_message(s, f'Question number {messageparts[1]} does not exist.')
+        send_message(f'Question number {messageparts[1]} does not exist.')
 
     except Exception as errormsg:
         errorlog(errormsg, "Questions/remove_question()", message)

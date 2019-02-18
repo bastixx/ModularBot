@@ -1,16 +1,15 @@
-import socket
-
 from Logger import logger
 from Errorlog import errorlog
 
 
-def load_send_message(folder, channel):
-    global CHANNEL; global FOLDER
+def load_send_message(folder, channel, socket):
+    global CHANNEL; global FOLDER; global s
     CHANNEL = channel
     FOLDER = folder
+    s = socket
 
 
-def send_message(s, message):
+def send_message(message):
     try:
         s.send(b"PRIVMSG #%s :%s\r\n" % (CHANNEL, message.encode()))
         print(">>BOT : " + message)
