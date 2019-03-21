@@ -4,7 +4,7 @@ from Errorlog import errorlog
 from Sendmessage import send_message
 
 
-def paddle(s, displayname, message):
+def paddle(displayname, message):
     try:
         messagesplit = message.split(" ")
         randint = random.randint(1, 20)

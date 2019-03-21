@@ -5,7 +5,7 @@ from Sendmessage import send_message
 from Errorlog import errorlog
 
 
-def roulette(displayname, s):
+def roulette(displayname):
     try:
         randint = random.randint(1, 6)
         send_message("%s spins the gun and pulls the trigger.." % displayname)

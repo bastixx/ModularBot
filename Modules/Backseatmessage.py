@@ -20,7 +20,7 @@ def load_bsmessage(FOLDER):
             f.write(bsmessagestr)
 
 
-def bsmessage(s):
+def bsmessage():
     global bstimer
     if backseating:
         try:
@@ -31,7 +31,7 @@ def bsmessage(s):
             errorlog(errormsg, "Backseatmessage()", '')
 
 
-def backseatmessage(s, message):
+def backseatmessage(message):
     global bstimer; global bsmessagestr; global backseating
     messageparts = message.split(" ")
     if messageparts[1] == "on":

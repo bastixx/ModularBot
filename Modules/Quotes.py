@@ -1,9 +1,9 @@
-import os
 import random
 import time
 
 from Errorlog import errorlog
 from Sendmessage import send_message
+from Database import *
 
 
 def load_quotes(FOLDER):
@@ -13,16 +13,15 @@ def load_quotes(FOLDER):
     folder = FOLDER
     quotes = {}
     try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'r') as f:
-            for line in f:
-                split = line.split("$")
-                quotes[split[0]] = split[1].rstrip('\n')
-    except:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w'):
-            pass
+        for document in getallfromdb("Quotes"):
+            quotes[document["_id"]] = f'{document["quote"]} - {document["said_by"]} [{document["game"]}] ' \
+                                      f'[{document["date"]}]'
+    except Exception as errormsg:
+        quotes = {}
+        errorlog(errormsg, "Quotes/loadquotes()", quotes)
 
 
-def quote(s, message, game):
+def quote(message, game):
     global quotes
     arguments = message.split(" ")
     try:
@@ -34,29 +33,35 @@ def quote(s, message, game):
 
                 newquote = " ".join(arguments[2:])
                 quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'a') as f:
-                    f.write("%s$%s [%s] [%s]\n" % (len(quotes), newquote, game, currentdate))
+                insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "game": game, "date": currentdate})
                 send_message("Quote %d added!" % len(quotes))
             except Exception as errormsg:
                 send_message("There was an error adding this quote. Please try again!")
                 errorlog(errormsg, "Quotes/addquote()", message)
         elif arguments[1].lower() == "remove":
-            try:
+            try:  # TODO try if this works
+                quotestemp = {}
                 del quotes[arguments[2]]
-                counter = 1
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt', 'w') as f:
-                    for key, val in quotes.items():
-                        f.write("%s$%s\n" % (counter, val))
-                        counter += 1
-                quotes = {}
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Quotes.txt') as f:
-                    for line in f:
-                        split = line.split("$")
-                        quotes[split[0]] = split[1].rstrip('\n')
+                for key, value in quotes.items():
+                    if key > arguments[2]:
+                        quotestemp[(key - 1)] = value
+
+                clearcollection("Tempquotes")
+                for key, val in quotestemp:
+                    quote, game, date = val.split(" [")
+                    game = game.rstrip("]")
+                    date = date.rstrip("]")
+
+                    insertoneindb("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
+
+                clearcollection("Quotes")
+                copycollection("Tempquotes", "Quotes")
+                quotes = quotestemp
                 send_message("Quote %s removed!" % arguments[2])
 
             except Exception as errormsg:
                 errorlog(errormsg, "Quotes/removequote()", message)
+                send_message("There was an error removing this quote. Please ask Bastixx to check!")
         else:
             try:
                 if quotes:
@@ -101,7 +106,7 @@ def quote(s, message, game):
         send_message("Quote %s: %s" % (randomindex, randomquote))
 
 
-def last_quote(s):
+def last_quote():
     try:
         quoteindex = len(quotes)
         quote = quotes[str(quoteindex)]

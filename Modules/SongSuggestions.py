@@ -1,12 +1,43 @@
-import os
+import requests
+import base64
 
 from Sendmessage import send_message
 from Errorlog import errorlog
+from Database import insertoneindb, clearcollection
+
+
+def getauthtoken():
+    with open("files/token.txt", "r") as f:
+        client_id, client_secret = f.read().split(":")
+
+    credentials = f"{client_id}:{client_secret}".encode("utf-8")
+    credentials = base64.standard_b64encode(credentials)
+    url = 'https://accounts.spotify.com/api/token/'
+    headers = {"Authorization": f"Basic {credentials.decode()}", "Content-Type": "application/x-www-form-urlencoded"}
+    data = "grant_type=client_credentials"
+    r = requests.post(url, data, headers=headers)
+    r = r.json()
+    token = r["access_token"]
+    return token
+
+
+def songonspotify(song):
+    url = f'https://api.spotify.com/v1/search?q={song}&type=track&market=GB&offset=0&limit=1'
+    authorisation = f'Bearer {authtoken}'
+    headers = {'Authorization': authorisation, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+    result = requests.get(url, headers=headers).json()
+    try:
+        if result["tracks"]["items"]:
+            return "Yes"
+    except:
+        return "No"
 
 
 def load_suggestions(FOLDER):
-    global folder
+    global folder; global authtoken
     folder = FOLDER
+
+    authtoken = getauthtoken()
 
 
 def suggest(message):
@@ -18,19 +49,19 @@ def suggest(message):
             if elem in suggestion:
                 suggestion = suggestion.replace(elem, "")
 
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/SongSuggestions.txt', 'a') as f:
-            f.write(" ".join(suggestion) + "\n")
+        suggestion = " ".join(suggestion)
+        insertoneindb("SongSuggestions", {"suggestion": suggestion, "on_spotify": songonspotify(suggestion)})
         send_message("Song suggestion registered!")
     except Exception as errormsg:
         send_message("There was an error adding this. Please try again!")
         errorlog(errormsg, "SongSuggestions/suggest()", message)
+        raise errormsg
 
 
 def clearsuggestions():
-    try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/SongSuggestions.txt', 'w') as f:
-            f.write("")
+    result = clearcollection("SongSuggestions")
+    if result:
         send_message("List cleared!")
-    except Exception as errormsg:
-        send_message("There was an error adding this. Please try again!")
-        errorlog(errormsg, "SongSuggestions/clearsuggestions()", "")
+    else:
+        send_message("An error occured. Please ask bastixx to check.")
+

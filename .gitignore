@@ -1,6 +1,7 @@
 # Ignore config files
 *.ini
 *.bat
+token.txt
 
 # Ignore working copies
 Production/

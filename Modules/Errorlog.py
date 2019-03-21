@@ -1,18 +1,17 @@
 from datetime import datetime
-import os
+import pymongo
 
 
 def load_errorlog(FOLDER):
     global folder
+    global collection
     folder = FOLDER
-    if not os.path.isdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog'):
-        os.mkdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog')
+    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+    db = myclient[FOLDER]
+    collection = db["Errorlog"]
 
 
 def errorlog(error, functionname, message):
-    now = datetime.date(datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
-
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/errorlog/Errorlog.txt', 'a+') as f:
-        f.write(f"{now} : {functionname} : {error} : {message}\n")
-
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    collection.insert_one({"timestamp": now, "error": error, "function": functionname, "message": message})
     print(f"{now} : {error} : {functionname} : {message}")

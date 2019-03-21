@@ -1,32 +1,15 @@
 from unidecode import unidecode
 import time
-import os
 
 from Errorlog import errorlog
-
-
-def load_logger(FOLDER):
-    global folder
-    folder = FOLDER
-    if not os.path.isdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs'):
-        os.mkdir(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs')
-
-    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime("%d-%m-%Y")
-              + ".txt", 'w'):
-        pass
+from Database import insertoneindb
 
 
 def logger(displayname, message, issub, ismod):
-    sub = ""
-    mod = ""
-    if issub:
-        sub = "|SUB"
-    if ismod:
-        mod = "|MOD"
-
     try:
         message = unidecode(message)
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime("%d-%m-%Y") + ".txt", 'a+') as f:
-            f.write("[%s] %s: %s %s%s\n" % (str(time.strftime("%H:%M:%S")), displayname, message, sub, mod))
+        insertoneindb("Chatlog", {"timestamp": str(time.strftime("%H:%M:%S")), "displayname": displayname,
+                                  "message": message, "sub": issub, "mod": ismod})
+
     except Exception as errormsg:
         errorlog(errormsg, "Logger", message)

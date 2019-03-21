@@ -3,6 +3,7 @@ import threading
 import numbers
 import os
 import time
+import requests
 
 from Sendmessage import send_message
 from Errorlog import errorlog
@@ -32,7 +33,7 @@ def load_bonertimer(FOLDER):
             f.write("No titleholder yet")
 
 
-def announcer(s, displayname, bettime):
+def announcer(displayname, bettime):
     global bets; global timers
     try:
         try:
@@ -47,7 +48,7 @@ def announcer(s, displayname, bettime):
         errorlog(errormsg, "Announcer()", '')
 
 
-def starttimer(s):
+def starttimer():
     global timeractive; global betsopen; global starttime; global timers
     if timeractive:
         send_message("Timer already started!")
@@ -62,7 +63,7 @@ def starttimer(s):
                      "Good luck all!")
 
 
-def stoptimer(s):
+def stoptimer():
     global timeractive; global timers; global bets
     if timeractive:
         timeractive = False
@@ -139,7 +140,7 @@ def stoptimer(s):
         send_message("There is currently no timer active!")
 
 
-def timer(s):
+def timer():
     try:
         if timeractive:
             timenow = datetime.time(datetime.now())
@@ -155,7 +156,7 @@ def timer(s):
         errorlog(errormsg, "BonerTimer/timer()", '')
 
 
-def resettimer(s):
+def resettimer():
     global timeractive; global betsopen; global timers
     try:
         timeractive = False
@@ -169,7 +170,7 @@ def resettimer(s):
         errorlog(errormsg, "BonerTimer/resettimer()", '')
 
 
-def fidwins(s):
+def fidwins():
     global timeractive; global timers; global bets
     try:
         if timeractive:
@@ -207,7 +208,7 @@ def fidwins(s):
             f.write('')
 
 
-def winner(s, message):
+def winner(message):
     global timeractive; global timers; global bets
     try:
         winner = message.split(" ")[1]
@@ -239,7 +240,7 @@ def winner(s, message):
             f.write('')
 
 
-def openbets(s):
+def openbets():
     global betsopen
     if not betsopen:
         betsopen = True
@@ -249,13 +250,13 @@ def openbets(s):
         send_message("Bets already opened!")
 
 
-def closebets(s):
+def closebets():
     global betsopen
     betsopen = False
     send_message("Bets are now closed!")
 
 
-def setboner(s, message):
+def setboner(message):
     try:
         keyword = "!setboner "
         titleholder = message[message.index(keyword) + len(keyword):]
@@ -270,7 +271,7 @@ def setboner(s, message):
         errorlog(errormsg, 'Bonertimer/setboner()', message)
 
 
-def currentboner(s):
+def currentboner():
     try:
         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "r") as f:
             titleholder = f.read()
@@ -281,7 +282,7 @@ def currentboner(s):
         send_message("Error reading current boner")
 
 
-def brokenboner(s):
+def brokenboner():
     send_message("The game is to bet how long it takes for Fid to break a leg or "
                  "die in ARMA. "
                  "The timer usually starts after the teleport pole or as the convoy moves out. "
@@ -289,7 +290,7 @@ def brokenboner(s):
                  "Use !bet <minutes> to place your bets!")
 
 
-def betstats(s):
+def betstats():
     if bets != {}:
         try:
             betvalues = [int(i) for i in list(bets.values())]
@@ -311,7 +312,7 @@ def betstats(s):
         send_message("No bets registered!")
 
 
-def bet(s, displayname, message):
+def bet(displayname, message, ismod):
     global bets; global timers
     if betsopen:
         if ismod:
@@ -346,7 +347,7 @@ def bet(s, displayname, message):
                     else:
                         bets[displayname] = bet
                         betsec = int(bet) * 60
-                        t = threading.Timer(betsec, announcer, [s, displayname, bet])
+                        t = threading.Timer(betsec, announcer, [displayname, bet])
                         timers[displayname] = t
                         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
                             for key in bets:
@@ -368,12 +369,12 @@ def bet(s, displayname, message):
         send_message("Bets are not currently opened.")
 
 
-def addbet(s, message):
+def addbet(message):
     global bets; global timers
     try:
         addbet = message.split(' ')
         bets[addbet[1]] = addbet[2]
-        t = threading.Timer((int(addbet[2]) * 60), announcer, [s, addbet[1], addbet[2]])
+        t = threading.Timer((int(addbet[2]) * 60), announcer, [addbet[1], addbet[2]])
         timers[addbet[1]] = t
         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
             for key in bets:
@@ -385,7 +386,7 @@ def addbet(s, message):
         errorlog(errormsg, 'Bonertimer/addbet()', message)
 
 
-def removebet(s, message):
+def removebet(message):
     global bets; global timers
     try:
         rembet = message.split(" ")[1]
@@ -428,7 +429,7 @@ def removebet(s, message):
         errorlog(errormsg, 'Bonertimer/removebet()', message)
 
 
-def clearbets(s):
+def clearbets():
     global bets; global timers
     try:
         bets = {}
@@ -439,7 +440,7 @@ def clearbets(s):
         errorlog(errormsg, 'Bonertimer/clearbets()', '')
 
 
-def mybet(s, displayname):
+def mybet(displayname):
     try:
         if bets.get(displayname):
             send_message(displayname + " your bet is: " +
@@ -449,15 +450,3 @@ def mybet(s, displayname):
     except Exception as errormsg:
         send_message("There was an error showing your bet!")
         errorlog(errormsg, 'Bonertimer/mybet()', '')
-
-
-def addending(s, message):
-    try:
-        keyword = "!addending "
-        newending = message[message.index(keyword) + len(keyword):]
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Endings.txt", "a") as f:
-            f.write(newending + "\n")
-        send_message("Ending added to the list!")
-    except Exception as errormsg:
-        send_message("There was an error registering your text. Please try again!")
-        errorlog(errormsg, 'Bonertimer/addending()', message)

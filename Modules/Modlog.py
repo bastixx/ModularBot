@@ -1,6 +1,6 @@
 import requests
-import time
-import os
+import datetime
+from Database import *
 
 from Errorlog import errorlog
 
@@ -24,13 +24,10 @@ def load_modlog(CHANNEL_ID, headers, FOLDER):
         modroom_available = True
     except:
         modroom_available = False
-        print(">>>No modlog available.")
-
-    with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Modlog.txt', 'w'):
-        pass
+        print(">>>No room to post modlog found.")
 
 
-def modlog(s, parts):
+def modlog(parts):
     try:
         # Sets the message variable to the actual message sent
         username = parts[2][:len(parts[2]) - 1]
@@ -38,46 +35,42 @@ def modlog(s, parts):
         username = ""
     # Sets the username variable to the actual username
     tags = str.split(parts[0], ';')
+    timestamp = datetime.datetime.now()
 
     # Mod action logging
     try:
         if "ban-duration" in tags[0]:
             reason = tags[1].split("=")[1].replace("\s", " ")
-            duration = tags[0].split("=")[1]
-            if int(duration) <= 5:
-                message = f"PURGED| Username: {username}\n"
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Modlog.txt', 'a') as f:
-                    f.write(message)
-                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime(
-                        "%d-%m-%Y") + ".txt", 'a+') as f:
-                    f.write(message)
-                if modroom_available:
-                    s.send(
-                        b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
-                        channel_id.encode(), modroom_id.encode(), message.encode()))
+            duration = int(tags[0].split("=")[1])
+            if duration <= 5:
+                insertoneindb("Modlog", {"action": "purged", "username": username, "duration": duration,
+                                         "reason": reason, "timestamp": timestamp})
+                insertoneindb("Chatlog", {"action": "purged", "username": username, "duration": duration,
+                                          "reason": reason, "timestamp": timestamp})
+                # if modroom_available:
+                #     s.send(
+                #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
+                #         channel_id.encode(), modroom_id.encode(), message.encode()))
             else:
-                message = f"TIMED OUT| Username: {username} | Reason: \"{reason}\" | Duration: {duration}\n"
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Modlog.txt', 'a') as f:
-                    f.write(message)
-                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime(
-                        "%d-%m-%Y") + ".txt", 'a+') as f:
-                    f.write(message)
-                if modroom_available:
-                    s.send(
-                        b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
-                        channel_id.encode(), modroom_id.encode(), message.encode()))
+                insertoneindb("Modlog", {"action": "timed out", "username": username, "duration": duration,
+                                         "reason": reason, "timestamp": timestamp})
+                insertoneindb("Chatlog", {"action": "timed out", "username": username, "duration": duration,
+                                          "reason": reason, "timestamp": timestamp})
+                # if modroom_available:
+                #     s.send(
+                #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
+                #         channel_id.encode(), modroom_id.encode(), message.encode()))
 
         elif username != "":
             reason = tags[0].split("=")[1].replace("/s", " ")
-            message = f"BANNED| Username: {username} | Reason: {reason} \n"
-            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Modlog.txt', 'a') as f:
-                f.write(message)
-            with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/chatlogs/" + time.strftime(
-                    "%d-%m-%Y") + ".txt", 'a+') as f:
-                f.write(message)
-            if modroom_available:
-                s.send(
-                    b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (channel_id.encode(), modroom_id.encode(), message.encode()))
+            insertoneindb("Modlog", {"action": "banned", "username": username, "duration": 0,
+                                     "reason": reason, "timestamp": timestamp})
+            insertoneindb("Chatlog", {"action": "banned", "username": username, "duration": 0,
+                                      "reason": reason, "timestamp": timestamp})
+            # if modroom_available:
+            #     s.send(
+            #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
+            #         channel_id.encode(), modroom_id.encode(), message.encode()))
 
     except Exception as errormsg:
         errorlog(errormsg, "Modlog", parts)

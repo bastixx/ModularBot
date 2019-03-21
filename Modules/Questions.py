@@ -3,6 +3,7 @@ import os
 
 from Errorlog import errorlog
 from Sendmessage import send_message
+from Database import *
 
 
 def load_questions(FOLDER):
@@ -11,16 +12,21 @@ def load_questions(FOLDER):
     folder = FOLDER
     questions = {}
     try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'r') as f:
-            for line in f:
-                split = line.split(":")
-                questions[split[0]] = split[1].rstrip('\n')
-    except:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'w'):
-            pass
+        if collectionexists("Questions"):
+            for document in getallfromdb("Questions"):
+                questions[document["_id"]] = document["question"]
+
+        # with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'r') as f:
+        #     for line in f:
+        #         split = line.split(":")
+        #         questions[split[0]] = split[1].rstrip('\n')
+    except Exception as errormsg:
+        errorlog(errormsg, "Questions/Load_questions()", "")
+        # with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'w'):
+        #     pass
 
 
-def question(s, message):
+def question(message):
     try:
         if questions:
             randomindex = random.randint(1, len(questions))
@@ -33,26 +39,36 @@ def question(s, message):
         send_message("Something went wrong, check your command.")
 
 
-def add_question(s, message):
+def add_question(message):
     global questions
+    created = False
     try:
         keyword = "!addquestion "
         newquestion = message[message.index(keyword) + len(keyword):]
-        questions[str(len(questions) + 1)] = newquestion
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt", 'a') as f:
-            f.write("%s:%s\n" % (len(questions), newquestion))
+        for i in range(1, len(questions)):
+            if i not in questions.keys():
+                questions[i] = newquestion
+                insertoneindb("Questions", {"_id": i, "question": newquestion})
+                created = True
+        if not created:
+            questions[str(len(questions) + 1)] = newquestion
+            insertoneindb("Questions", {"_id": len(questions), "question": newquestion})
         send_message("question %d added!" % len(questions))
     except Exception as errormsg:
         send_message("There was an error adding this question. Please try again!")
         errorlog(errormsg, "Questions/add_question()", message)
 
 
-def remove_question(s, message):
+def remove_question(message):
     global questions
     try:
         messageparts = message.split(" ")
         del questions[messageparts[1]]
         qcounter = 1
+
+
+
+
         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt", 'w') as f:
             for key, val in questions.items():
                 f.write("%s:%s\n" % (qcounter, val))

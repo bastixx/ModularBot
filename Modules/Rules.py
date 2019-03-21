@@ -1,6 +1,6 @@
 from Errorlog import errorlog
 from Sendmessage import send_message
-import os
+from Database import *
 
 
 def load_rules(folder):
@@ -8,16 +8,16 @@ def load_rules(folder):
     rules = {}
     warnings = {}
     try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'r') as f:
-            for line in f:
-                split = line.split(":")
-                rules[split[0]] = {"rule": split[1], "1": split[2], "2": split[3], "3": split[4].strip("\n")}
-    except:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Rules.txt', 'w'):
-            pass
+        col = getallfromdb("Rules")
+        for document in col:
+            rules[document["_id"]] = {"rule": document["Rule"], "1": document["first_timeout"],
+                                      "2": document["second_timeout"], "3": document["third_timeout"]}
+
+    except Exception as errormsg:
+        errorlog(errormsg, "Rules/Load_rules()", "")
 
 
-def func_rules(s, message):
+def func_rules(message):
     arguments = message.split(" ")
     ruleno = arguments[1]
     ruletext = rules[ruleno]['rule']

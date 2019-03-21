@@ -1,8 +1,6 @@
-import requests
-
 from Errorlog import errorlog
 from Sendmessage import send_message
-import os
+from Database import *
 
 
 def load_deaths(FOLDER):
@@ -12,16 +10,14 @@ def load_deaths(FOLDER):
     deaths = {}
 
     try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'r') as f:
-            for line in f:
-                key, value = line.strip("\n").split(":")
-                deaths[key.lower()] = int(value)
-    except:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'w'):
-            pass
+        col = getallfromdb("Deaths")
+        for document in col:
+            deaths[document["game"]] = document["deaths"]
+    except Exception as errormsg:
+        errorlog(errormsg, "Deathcounter/Load_deaths()", "")
 
 
-def func_deaths(s, message, game, ismod):
+def func_deaths(message, game, ismod):
     arguments = message.split(" ")
     cooldown_time = 0
 
@@ -44,7 +40,7 @@ def func_deaths(s, message, game, ismod):
             cooldown_time = 5
         elif arguments[1] == "remove" and ismod:
             if deaths[game] - int(arguments[2]) < 0:
-                send_message("Deaths can't be negative. Current deaths: %s" % deaths[game])
+                send_message("Deaths can't   be negative. Current deaths: %s" % deaths[game])
             elif game in deaths:
                 deaths[game] -= int(arguments[2])
                 send_message("New death counter for %s is now: %s" % (game, deaths[game]))
@@ -76,22 +72,18 @@ def func_deaths(s, message, game, ismod):
         cooldown_time = 5
 
     finally:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'w') as f:
-            for key, value in deaths.items():
-                f.write("%s:%s\n" % (key, value))
+        updateoneindb("Deaths", {"game": game}, {"deaths": deaths[game]}, True)
         return cooldown_time
 
 
-def dead(s, game):
+def dead(game):
     try:
         if game in deaths:
             deaths[game] += 1
         else:
             deaths[game] = 1
         send_message("A new death! Deathcount: %d!" % deaths[game])
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Deaths.txt', 'w') as f:
-            for key, value in deaths.items():
-                f.write("%s:%s\n" % (key, value))
+        updateoneindb("Deaths", {"game": game}, {"deaths": deaths[game]}, True)
     except Exception as errormsg:
         send_message("A error occured. Please try again.")
         errorlog(errormsg, "!dead", '')
