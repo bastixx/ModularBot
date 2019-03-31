@@ -1,5 +1,5 @@
-from Errorlog import errorlog
-from Sendmessage import send_message
+from Required.Errorlog import errorlog
+from Required.Sendmessage import send_message
 import os
 import requests
 

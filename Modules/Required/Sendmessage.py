@@ -1,5 +1,5 @@
-from Logger import logger
-from Errorlog import errorlog
+from Required.Logger import logger
+from Required.Errorlog import errorlog
 
 
 def load_send_message(folder, channel, socket):

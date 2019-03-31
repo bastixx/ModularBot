@@ -22,7 +22,7 @@ Log raw = False
 Print tags = False
 
 [Modules]
-Sendmessage = True
+Required.Sendmessage = True
 Errorlog = True
 
 Logger = True

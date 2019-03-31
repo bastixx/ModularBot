@@ -1,9 +1,9 @@
 import requests
 import base64
 
-from Sendmessage import send_message
-from Errorlog import errorlog
-from Database import insertoneindb, clearcollection
+from Required.Sendmessage import send_message
+from Required.Errorlog import errorlog
+from Required.Database import insertoneindb, clearcollection
 
 
 def getauthtoken():

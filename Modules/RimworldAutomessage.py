@@ -1,9 +1,9 @@
 import threading
 import requests
 
-from Sendmessage import send_message
-from Getgame import getgame
-from Errorlog import errorlog
+from Required.Sendmessage import send_message
+from Required.Getgame  import getgame
+from Required.Errorlog import errorlog
 
 
 def load_rimworldautomessage(s, FOLDER, channelid, CLIENTID):

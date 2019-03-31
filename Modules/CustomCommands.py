@@ -1,6 +1,6 @@
-from Errorlog import errorlog
-from Database import *
-from Sendmessage import send_message
+from Required.Errorlog import errorlog
+from Required.Database import *
+from Required.Sendmessage import send_message
 
 
 def load_commands():

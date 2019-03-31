@@ -13,5 +13,5 @@ def load_errorlog(FOLDER):
 
 def errorlog(error, functionname, message):
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    collection.insert_one({"timestamp": now, "error": error, "function": functionname, "message": message})
-    print(f"{now} : {error} : {functionname} : {message}")
+    collection.insert_one({"timestamp": now, "error": str(error), "function": functionname, "message": message})
+    print(f"{now} : {str(error)} : {functionname} : {message}")

@@ -1,8 +1,8 @@
 import random
 import time
 
-from Sendmessage import send_message
-from Errorlog import errorlog
+from Required.Sendmessage import send_message
+from Required.Errorlog import errorlog
 
 
 def roulette(displayname):

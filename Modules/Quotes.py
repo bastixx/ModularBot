@@ -1,9 +1,9 @@
 import random
 import time
 
-from Errorlog import errorlog
-from Sendmessage import send_message
-from Database import *
+from Required.Errorlog import errorlog
+from Required.Sendmessage import send_message
+from Required.Database import *
 
 
 def load_quotes(FOLDER):
@@ -39,7 +39,7 @@ def quote(message, game):
                 send_message("There was an error adding this quote. Please try again!")
                 errorlog(errormsg, "Quotes/addquote()", message)
         elif arguments[1].lower() == "remove":
-            try:  # TODO try if this works
+            try:
                 quotestemp = {}
                 del quotes[arguments[2]]
                 for key, value in quotes.items():

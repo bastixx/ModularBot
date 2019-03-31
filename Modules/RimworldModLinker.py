@@ -3,8 +3,8 @@ import requests
 import re
 import json
 
-from Errorlog import errorlog
-from Sendmessage import send_message
+from Required.Errorlog import errorlog
+from Required.Sendmessage import send_message
 
 
 def load_mod(STEAMAPIKEY):
