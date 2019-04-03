@@ -383,6 +383,7 @@ def main(s=sock):
 
                                 if enabled('RP'):
                                     parseResponse(message)
+
                                 if enabled("BT"):
                                     custommodule = "BT"
                                     if "!starttimer" in messagelow and ismod and ismod:
@@ -460,7 +461,6 @@ def main(s=sock):
 
                                         remove_question(message)
 
-                                if enabled('RP'):
                                 if "!bot" in messagelow:
                                     send_message("This bot is made by Bastixx669. "
                                                  "Github: https://github.com/bastixx/ModularBot")
