@@ -17,8 +17,8 @@ def load_quotes(FOLDER):
             quotes[document["_id"]] = f'{document["quote"]} - {document["said_by"]} [{document["game"]}] ' \
                                       f'[{document["date"]}]'
     except Exception as errormsg:
-        quotes = {}
         errorlog(errormsg, "Quotes/loadquotes()", quotes)
+        quotes = {}
 
 
 def quote(message, game):

@@ -4,15 +4,14 @@ import requests
 from Required.Sendmessage import send_message
 from Required.Getgame  import getgame
 from Required.Errorlog import errorlog
+from Required.Database import *
 
 
-def load_rimworldautomessage(s, FOLDER, channelid, CLIENTID):
+def load_rimworldautomessage(channelid, CLIENTID):
     global messagetext
     global channel_id
-    global folder
     global client_id
     channel_id = channelid
-    folder = FOLDER
     client_id = CLIENTID
 
     messagetext = "/me If you want a colonist to be renamed to your username then join our raffle! " \

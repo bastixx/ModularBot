@@ -198,7 +198,7 @@ def main(s=sock):
     if modules['BT']["enabled"]:
         load_bonertimer(FOLDER)
     if modules['RA']["enabled"]:
-        load_rimworldautomessage(FOLDER, channel_id, CLIENTID)
+        load_rimworldautomessage(channel_id, CLIENTID)
     if modules['QS']["enabled"]:
         load_questions(FOLDER)
     if modules['ML']["enabled"]:
@@ -541,10 +541,21 @@ def main(s=sock):
                                         except Exception as errormsg:
                                             errorlog(errormsg, "custommodule/disable", message)
                                             send_message("Error disabling this custommodule.")
+                            except Exception as errormsg:
+                                errorlog(errormsg, "main/functions", message)
+                                send_message("There was an error with the command. "
+                                             "Please check your command and try again.")
+
+                                print(f"Message: {message}")
+                                print(f"Line: {line}")
+
                             finally:
                                 if cooldown_time != 0:  # TODO Fix.
-                                    modules[custommodule]["functions"][functionname] = {"next use": time.time()
-                                                                                        + cooldown_time}
+                                    # tempdict = {custommodule: {"functions": {functionname: {"next use": time.time() + cooldown_time}}}}
+                                    modules[custommodule]["functions"][functionname] = {"next use": time.time() + cooldown_time}
+                                    # modules.update(tempdict)
+
+                                    print(f"Module: {custommodule}")
 
                     for l in parts:
                         if "End of /NAMES list" in l:
