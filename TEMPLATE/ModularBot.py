@@ -34,6 +34,7 @@ from SongSuggestions import *
 from Required.Database import load_database
 from CustomCommands import *
 from responseParse import *
+from Errors import *
 # try from Modules import *
 
 
@@ -357,10 +358,20 @@ def main(s=sock):
                                 if enabled("PA"):
                                     custommodule = "PA"
                                     if "!paddle" in message and not oncooldown(custommodule, "paddle"):
-                                        functionname = "paddle"
-                                        cooldown_time = 20
+                                        try:
+                                            cooldown_time = 20
+                                            functionname = "paddle"
+                                            paddle(displayname, message)
 
-                                        paddle(displayname, message)
+                                        except InsufficientParameterException:
+                                            cooldown_time = 0
+                                            send_message("Usage: !paddle <username>")
+
+                                        except KeyError:
+                                            pass
+
+                                        except Exception as errormsg:
+                                            errorlog(errormsg, "!paddle", message)
 
                                 if enabled("QU"):
                                     custommodule = "QU"
