@@ -3,10 +3,8 @@ from Required.Sendmessage import send_message
 from Required.Database import *
 
 
-def load_deaths(FOLDER):
-    global folder
+def load_deaths():
     global deaths
-    folder = FOLDER
     deaths = {}
 
     try:
@@ -20,6 +18,7 @@ def load_deaths(FOLDER):
 def func_deaths(message, game, ismod):
     arguments = message.split(" ")
     cooldown_time = 0
+    skipdb = False
 
     try:
         if len(arguments) > 3 and arguments[1] in ['add', 'set', 'remove']:
@@ -62,6 +61,7 @@ def func_deaths(message, game, ismod):
             send_message("Deaths in %s: %d!" % (game, deaths[game]))
         else:
             send_message("There are no deaths (yet) for %s" % game)
+            skipdb = True
         cooldown_time = 20
     except KeyError:
         send_message("There are no deaths (yet) for %s" % game)
@@ -72,7 +72,8 @@ def func_deaths(message, game, ismod):
         cooldown_time = 5
 
     finally:
-        updateoneindb("Deaths", {"game": game}, {"deaths": deaths[game]}, True)
+        if not skipdb:
+            updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
         return cooldown_time
 
 
@@ -83,7 +84,7 @@ def dead(game):
         else:
             deaths[game] = 1
         send_message("A new death! Deathcount: %d!" % deaths[game])
-        updateoneindb("Deaths", {"game": game}, {"deaths": deaths[game]}, True)
+        updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
     except Exception as errormsg:
         send_message("A error occured. Please try again.")
         errorlog(errormsg, "!dead", '')

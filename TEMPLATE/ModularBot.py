@@ -14,6 +14,7 @@ sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\
 from Roulette import *
 from Required.Sendmessage import *
 from Required.Getgame import *  # TODO Keep as seperate module?
+from Required.Tagger import *
 from Backseatmessage import *
 from Required.Errorlog import *
 from Required.Logger import *
@@ -98,7 +99,8 @@ for module in modules.keys():
             modules[module]["functions"][func.name] = {"next use": time.time()}
 
 
-logging.debug("Loaded config.")
+modules['other'] = {"name": "Other"}
+# logging.debug("Loaded config.")
 # filter(lambda x: modules[x]["enabled"], modules.keys())
 
 # setting the name of the window to bot name for easier distinguishing
@@ -121,7 +123,13 @@ def enabled(module):
 
 
 def oncooldown(module, func):
-    if modules[module]["functions"][func]["next use"] <= time.time():
+    print("Next use:")
+    print(modules[module]["functions"][func]["next use"])
+    print("time.time:")
+    print(time.time())
+    print("on cooldown:")
+    print(modules[module]["functions"][func]["next use"] >= time.time())
+    if modules[module]["functions"][func]["next use"] >= time.time():
         return True
     else:
         return False
@@ -158,6 +166,7 @@ def main(s=sock):
     keepalivetimer.start()
 
     # Loading the basic modules
+    load_tagger(CLIENTID)
     load_send_message(FOLDER, CHANNEL, s)
     load_errorlog(FOLDER)
 
@@ -174,13 +183,14 @@ def main(s=sock):
 
     # Load all the modules that were enabled in the config file
     load_database(FOLDER)
+    # load_tagger()
 
     if modules['RU']["enabled"]:
         load_rules(FOLDER)
     if modules['BSM']["enabled"]:
         load_bsmessage(FOLDER)
     if modules['DC']["enabled"]:
-        load_deaths(FOLDER)
+        load_deaths()
     if modules['QU']["enabled"]:
         load_quotes(FOLDER)
     if modules['RF']["enabled"]:
@@ -204,7 +214,6 @@ def main(s=sock):
     if modules['CC']['enabled']:
         customcommands = load_commands()
 
-    logging.debug("Loaded modules")
     # Infinite loop waiting for commands
     while True:
         try:
@@ -243,351 +252,309 @@ def main(s=sock):
                         parts = line.split(" :", 2)
                     else:
                         parts = line.split(":", 2)
-                    if printparts:
-                        print(parts)
-                    if "QUIT" not in parts[1] and "JOIN" not in parts[1] and "PART" not in parts[1] and "ACK" not in \
-                            parts[1]:
-                        issub = False
-                        ismod = False
 
-                    if ("CLEARCHAT" in parts[1] or "CLEARMSG" in parts[1])and enabled("ML"):
-                        modlog(parts)
+                    # Only works after twitch is done announcing stuff (modt = Message of the day)
+                    if modt:
+                        if re.search("PRIVMSG", line):
+                            displayname, username, userid, message, issub, ismod = tagprivmsg(line)
+                            msgtype = "PRIVMSG"
+                        elif re.search("CLEARCHAT", line):
+                            tagclearchat(line)
+                            msgtype = "CLEARCHAT"
+                        elif re.search("CLEARMSG", line):
+                            tagclearmsg(line)
+                            msgtype = "CLEARMSG"
+                        elif re.search("USERNOTICE", line):
+                            tagusernotice(line)
+                            msgtype = "USERNOTICE"
+                        elif re.search("USERSTATE", line):
+                            msgtype = "USERSTATE"
+                        elif re.search("NOTICE", line):
+                            tagnotice(line)
+                            msgtype = "NOTICE"
 
-                    templist = ['QUIT', 'JOIN', 'PART', 'ACK', 'USERSTATE', 'ROOMSTATE', 'CLEARCHAT', "NOTICE",
-                                'HOSTTARGET', 'CLEARMSG']
-                    try:
-                        tempparts = parts[1].split(" ")
-                    except:
-                        tempparts = parts[0].split(" ")
+                        if msgtype == "PRIVMSG":
+                            logger(userid, displayname, message, issub, ismod)
 
-                    if "NOTICE" in tempparts[1]:
-                        print(">>>" + parts[2][:len(parts[2]) - 1])
+                        # Unshortener TODO fix this thing
+                        # if enabled("US"):
+                        #     tempmessage = message.split(" ")
+                        #     for shorturl in tempmessage:
+                        #         if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
+                        #             unshorten(shorturl)
 
-                    if not any(s in tempparts[1] for s in templist):
-                        # noinspection PyBroadException
-                        try:
-                            # Sets the message variable to the actual message sent
-                            message = parts[2][:len(parts[2]) - 1]
-                        except:
-                            message = ""
-                        # Sets the username variable to the actual username
-                        usernamesplit = str.split(parts[1], "!")
-                        username = usernamesplit[0]
-                        displayname = username
-                        tags = str.split(parts[0], ';')
+                        # These are the actual commands
+                        if msgtype != "PRIVMSG":
+                            pass
 
-                        # Get index of mod and sub status dynamically because tag indexes are not fixed
-                        subindex = [i for i, z in enumerate(tags) if 'subscriber' in z]
-                        modindex = [i for i, z in enumerate(tags) if 'mod' in z]
-                        displayindex = [i for i, z in enumerate(tags) if 'display-name' in z]
+                        elif message[0] == '!':
+                            cooldown_time = 0
+                            try:
+                                messagelow = message.lower()
+                                if messagelow == "!test":
+                                    send_message("Test successful. Bot is online!")
 
-                        # Only works after twitch is done announcing stuff (modt = Message of the day)
-                        if modt:
-                            subindex = subindex[0]
-                            modindex = modindex[0]
-                            displayindex = displayindex[0]
-                            if tags[displayindex] != 'display-name=':
-                                displayname = tags[displayindex]
-                                displayname = displayname.split("=")[1]
-                                displayname = displayname.replace("\\s", '')
+                                elif "!pun" in messagelow and not oncooldown("other", "pun"):
+                                    functionname = "pun"
+                                    cooldown_time = 30
 
-                            if tags[subindex] == 'subscriber=1' or 'subscriber' in tags[0]:
-                                issub = True
-                            else:
-                                issub = False
+                                    pun()
 
-                            if tags[modindex] == 'mod=1' or 'mod' in tags[0] or 'broadcaster' in tags[0]:
-                                ismod = True
-                            else:
-                                ismod = False
+                                elif "!commandlist" in messagelow and not oncooldown("other", "commandlist"):
+                                    functionname = "commandlist"
+                                    cooldown_time = 30
 
-                            if printmessage:
-                                if message != "":
-                                    print(displayname + ": " + message)
+                                    send_message(f"Commands for this channel can be found here: "
+                                                 f"http://www.bastixx.nl/twitch/{FOLDER}/commands.php")
 
-                            if message != "":
-                                logger(displayname, message, issub, ismod)
+                                if enabled("RU"):
+                                    custommodule = "RU"
+                                    if "!rule" in messagelow and ismod and not oncooldown(custommodule, "rule"):
+                                        functionname = "rule"
+                                        cooldown_time = 5
 
-                            # Unshortener TODO fix this thing
-                            # if enabled("US"):
-                            #     tempmessage = message.split(" ")
-                            #     for shorturl in tempmessage:
-                            #         if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
-                            #             unshorten(shorturl)
+                                        func_rules(message)
 
-                            # These are the actual commands
-                            if message == "":
-                                pass
+                                if enabled("DC"):
+                                    custommodule = "DC"
+                                    if "!deaths" in messagelow and not oncooldown(custommodule, "func_deaths"):
+                                        functionname = "func_deaths"
 
-                            elif message[0] == '!':
-                                cooldown_time = 0
-                                try:
-                                    messagelow = message.lower()
-                                    if messagelow == "!test":
-                                        send_message("Test successful. Bot is online!")
+                                        game = str(getgame(channel_id, CLIENTID)).lower()
+                                        cooldown_time = func_deaths(message, game, ismod)
 
-                                    elif "!pun" in messagelow and not oncooldown("other", "pun"):
-                                        customfunc = "pun"
+                                    if messagelow == "!dead" and not oncooldown(custommodule, "dead") and (ismod or issub):
+                                        functionname = "dead"
+                                        cooldown_time = 10
+
+                                        game = str(getgame(channel_id, CLIENTID)).lower()
+                                        dead(game)
+
+                                if enabled("RF"):
+                                    custommodule = "RF"
+                                    if ("!raffle" in messagelow or "!giveaway" in messagelow) and ismod:
+                                        functionname = "raffle"
+                                        cooldown_time = 5
+
+                                        raffle(message)
+
+                                    elif "!join" in messagelow:
+                                        join_raffle(displayname, message, issub, ismod)
+
+                                if enabled("RO"):
+                                    custommodule = "RO"
+                                    if "!roulette" in messagelow and not oncooldown(custommodule, "roulette"):
+                                        functionname = "roulette"
+                                        cooldown_time = 20
+
+                                        roulette(displayname)
+
+                                if enabled("PA"):
+                                    custommodule = "PA"
+                                    if "!paddle" in message and not oncooldown(custommodule, "paddle"):
+                                        functionname = "paddle"
+                                        cooldown_time = 20
+
+                                        paddle(displayname, message)
+
+                                if enabled("QU"):
+                                    custommodule = "QU"
+                                    if messagelow == "!lastquote" and (not oncooldown(custommodule, "last_quote") or ismod):
+                                        functionname = "last_quote"
+                                        cooldown_time = 15
+
+                                        last_quote()
+
+                                    elif "!quote" in messagelow and (not oncooldown(custommodule, "quote") or ismod):
+                                        functionname = "quote"
+                                        cooldown_time = 15
+
+                                        game = getgame(channel_id, CLIENTID)
+                                        quote(message, game)
+
+                                if enabled("BSM"):
+                                    if "!backseatmessage" in messagelow or '!bsm' in messagelow and ismod:
+                                        backseatmessage(message)
+
+                                if enabled("BT"):
+                                    custommodule = "BT"
+                                    if "!starttimer" in messagelow and ismod and ismod:
+                                        timer(message)
+
+                                    elif "!stoptimer" in messagelow and ismod:
+                                        timer(message)
+
+                                    elif "!openbets" in messagelow and ismod:
+                                        bets(message)
+
+                                    elif "!closebets" in messagelow and ismod:
+                                        bets(message)
+
+                                    elif messagelow == "!betstats":
+                                        betstats()
+
+                                    elif "!bet" in messagelow:
+
+                                        bet(displayname, message, ismod)
+
+                                    elif "!mybet" in messagelow:
+                                        mybet(displayname)
+
+                                    elif "!clearbets" in messagelow and ismod:
+                                        clearbets()
+
+                                    elif "!addbet" in messagelow and ismod:
+                                        addbet(message)
+
+                                    elif ("!rembet" or "!removebet") in messagelow and ismod:
+                                        removebet(message)
+
+                                    elif "!currentboner" in messagelow and not oncooldown(custommodule, "currentboner"):
+                                        functionname = "currentboner"
+                                        cooldown_time = 30
+                                        currentboner()
+
+                                    elif "!brokenboner" in messagelow and not oncooldown(custommodule, "brokenboner"):
+                                        functionname = "brokenboner"
+                                        cooldown_time = 30
+                                        brokenboner()
+
+                                    elif "!setboner" in messagelow and ismod:
+                                        setboner(message)
+
+                                    elif "!timer" in messagelow and not oncooldown(custommodule, "timer"):
+                                        functionname = "timer"
+                                        cooldown_time = 30
+                                        timer(message)
+
+                                    elif "!resettimer" in messagelow and ismod:
+                                        timer(message)
+
+                                    elif "!fidwins" in messagelow and ismod:
+                                        fidwins()
+
+                                    elif "!winner" in messagelow and ismod:
+                                        winner(message)
+
+                                if enabled("QU"):
+                                    custommodule = "QU"
+                                    if message == "!question" and not oncooldown(custommodule, "question"):
+                                        functionname = "question"
                                         cooldown_time = 30
 
-                                        pun()
+                                        question(message)
 
-                                    elif "!commandlist" in messagelow and not oncooldown("other", "commandlist"):
-                                        customfunc = "commandlist"
-                                        cooldown_time = 30
+                                    elif "!addquestion" in message and ismod:
+                                        add_question(message)
 
-                                        send_message(f"Commands for this channel can be found here: "
-                                                     f"http://www.bastixx.nl/twitch/{FOLDER}/commands.php")
+                                    elif "!removequestion" in message and ismod and not oncooldown(custommodule, "remove_question"):
+                                        functionname = "remove_question"
+                                        cooldown_time = 2
 
-                                    if enabled("RU"):
-                                        custommodule = "RU"
-                                        if "!rule" in messagelow and ismod and not oncooldown(custommodule, "rule"):
-                                            customfunc = "rule"
-                                            cooldown_time = 5
+                                        remove_question(message)
 
-                                            func_rules(message)
+                                if "!bot" in messagelow:
+                                    send_message("This bot is made by Bastixx669. "
+                                                 "Github: https://github.com/bastixx/ModularBot")
 
-                                    if enabled("DC"):
-                                        custommodule = "DC"
-                                        if "!deaths" in messagelow and not oncooldown(custommodule, "deaths"):
-                                            customfunc = "deaths"
+                                if enabled("CV"):
+                                    custommodule = "CV"
+                                    if "!convert" in messagelow and not oncooldown(custommodule, "convert"):
+                                        functionname = "convert"
+                                        cooldown_time = 10
+                                        convert(message)
 
-                                            game = str(getgame(channel_id, CLIENTID)).lower()
-                                            cooldown_time = func_deaths(message, game, ismod)
+                                if enabled("RML"):
+                                    custommodule = "RML"
+                                    if "!linkmod" in messagelow and not oncooldown(custommodule, "linkmod"):
+                                        functionname = "linkmod"
+                                        cooldown_time = 15
 
-                                        if messagelow == "!dead" and not oncooldown(custommodule, "dead") and (ismod or issub):
-                                            customfunc = "dead"
-                                            cooldown_time = 10
+                                        linkmod(message)
 
-                                            game = str(getgame(channel_id, CLIENTID)).lower()
-                                            dead(game)
+                                if enabled("SS"):
+                                    custommodule = "SS"
+                                    if "!suggest" in messagelow and (not oncooldown(custommodule, "suggest")or ismod):
+                                        functionname = "suggest"
+                                        cooldown_time = 5
 
-                                    if enabled("RF"):
-                                        custommodule = "RF"
-                                        if "!raffle" in messagelow and ismod:
-                                            customfunc = "raffle"
-                                            cooldown_time = 5
+                                        suggest(message)
 
-                                            raffle(message)
+                                    elif "!clearsuggestions" in messagelow and ismod:
+                                        clearsuggestions()
 
-                                        elif "!join" in messagelow:
-                                            join_raffle(displayname, message, issub, ismod)
+                                if enabled("CC"):
+                                    custommodule = "CC"
+                                    if "!command" in messagelow and ismod:
+                                        func_command(message)
+                                    else:
+                                        if messagelow.split(" ")[0] in customcommands.keys():
+                                            eval_command(message)
 
-                                    if enabled("RO"):
-                                        custommodule = "RO"
-                                        if "!roulette" in messagelow and not oncooldown(custommodule, "roulette"):
-                                            customfunc = "roulette"
-                                            cooldown_time = 20
+                                if messagelow == '!restart' and username == 'bastixx669':
+                                    nopong()
 
-                                            roulette(displayname)
+                                elif "!module" in messagelow and username == 'bastixx669':
+                                    messageparts = message.split(" ")
+                                    var_break = False
+                                    if messageparts[1] == "enable":
+                                        try:
+                                            templist = []
+                                            keyword = " ".join(messageparts[2:])
+                                            with open('config.ini', 'r+') as f:
+                                                for lineinfile in f:
+                                                    if keyword in lineinfile:
+                                                        if "False" in lineinfile:
+                                                            lineinfile = lineinfile.replace('False', 'True')
+                                                        else:
+                                                            send_message("Module already enabled.")
+                                                            var_break = True
+                                                    templist.append(lineinfile)
+                                                f.seek(0)
+                                                for lineinfile in templist:
+                                                    f.write(lineinfile)
+                                            if not var_break:
+                                                send_message(f"Module {keyword} enabled.")
+                                                nopong()
+                                        except Exception as errormsg:
+                                            errorlog(errormsg, "custommodule/enable", message)
+                                            send_message("Error enabling this custommodule.")
+                                    elif messageparts[1] == "disable":
+                                        try:
+                                            templist = []
+                                            keyword = " ".join(messageparts[2:])
+                                            with open('config.ini', 'r+') as f:
+                                                for lineinfile in f:
+                                                    if keyword in lineinfile:
+                                                        if "True" in lineinfile:
+                                                            lineinfile = lineinfile.replace('True', 'False')
+                                                        else:
+                                                            send_message("Module already disabled.")
+                                                            var_break = True
+                                                    templist.append(lineinfile)
+                                                f.seek(0)
+                                                for lineinfile in templist:
+                                                    f.write(lineinfile)
+                                            if not var_break:
+                                                send_message(f"Module {keyword} disabled.")
+                                                nopong()
+                                        except Exception as errormsg:
+                                            errorlog(errormsg, "custommodule/disable", message)
+                                            send_message("Error disabling this custommodule.")
+                            finally:
+                                if cooldown_time != 0:  # TODO Fix.
+                                    modules[custommodule]["functions"][functionname] = {"next use": time.time()
+                                                                                        + cooldown_time}
 
-                                    if enabled("PA"):
-                                        custommodule = "PA"
-                                        if "!paddle" in message and not oncooldown(custommodule, "paddle"):
-                                            customfunc = "paddle"
-                                            cooldown_time = 20
-
-                                            paddle(displayname, message)
-
-                                    if enabled("QU"):
-                                        custommodule = "QU"
-                                        if messagelow == "!lastquote" and (not oncooldown(custommodule, "last_quote") or ismod):
-                                            customfunc = "last_quote"
-                                            cooldown_time = 15
-
-                                            last_quote()
-
-                                        elif "!quote" in messagelow and (not oncooldown(custommodule, "quote") or ismod):
-                                            customfunc = "quote"
-                                            cooldown_time = 15
-
-                                            game = getgame(channel_id, CLIENTID)
-                                            quote(message, game)
-
-                                    if enabled("BSM"):
-                                        if "!backseatmessage" in messagelow or '!bsm' in messagelow and ismod:
-                                            backseatmessage(message)
-
-                                    if enabled("BT"):
-                                        custommodule = "BT"
-                                        if "!starttimer" in messagelow and ismod and ismod:
-                                            timer(message)
-
-                                        elif "!stoptimer" in messagelow and ismod:
-                                            timer(message)
-
-                                        elif "!openbets" in messagelow and ismod:
-                                            bets(message)
-
-                                        elif "!closebets" in messagelow and ismod:
-                                            bets(message)
-
-                                        elif messagelow == "!betstats":
-                                            betstats()
-
-                                        elif "!bet" in messagelow:
-
-                                            bet(displayname, message, ismod)
-
-                                        elif "!mybet" in messagelow:
-                                            mybet(displayname)
-
-                                        elif "!clearbets" in messagelow and ismod:
-                                            clearbets()
-
-                                        elif "!addbet" in messagelow and ismod:
-                                            addbet(message)
-
-                                        elif ("!rembet" or "!removebet") in messagelow and ismod:
-                                            removebet(message)
-
-                                        elif "!currentboner" in messagelow and not oncooldown(custommodule, "currentboner"):
-                                            customfunc = "currentboner"
-                                            cooldown_time = 30
-                                            currentboner()
-
-                                        elif "!brokenboner" in messagelow and not oncooldown(custommodule, "brokenboner"):
-                                            customfunc = "brokenboner"
-                                            cooldown_time = 30
-                                            brokenboner()
-
-                                        elif "!setboner" in messagelow and ismod:
-                                            setboner(message)
-
-                                        elif "!timer" in messagelow and not oncooldown(custommodule, "timer"):
-                                            customfunc = "timer"
-                                            cooldown_time = 30
-                                            timer(message)
-
-                                        elif "!resettimer" in messagelow and ismod:
-                                            timer(message)
-
-                                        elif "!fidwins" in messagelow and ismod:
-                                            fidwins()
-
-                                        elif "!winner" in messagelow and ismod:
-                                            winner(message)
-
-                                    if enabled("QU"):
-                                        custommodule = "QU"
-                                        if message == "!question" and not oncooldown(custommodule, "question"):
-                                            customfunc = "question"
-                                            cooldown_time = 30
-
-                                            question(message)
-
-                                        elif "!addquestion" in message and ismod:
-                                            add_question(message)
-
-                                        elif "!removequestion" in message and ismod and not oncooldown(custommodule, "remove_question"):
-                                            customfunc = "remove_question"
-                                            cooldown_time = 2
-
-                                            remove_question(message)
-
-                                    if "!bot" in messagelow:
-                                        send_message("This bot is made by Bastixx669. "
-                                                     "Github: https://github.com/bastixx/ModularBot")
-
-                                    if enabled("CV"):
-                                        custommodule = "CV"
-                                        if "!convert" in messagelow and not oncooldown(custommodule, "convert"):
-                                            customfunc = "convert"
-                                            cooldown_time = 10
-                                            convert(message)
-
-                                    if enabled("RML"):
-                                        custommodule = "RML"
-                                        if "!linkmod" in messagelow and not oncooldown(custommodule, "linkmod"):
-                                            customfunc = "linkmod"
-                                            cooldown_time = 15
-
-                                            linkmod(message)
-
-                                    if enabled("SS"):
-                                        custommodule = "SS"
-                                        if "!suggest" in messagelow and (not oncooldown(custommodule, "suggest")or ismod):
-                                            customfunc = "suggest"
-                                            cooldown_time = 5
-
-                                            suggest(message)
-
-                                        elif "!clearsuggestions" in messagelow and ismod:
-                                            clearsuggestions()
-
-                                    if enabled("CC"):
-                                        custommodule = "CC"
-                                        if "!command" in messagelow and ismod:
-                                            func_command(message)
-                                        else:
-                                            if messagelow.split(" ")[0] in customcommands.keys():
-                                                eval_command(message)
-
-
-                                    if messagelow == '!restart' and username == 'bastixx669':
-                                        nopong()
-
-                                    elif "!custommodule" in messagelow and username == 'bastixx669':
-                                        messageparts = message.split(" ")
-                                        var_break = False
-                                        if messageparts[1] == "enable":
-                                            try:
-                                                templist = []
-                                                keyword = " ".join(messageparts[2:])
-                                                with open('config.ini', 'r+') as f:
-                                                    for lineinfile in f:
-                                                        if keyword in lineinfile:
-                                                            if "False" in lineinfile:
-                                                                lineinfile = lineinfile.replace('False', 'True')
-                                                            else:
-                                                                send_message("Module already enabled.")
-                                                                var_break = True
-                                                        templist.append(lineinfile)
-                                                    f.seek(0)
-                                                    for lineinfile in templist:
-                                                        f.write(lineinfile)
-                                                if not var_break:
-                                                    send_message(f"Module {keyword} enabled.")
-                                                    nopong()
-                                            except Exception as errormsg:
-                                                errorlog(errormsg, "custommodule/enable", message)
-                                                send_message("Error enabling this custommodule.")
-                                        elif messageparts[1] == "disable":
-                                            try:
-                                                templist = []
-                                                keyword = " ".join(messageparts[2:])
-                                                with open('config.ini', 'r+') as f:
-                                                    for lineinfile in f:
-                                                        if keyword in lineinfile:
-                                                            if "True" in lineinfile:
-                                                                lineinfile = lineinfile.replace('True', 'False')
-                                                            else:
-                                                                send_message("Module already disabled.")
-                                                                var_break = True
-                                                        templist.append(lineinfile)
-                                                    f.seek(0)
-                                                    for lineinfile in templist:
-                                                        f.write(lineinfile)
-                                                if not var_break:
-                                                    send_message(f"Module {keyword} disabled.")
-                                                    nopong()
-                                            except Exception as errormsg:
-                                                errorlog(errormsg, "custommodule/disable", message)
-                                                send_message("Error disabling this custommodule.")
-                                finally:
-                                    if cooldown_time != 0:
-                                        modules[custommodule]["functions"][customfunc] = {"next use": time.time() + cooldown_time}
-
-                        for l in parts:
-                            if "End of /NAMES list" in l:
-                                modt = True
-                                print(">>>Bot ready in channel: %s" % CHANNEL.decode())
-                                logger('>>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True)
-                                modulelist = []
-                                for custommodule in modules.keys():
-                                    x = modules[custommodule]["name"]
-                                    modulelist.append(x)
-                                print(">>>modules loaded: %s" % ", ".join(modulelist))
+                    for l in parts:
+                        if "End of /NAMES list" in l:
+                            modt = True
+                            logger(0000000, '>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True, True)
+                            modulelist = []
+                            for custommodule in modules.keys():
+                                x = modules[custommodule]["name"]
+                                modulelist.append(x)
+                            logger(0000000, ">>Bot", "Modules loaded: %s" % ", ".join(modulelist), False, True, True)
 
         except Exception as errormsg:
             try:

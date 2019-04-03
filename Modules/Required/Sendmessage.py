@@ -12,7 +12,6 @@ def load_send_message(folder, channel, socket):
 def send_message(message):
     try:
         s.send(b"PRIVMSG #%s :%s\r\n" % (CHANNEL, message.encode()))
-        print(">>BOT : " + message)
-        logger(">>BOT", message, False, True)
+        logger(0000000, ">>BOT", message, False, True, True)
     except Exception as errormsg:
         errorlog(errormsg, "Send_message", message)

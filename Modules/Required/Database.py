@@ -44,12 +44,12 @@ def deletecollection(collection):
         raise Exception
 
 
-def updateoneindb(collection, filter, data, upsert=False):
+def updateoneindb(collection, fltr, data, upsert=False):
     try:
         mycol = db[collection]
-        mycol.update_one(filter, data, upsert)
+        mycol.update_one(fltr, data, upsert, upsert)
     except Exception as errormsg:
-        errorlog(errormsg, "Database/updateone()", "filter: " + filter + " Data: " + data)
+        errorlog(errormsg, "Database/updateone()", "filter: " + fltr + " Data: " + data)
         raise Exception
 
 

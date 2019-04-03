@@ -88,7 +88,10 @@ def raffle(message):
                 errorlog(errormsg, "Raffle/set()", message)
 
         elif arguments[1] == "list":
-            send_message("Current raffles are: %s." % ", ".join(raffles.keys()))
+            if len(raffles.keys > 0):
+                send_message("Current raffles are: %s." % ", ".join(raffles.keys()))
+            else:
+                send_message("There are currently no raffles going.")
         elif arguments[1] == "roll":
             if len(raffles[raffle]) == 0:
                 send_message("No contestants left!")
