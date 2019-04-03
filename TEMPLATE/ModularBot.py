@@ -33,6 +33,8 @@ from RimworldModLinker import *
 from SongSuggestions import *
 from Required.Database import load_database
 from CustomCommands import *
+from responseParse import *
+# try from Modules import *
 
 
 def top_level_functions(body):
@@ -86,7 +88,8 @@ modules = {'SM': {"name": 'Sendmessage'},
            'FG': {"name": 'FollowerGoals'},
            'RML': {"name": 'RimworldModLinker'},
            'SS': {"name": 'SongSuggestions'},
-           'CC': {"name": 'CustomCommands'}}
+           'CC': {"name": 'CustomCommands'},
+           'RP': {"name": 'ResponseParse'}}
 
 # Enabling modules if set to true in config file
 modulesConfig = config['Modules']
@@ -118,7 +121,7 @@ sock.send(b"CAP REQ :twitch.tv/commands \r\n")
 sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
 
-def enabled(module):
+def enabled(module): # MB use this in the giant List of modules?
     return modules[module]["enabled"]
 
 
@@ -213,6 +216,8 @@ def main(s=sock):
         load_suggestions(FOLDER)
     if modules['CC']['enabled']:
         customcommands = load_commands()
+    if modules['RP']['enabled']:
+        loadResponses(FOLDER):
 
     # Infinite loop waiting for commands
     while True:
@@ -376,6 +381,8 @@ def main(s=sock):
                                     if "!backseatmessage" in messagelow or '!bsm' in messagelow and ismod:
                                         backseatmessage(message)
 
+                                if enabled('RP'):
+                                    parseResponse(message)
                                 if enabled("BT"):
                                     custommodule = "BT"
                                     if "!starttimer" in messagelow and ismod and ismod:
@@ -453,6 +460,7 @@ def main(s=sock):
 
                                         remove_question(message)
 
+                                if enabled('RP'):
                                 if "!bot" in messagelow:
                                     send_message("This bot is made by Bastixx669. "
                                                  "Github: https://github.com/bastixx/ModularBot")

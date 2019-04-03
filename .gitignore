@@ -3,6 +3,9 @@
 *.bat
 token.txt
 
+# Ignore personal tests
+*test.py
+
 # Ignore working copies
 Production/
 TEMPLATE/files/chatlogs/*.txt
@@ -11,4 +14,4 @@ TEMPLATE/files/raffle/*.txt
 
 # Ignore python project files
 /.idea
-
+/*/__pycache__/
