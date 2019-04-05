@@ -58,7 +58,7 @@ def backseatmessage(message):
             send_message("Backseat message changed.")
         except Exception as errormsg:
             errorlog(errormsg, 'backseatmessage/set()', message)
-            send_message("There was an error chaning the backseatmessage. Please try again.")
+            send_message("There was an error chaning the backseatmessage. Please try again.") #STEVE potential spelling error?
 
 
 def bsmcheck(channel_id, client_id):
