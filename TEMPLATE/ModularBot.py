@@ -34,7 +34,7 @@ from SongSuggestions import *
 from Required.Database import load_database
 from CustomCommands import *
 from responseParse import *
-from Errors import *
+from Required.Errors import *
 # try from Modules import *
 
 
@@ -189,36 +189,36 @@ def main(s=sock):
     load_database(FOLDER)
     # load_tagger()
 
-    if modules['RU']["enabled"]:
+    if enabled("RU"):
         load_rules(FOLDER)
-    if modules['BSM']["enabled"]:
+    if enabled("BSM"):
         load_bsmessage(FOLDER)
-    if modules['DC']["enabled"]:
+    if enabled("DC"):
         load_deaths()
-    if modules['QU']["enabled"]:
+    if enabled("QU"):
         load_quotes(FOLDER)
-    if modules['RF']["enabled"]:
+    if enabled("RF"):
         load_raffles(CLIENTID, channel_id)
-    if modules['BT']["enabled"]:
+    if enabled("BT"):
         load_bonertimer(FOLDER)
-    if modules['RA']["enabled"]:
+    if enabled("RA"):
         load_rimworldautomessage(channel_id, CLIENTID)
-    if modules['QS']["enabled"]:
+    if enabled("QS"):
         load_questions(FOLDER)
-    if modules['ML']["enabled"]:
+    if enabled("ML"):
         load_modlog(channel_id, headers, FOLDER)
-    if modules['FG']["enabled"]:
+    if enabled("FG"):
         load_followergoals(FOLDER)
-    if modules['RML']["enabled"]:
+    if enabled("RML"):
         load_mod(STEAMAPIKEY)
-    if modules['BT']["enabled"]:
+    if enabled("SU"):
         load_suggestions(FOLDER)
-    if modules['SS']['enabled']:
+    if enabled("SS"):
         load_suggestions(FOLDER)
-    if modules['CC']['enabled']:
+    if enabled("CC"):
         customcommands = load_commands()
-    if modules['RP']['enabled']:
-        loadResponses(FOLDER):
+    if enabled("RP"):
+        loadResponses(FOLDER)
 
     # Infinite loop waiting for commands
     while True:
@@ -391,9 +391,6 @@ def main(s=sock):
                                 if enabled("BSM"):
                                     if ("!backseatmessage" in messagelow[0:16] or '!bsm' in messagelow[0:4]) and ismod:
                                         backseatmessage(message)
-
-                                if enabled('RP'):
-                                    parseResponse(message)
 
                                 if enabled("BT"):
                                     custommodule = "BT"
@@ -575,6 +572,9 @@ def main(s=sock):
                                     # modules.update(tempdict)
 
                                     print(f"Module: {custommodule}")
+                        else:
+                            if enabled('RP'):
+                                parseResponse(message)
 
                     for l in parts:
                         if "End of /NAMES list" in l:

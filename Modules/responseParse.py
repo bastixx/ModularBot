@@ -3,14 +3,14 @@ from Required.Sendmessage import send_message
 from Required.Database import *
 
 global responsedict
-responsedict = dict()
+responsedict = {}
 
 
 def loadResponses(FOLDER):
     global responsedict
     try:
-        for document in getallfromdb("Quotes"):
-            responsedict.update(document["phrase"]=document["response"])
+        for document in getallfromdb("Responses"):
+            responsedict[document["phrase"]] = document["response"]
     except Exception as errormsg:
         errorlog(errormsg, "responseParse/loadResponses", responsedict)
         responsedict=dict()

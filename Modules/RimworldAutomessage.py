@@ -14,13 +14,13 @@ def load_rimworldautomessage(channelid, CLIENTID):
     channel_id = channelid
     client_id = CLIENTID
 
-    messagetext = "/me If you want a colonist to be renamed to your username then join our raffle! " \
-                  "Simply type \"!join colonist\" to enter!"
+    cursor = getallfromdb("RimworldAutomessage")
+    for document in cursor:
+        messagetext = document["messagetext"]
+    threading.Timer(300, rimworldautomessage).start()
 
-    threading.Timer(300, rimworldautomessage, [s]).start()
 
-
-def rimworldautomessage(s):
+def rimworldautomessage():
     game = getgame(channel_id, client_id)
 
     url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
@@ -36,4 +36,4 @@ def rimworldautomessage(s):
     except Exception as errormsg:
         errorlog(errormsg, "Rimworldautomessage", '')
     finally:
-        threading.Timer(900, rimworldautomessage, [s]).start()
+        threading.Timer(900, rimworldautomessage).start()
