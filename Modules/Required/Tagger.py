@@ -1,5 +1,5 @@
 from Modlog import *
-from Required.Logger import *
+from Required.Logger import logger
 
 
 def load_tagger(CLIENTID):

@@ -1,30 +1,29 @@
 import threading
-import os
 import requests
 
 from Required.Sendmessage import send_message
 from Required.Errorlog import errorlog
+import Required.Database as Database
 
 
-def load_bsmessage(FOLDER):
-    global bsmessagestr; global backseating; global folder
+def load_bsmessage():
+    global bsmessagestr; global backseating
     backseating = False
-    folder = FOLDER
 
     try:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Backseatmessage.txt', 'r') as f:
-            bsmessagestr = f.read()
-    except:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Backseatmessage.txt', 'w') as f:
-            bsmessagestr = "/me Please don't backseat. This is a blind playthrough!"
-            f.write(bsmessagestr)
+        for document in Database.updateoneindb("BackseatMessage"):
+            bsmessagestr = document["messagetext"]
+    except Exception as errormsg:
+        errorlog(errormsg, "Backseatmessage/load_bsmessage()", "")
+        bsmessagestr = "/me Please don't backseat. This is a blind playthrough!"
+    # TODO Explicitly handle Database connection error(s).
 
 
 def bsmessage():
     global bstimer
     if backseating:
         try:
-            bstimer = threading.Timer(900, bsmessage, [s])
+            bstimer = threading.Timer(900, bsmessage)
             bstimer.start()
             send_message(bsmessagestr)
         except Exception as errormsg:
@@ -37,7 +36,7 @@ def backseatmessage(message):
     if messageparts[1] == "on":
         if not backseating:
             backseating = True
-            bstimer = threading.Timer(900, bsmessage, [s])
+            bstimer = threading.Timer(900, bsmessage)
             bstimer.start()
             send_message("Backseating message enabled.")
         else:
@@ -53,12 +52,14 @@ def backseatmessage(message):
         try:
             newbsmessage = " ".join(messageparts[2:])
             bsmessagestr = newbsmessage
-            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Backseatmessage.txt', 'w') as f:
-                f.write(bsmessagestr)
+
+            # Empty filter will match all elements,
+            # but since there will be only 1 element in the database this won't be an issue.
+            Database.updateoneindb("BackseatMessage", {}, {"messagetext": bsmessagestr}, True)
             send_message("Backseat message changed.")
         except Exception as errormsg:
             errorlog(errormsg, 'backseatmessage/set()', message)
-            send_message("There was an error chaning the backseatmessage. Please try again.") #STEVE potential spelling error?
+            send_message("There was an error changing the backseatmessage. Please try again.")
 
 
 def bsmcheck(channel_id, client_id):

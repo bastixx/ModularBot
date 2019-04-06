@@ -4,12 +4,11 @@ import numbers
 import os
 import time
 import requests
-import pymongo
 
 from Required.Sendmessage import send_message
 from Required.Errorlog import errorlog
 from datetime import datetime, date
-from Required.Database import *
+import Required.Database as Database
 from Required.Logger import logtofile
 
 
@@ -22,8 +21,7 @@ def load_bonertimer(FOLDER):
     timers = {}
     endings = []
 
-    cursor = getallfromdb("Endings")
-    for document in cursor:
+    for document in Database.getallfromdb("Endings"):
         endings.append(document["ending"])
 
 
@@ -39,7 +37,7 @@ def announcer(displayname, bettime):
         timers.pop(displayname)
 
     except Exception as errormsg:
-        errorlog(errormsg, "Announcer()", '')
+        errorlog(errormsg, "BonerTimer/Announcer()", '')
 
 
 def timer(message):
@@ -103,8 +101,8 @@ def timer(message):
                                      endtime + " minute(s)! The winner is: " + winner +
                                      " with " + str(winningtime) + " minutes!")
 
-                    insertoneindb("Bonerwinners", {"name(s)": winner, "time": winningtime})
-                    insertoneindb("BonerTitleholder", {"name": winner})
+                    Database.insertoneindb("Bonerwinners", {"name(s)": winner, "time": winningtime})
+                    Database.insertoneindb("BonerTitleholder", {"name": winner})
                 else:
                     send_message("Bones have been broken! The timer is on" + endtime + " minutes. No bets are within "
                                  "5 minutes of the timer. That means there is no winner this round!")
@@ -232,7 +230,7 @@ def timer(message):
 #             print("endtime + 5: " + str(int(endtime) + 5))
 #             print("winning time: " + str(winningtime))
 #         except Exception as errormsg:
-#             errorlog(errormsg, 'Bonertimer/stoptimer()', "")
+#             Errorlog.errorlog(errormsg, 'Bonertimer/stoptimer()', "")
 #         else:
 #             with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
 #                 f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
@@ -261,7 +259,7 @@ def timer(message):
 #         else:
 #             send_message("There is currently no timer active!")
 #     except Exception as errormsg:
-#         errorlog(errormsg, "BonerTimer/timer()", '')
+#         Errorlog.errorlog(errormsg, "BonerTimer/timer()", '')
 
 
 # def resettimer():
@@ -275,7 +273,7 @@ def timer(message):
 #         timers = {}
 #         send_message("Timer reset. Bets are now open again!")
 #     except Exception as errormsg:
-#         errorlog(errormsg, "BonerTimer/resettimer()", '')
+#         Errorlog.errorlog(errormsg, "BonerTimer/resettimer()", '')
 
 
 def fidwins():
@@ -493,9 +491,6 @@ def bet(displayname, message, ismod):
             send_message("This is a community game. You most be following for at least 7 days before you can join!")
     else:
         send_message("Bets are not currently opened.")
-
-
-
 
 
 def addbet(message):

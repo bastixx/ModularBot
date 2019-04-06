@@ -3,7 +3,7 @@ import base64
 
 from Required.Sendmessage import send_message
 from Required.Errorlog import errorlog
-from Required.Database import insertoneindb, clearcollection
+import Required.Database as Database
 
 
 def getauthtoken():
@@ -33,10 +33,8 @@ def songonspotify(song):
         return "No"
 
 
-def load_suggestions(FOLDER):
-    global folder; global authtoken
-    folder = FOLDER
-
+def load_suggestions():
+    global authtoken
     authtoken = getauthtoken()
 
 
@@ -50,7 +48,7 @@ def suggest(message):
                 suggestion = suggestion.replace(elem, "")
 
         suggestion = " ".join(suggestion)
-        insertoneindb("SongSuggestions", {"suggestion": suggestion, "on_spotify": songonspotify(suggestion)})
+        Database.insertoneindb("SongSuggestions", {"suggestion": suggestion, "on_spotify": songonspotify(suggestion)})
         send_message("Song suggestion registered!")
     except Exception as errormsg:
         send_message("There was an error adding this. Please try again!")
@@ -59,7 +57,7 @@ def suggest(message):
 
 
 def clearsuggestions():
-    result = clearcollection("SongSuggestions")
+    result = Database.clearcollection("SongSuggestions")
     if result:
         send_message("List cleared!")
     else:

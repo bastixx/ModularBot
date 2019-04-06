@@ -2,7 +2,7 @@ import random
 
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Errors import InsufficientParameterException
+from Required.Errors import InsufficientParameterException
 
 
 def paddle(displayname, message):

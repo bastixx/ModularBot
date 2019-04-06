@@ -1,14 +1,14 @@
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Required.Database import *
+import Required.Database as Database
 
 
-def load_rules(folder):
+def load_rules():
     global rules; global warnings
     rules = {}
     warnings = {}
     try:
-        col = getallfromdb("Rules")
+        col = Database.getallfromdb("Rules")
         for document in col:
             rules[document["_id"]] = {"rule": document["Rule"], "1": document["first_timeout"],
                                       "2": document["second_timeout"], "3": document["third_timeout"]}

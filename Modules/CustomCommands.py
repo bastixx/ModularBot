@@ -1,12 +1,12 @@
 from Required.Errorlog import errorlog
-from Required.Database import *
+import Required.Database as Database
 from Required.Sendmessage import send_message
 
 
 def load_commands():
     global customcommands
     customcommands = {}
-    cursor = getallfromdb("CustomCommands")
+    cursor = Database.getallfromdb("CustomCommands")
     for document in cursor:
         customcommands[document["name"]] = document["action"]
     return customcommands
@@ -20,19 +20,19 @@ def func_command(message):
             newcommandname = arguments[2]
             newcommandaction = " ".join(arguments[3:])
             customcommands[newcommandname] = newcommandaction
-            insertoneindb("CustomCommands", {"name": newcommandname, "action": newcommandaction})
+            Database.insertoneindb("CustomCommands", {"name": newcommandname, "action": newcommandaction})
             send_message(f"Command {newcommandname} added!")
         elif arguments[1] == "remove":
             commandname = arguments[2]
             customcommands.remove(commandname)
-            deleteoneindb("CustomCommands", {"name": commandname})
+            Database.deleteoneindb("CustomCommands", {"name": commandname})
             send_message(f"Command {commandname} removed!")
         elif arguments[1] == "edit":
             commandname = arguments[2]
             newcommandaction = " ".join(arguments[3:])
             if commandname in customcommands.keys():
                 customcommands[commandname] = newcommandaction
-                updateoneindb("CustomCommands", {"name": commandname}, {"action": newcommandaction})
+                Database.updateoneindb("CustomCommands", {"name": commandname}, {"action": newcommandaction})
                 send_message(f"Command {commandname} updated!")
             else:
                 send_message(f"Command {commandname} does not exist!")

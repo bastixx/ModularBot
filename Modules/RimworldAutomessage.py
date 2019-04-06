@@ -2,9 +2,9 @@ import threading
 import requests
 
 from Required.Sendmessage import send_message
-from Required.Getgame  import getgame
+from Required.Getgame import get_current_game
 from Required.Errorlog import errorlog
-from Required.Database import *
+import Required.Database as Database
 
 
 def load_rimworldautomessage(channelid, CLIENTID):
@@ -14,14 +14,13 @@ def load_rimworldautomessage(channelid, CLIENTID):
     channel_id = channelid
     client_id = CLIENTID
 
-    cursor = getallfromdb("RimworldAutomessage")
-    for document in cursor:
+    for document in Database.getallfromdb("RimworldAutomessage"):
         messagetext = document["messagetext"]
     threading.Timer(300, rimworldautomessage).start()
 
 
 def rimworldautomessage():
-    game = getgame(channel_id, client_id)
+    game = get_current_game(channel_id, client_id)
 
     url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
     headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}

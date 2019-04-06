@@ -1,18 +1,16 @@
 import requests
 import time
-from Required.Database import *
+import Required.Database as Database
 
 from Required.Errorlog import errorlog
 
 
 # Try and get the ID for the mod channel. This is used for the moderation log.
-def load_modlog(CHANNEL_ID, headers, FOLDER):
+def load_modlog(CHANNEL_ID, headers):
     global modroom_available
     global modroom_id
     global channel_id
-    global folder
     channel_id = CHANNEL_ID
-    folder = FOLDER
     rooms = {}
     try:
         url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
@@ -38,9 +36,9 @@ def modlog(duration, userid, username, reason=""):
     try:
         if duration == 0:
             message = f"Banned: {username}. Reason: {reason}"
-            insertoneindb("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
+            Database.insertoneindb("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
                                      "reason": reason, "timestamp": timestamp})
-            insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                       "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -49,9 +47,9 @@ def modlog(duration, userid, username, reason=""):
         elif duration <= 5:
             message = f"purged: {username}. reason: {reason}"
 
-            insertoneindb("Modlog", {"action": "purged", "username": username, "duration": duration,
+            Database.insertoneindb("Modlog", {"action": "purged", "username": username, "duration": duration,
                                      "reason": reason, "timestamp": timestamp})
-            insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                       "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -59,10 +57,10 @@ def modlog(duration, userid, username, reason=""):
             #         channel_id.encode(), modroom_id.encode(), message.encode()))
         else:
             message = f"Timed out: {username}. Duration: {duration}. Reason: {reason}"
-            insertoneindb("Modlog", {"action": "timed out", "username": username, "duration": duration,
+            Database.insertoneindb("Modlog", {"action": "timed out", "username": username, "duration": duration,
                                      "reason": reason, "timestamp": timestamp})
 
-            insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                       "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -81,9 +79,9 @@ def removedmessage(username, userid, message):
     displayname = "MOD-ACTION"
     try:
         message = f"Removed message from: {username}. Message: {removedmessage}"
-        insertoneindb("Modlog", {"action": "message removed", "username": username, "userid": userid,
+        Database.insertoneindb("Modlog", {"action": "message removed", "username": username, "userid": userid,
                                  "message": message, "timestamp": timestamp})
-        insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid, "message": message,
+        Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid, "message": message,
                                   "sub": issub, "mod": ismod})
     except Exception as errormsg:
         errorlog(errormsg, "Modlog", message)

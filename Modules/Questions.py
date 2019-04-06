@@ -3,7 +3,7 @@ import os
 
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Required.Database import *
+import Required.Database as Database
 
 
 def load_questions(FOLDER):
@@ -12,8 +12,8 @@ def load_questions(FOLDER):
     folder = FOLDER
     questions = {}
     try:
-        if collectionexists("Questions"):
-            for document in getallfromdb("Questions"):
+        if Database.collectionexists("Questions"):
+            for document in Database.getallfromdb("Questions"):
                 questions[document["_id"]] = document["question"]
 
         # with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Questions.txt', 'r') as f:
@@ -48,11 +48,11 @@ def add_question(message):
         for i in range(1, len(questions)):
             if i not in questions.keys():
                 questions[i] = newquestion
-                insertoneindb("Questions", {"_id": i, "question": newquestion})
+                Database.insertoneindb("Questions", {"_id": i, "question": newquestion})
                 created = True
         if not created:
             questions[str(len(questions) + 1)] = newquestion
-            insertoneindb("Questions", {"_id": len(questions), "question": newquestion})
+            Database.insertoneindb("Questions", {"_id": len(questions), "question": newquestion})
         send_message("question %d added!" % len(questions))
     except Exception as errormsg:
         send_message("There was an error adding this question. Please try again!")

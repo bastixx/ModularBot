@@ -20,5 +20,5 @@ def logger(userid, displayname, message, issub, ismod, issystem=False):
 
 def logtofile(folder, func, line):
     now = str(time.strftime("%H:%M:%S"))
-    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Log.txt", "a") as f:
+    with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Errorlog.txt", "a") as f:
         f.write(f"[{now}] [{func}]: {line}")

@@ -1,21 +1,20 @@
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Required.Database import *
-
-global responsedict
-responsedict = {}
+import Required.Database as Database
 
 
-def loadResponses(FOLDER):
+def load_responses():
     global responsedict
+    responsedict = {}
     try:
-        for document in getallfromdb("Responses"):
+        for document in Database.getallfromdb("Responses"):
             responsedict[document["phrase"]] = document["response"]
     except Exception as errormsg:
         errorlog(errormsg, "responseParse/loadResponses", responsedict)
-        responsedict=dict()
+        responsedict = dict()
 
-def parseResponse(chat):
+
+def parse_response(chat):
     for x in responsedict.keys():
         if x in chat:
             send_message(responsedict[x])

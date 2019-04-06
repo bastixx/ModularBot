@@ -1,6 +1,6 @@
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Required.Database import *
+import Required.Database as Database
 
 
 def load_deaths():
@@ -8,8 +8,7 @@ def load_deaths():
     deaths = {}
 
     try:
-        col = getallfromdb("Deaths")
-        for document in col:
+        for document in Database.getallfromdb("Deaths"):
             deaths[document["game"]] = document["deaths"]
     except Exception as errormsg:
         errorlog(errormsg, "Deathcounter/Load_deaths()", "")
@@ -73,7 +72,7 @@ def func_deaths(message, game, ismod):
 
     finally:
         if not skipdb:
-            updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
+            Database.updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
         return cooldown_time
 
 
@@ -84,7 +83,7 @@ def dead(game):
         else:
             deaths[game] = 1
         send_message("A new death! Deathcount: %d!" % deaths[game])
-        updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
+        Database.updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
     except Exception as errormsg:
         send_message("A error occured. Please try again.")
         errorlog(errormsg, "!dead", '')

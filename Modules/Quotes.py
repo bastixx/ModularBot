@@ -3,7 +3,7 @@ import time
 
 from Required.Errorlog import errorlog
 from Required.Sendmessage import send_message
-from Required.Database import *
+import Required.Database as Database
 
 
 def load_quotes(FOLDER):
@@ -13,7 +13,7 @@ def load_quotes(FOLDER):
     folder = FOLDER
     quotes = {}
     try:
-        for document in getallfromdb("Quotes"):
+        for document in Database.getallfromdb("Quotes"):
             quotes[document["_id"]] = f'{document["quote"]} - {document["said_by"]} [{document["game"]}] ' \
                                       f'[{document["date"]}]'
     except Exception as errormsg:
@@ -33,7 +33,7 @@ def quote(message, game):
 
                 newquote = " ".join(arguments[2:])
                 quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
-                insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "game": game, "date": currentdate})
+                Database.insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "game": game, "date": currentdate})
                 send_message("Quote %d added!" % len(quotes))
             except Exception as errormsg:
                 send_message("There was an error adding this quote. Please try again!")
@@ -46,16 +46,16 @@ def quote(message, game):
                     if key > arguments[2]:
                         quotestemp[(key - 1)] = value
 
-                clearcollection("Tempquotes")
+                        Database.clearcollection("Tempquotes")
                 for key, val in quotestemp:
                     quote, game, date = val.split(" [")
                     game = game.rstrip("]")
                     date = date.rstrip("]")
 
-                    insertoneindb("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
+                    Database.insertoneindb("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
 
-                clearcollection("Quotes")
-                copycollection("Tempquotes", "Quotes")
+                    Database.clearcollection("Quotes")
+                    Database.copycollection("Tempquotes", "Quotes")
                 quotes = quotestemp
                 send_message("Quote %s removed!" % arguments[2])
 
