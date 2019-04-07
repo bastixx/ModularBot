@@ -499,6 +499,12 @@ def main(s=sock):
 
                                         RimworldModLinker.linkmod(message)
 
+                                if enabled("RA"):
+                                    if "!rimworldmessage" in messagelow[0:15]:
+                                        custommodule = "RA"
+                                        functionname = "setmessage"
+                                        RimworldAutomessage.setmessage(message)
+
                                 if enabled("SS"):
                                     if "!suggest" in messagelow[0:8] and (not oncooldown("SS", "suggest")or ismod):
                                         custommodule = "SS"
