@@ -43,10 +43,12 @@ def quote(message, game):
                 quotestemp = {}
                 del quotes[arguments[2]]
                 for key, value in quotes.items():
-                    if key > arguments[2]:
+                    if key < arguments[2]:
+                        quotestemp[key] = value
+                    else:
                         quotestemp[(key - 1)] = value
 
-                        Database.clearcollection("Tempquotes")
+                Database.clearcollection("Tempquotes")
                 for key, val in quotestemp:
                     quote, game, date = val.split(" [")
                     game = game.rstrip("]")
@@ -54,8 +56,8 @@ def quote(message, game):
 
                     Database.insertoneindb("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
 
-                    Database.clearcollection("Quotes")
-                    Database.copycollection("Tempquotes", "Quotes")
+                Database.clearcollection("Quotes")
+                Database.copycollection("Tempquotes", "Quotes")
                 quotes = quotestemp
                 send_message("Quote %s removed!" % arguments[2])
 
