@@ -4,6 +4,7 @@ import os
 import requests
 
 
+# TODO Figure out if this stays in before continuing work on this
 def load_followergoals(folder):
     global goals
     goals = []

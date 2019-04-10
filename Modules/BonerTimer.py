@@ -3,38 +3,43 @@ import threading
 import numbers
 import os
 import time
-import requests
 
 from Required.Sendmessage import send_message
 from Required.Errorlog import errorlog
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import Required.Database as Database
 from Required.Logger import logtofile
+from Required.APICalls import follows, usernametoid, idtousername
 
 
-def load_bonertimer(FOLDER):
-    global folder; global timeractive; global betsopen; global bets; global timers; global endings
+def load_bonertimer():
+    global timeractive
+    global betsopen
+    global bets
+    global timers
+    global endings
+    global titleholder
     timeractive = False
     betsopen = False
-    folder = FOLDER
     bets = {}
     timers = {}
     endings = []
 
     for document in Database.getallfromdb("Endings"):
         endings.append(document["ending"])
+    titleholder = Database.getonefromdb("Titleholder")["username"]
 
 
-def announcer(displayname, bettime):
+def announcer(userid, username, bettime):
     global bets; global timers
     try:
         try:
             ending = random.choice(endings)
         except:
             ending = ""
-        send_message("%s's time has come with %s minutes! %s" % (displayname, bettime, ending))
+        send_message("%s's time has come with %s minutes! %s" % (username, bettime, ending))
         # bets.pop(displayname)
-        timers.pop(displayname)
+        timers.pop(userid)
 
     except Exception as errormsg:
         errorlog(errormsg, "BonerTimer/Announcer()", '')
@@ -107,20 +112,9 @@ def timer(message):
                     send_message("Bones have been broken! The timer is on" + endtime + " minutes. No bets are within "
                                  "5 minutes of the timer. That means there is no winner this round!")
 
-                logtofile(folder, "Timer/stoptimer()", f"endtime: {str(endtime)}. Winning time: {str(winningtime)}")
+                # logtofile(folder, "Timer/stoptimer()", f"endtime: {str(endtime)}. Winning time: {str(winningtime)}")
             except Exception as errormsg:
                 errorlog(errormsg, 'Bonertimer/stoptimer()', "")
-            else:
-                with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
-                    f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
-                            str(time.strftime("%X")) + "\n")
-                    f.write("Endtime: %s minutes\n" % endtime)
-                    for key in bets:
-                        f.write(key + ":" + str(bets[key]) + "\n")
-                bets = {}
-                with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-                    f.write('')
-
         else:
             send_message("There is currently no timer active!")
     elif arguments[1] == "reset":
@@ -148,10 +142,6 @@ def timer(message):
                 send_message("There is currently no timer active!")
         except Exception as errormsg:
             errorlog(errormsg, "BonerTimer/timer()", '')
-
-
-
-
 
 
 # def starttimer():
@@ -285,8 +275,7 @@ def fidwins():
                 t.cancel()
             time.sleep(1)
             timers = {}
-            with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "w") as f:
-                f.write("FideliasFK")
+            Database.updateoneindb("Titleholder", {}, {"username": "FideliasFK"}, True)
             timenow = datetime.time(datetime.now())
             timer = datetime.combine(date.today(), timenow) - datetime.combine(date.today(),
                                                                                starttime)
@@ -295,58 +284,41 @@ def fidwins():
                 endtime += (int(endtime) + 60)
             if str(timer).split(':')[0] == '2':
                 endtime += (int(endtime) + 120)
-            send_message("The timer is on " + endtime + " minute(s)!")
+            send_message(f"The timer is on {endtime} minute(s)!")
             send_message("No boners have been broken this round. The winner is FideliasFK!")
         else:
             send_message("There is no timer active!")
     except Exception as errormsg:
         send_message("Error lettting fid win.")
         errorlog(errormsg, 'Bonertimer/fidwins', '')
-    else:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
-            f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
-                    str(time.strftime("%X")) + "\n")
-            f.write("Endtime: %s minutes\n" % endtime)
-            for key in bets:
-                f.write(key + ":" + str(bets[key]) + "\n")
-        bets = {}
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-            f.write('')
 
 
 def winner(message):
-    global timeractive; global timers; global bets
+    global timeractive
+    global timers
+    global bets
+    winner = message.split(" ")[1]
     try:
-        winner = message.split(" ")[1]
         if timeractive:
             timeractive = False
             for t in list(timers.values()):
                 t.cancel()
             time.sleep(1)
             timers = {}
-            with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "w") as f:
-                f.write(winner)
-            send_message("The winner this round is %s!" % winner)
+            Database.updateoneindb("Titleholder", {}, {"username": winner})
+            send_message(f"The winner this round is {winner}!")
         else:
             send_message("There is no timer active!")
     except IndexError:
         send_message("Error setting new winner. Check your command.")
     except Exception as errormsg:
-        send_message("There was an error setting %s as winner." % winner)
+        send_message(f"There was an error setting {winner} as winner.")
         errorlog(errormsg, 'Bonertimer/winner()', message)
     else:
-        with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/PrevBets.txt', 'a+')as f:
-            f.write("\n" + "Bets ended on: " + str(time.strftime("%x")) + " " +
-                    str(time.strftime("%X")) + "\n")
-            f.write("No endtime available\n")
-            for key in bets:
-                f.write(key + ":" + str(bets[key]) + "\n")
-        bets = {}
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-            f.write('')
+        Database.clearcollection("Bets")
 
 
-def bets(message):
+def func_bets(message):
     global betsopen
     arguments = message.split(" ")
     if arguments[1] == "open":
@@ -364,28 +336,12 @@ def bets(message):
             send_message("Bets are already closed!")
 
 
-# def openbets():
-#     global betsopen
-#     if not betsopen:
-#         betsopen = True
-#         send_message("Taking bets for the Broken Boner game! "
-#                      "Use !bet <number> to join in!")
-#     else:
-#         send_message("Bets already opened!")
-
-
-# def closebets():
-#     global betsopen
-#     betsopen = False
-#     send_message("Bets are now closed!")
-
-
 def setboner(message):
+    global titleholder
+    arguments = message.split(" ")
     try:
-        keyword = "!setboner "
-        titleholder = message[message.index(keyword) + len(keyword):]
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "w") as f:
-            f.write(titleholder)
+        titleholder = arguments[1]
+        Database.updateoneindb("Titleholder", {}, {"username": titleholder}, True)
         send_message("Registered " + titleholder + " as the new owner of \"Broken Boner\" ")
     except ValueError:
         send_message("Unable to determine new titleholder. Please check your command.")
@@ -397,8 +353,6 @@ def setboner(message):
 
 def currentboner():
     try:
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Titleholder.txt", "r") as f:
-            titleholder = f.read()
         send_message("The current owner of the title \"Broken Boner\" is: " +
                      titleholder + "!")
     except Exception as errormsg:
@@ -436,54 +390,48 @@ def betstats():
         send_message("No bets registered!")
 
 
-def bet(displayname, message, ismod):
-    global bets; global timers
+def bet(username, userid, message, ismod):
+    arguments = message.split(" ")
+    global bets
+    global timers
     if betsopen:
-        if ismod:
+        if not ismod:
             followed_at = '2010-01-01T22:33:44Z'
         else:
-            url = 'https://api.twitch.tv/helix/users/follows?from_id=%s&to_id=%s' % (userid, channel_id)
-            headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            followed_at = r["data"][0]['followed_at']
+            bet_tempvar1 = follows(userid)["followed_at"]
+            if bet_tempvar1 != {}:
+                followed_at = bet_tempvar1
+            else:
+                followed_at = datetime.now()
 
-        followed_at_formatted = datetime.strptime(followed_at, '%Y-%m-%dT%H:%M:%SZ')
-        time_now = datetime.now()
-
-        if time_now - followed_at_formatted >= timedelta(days=7):
-
-            keyword = "!bet "
+        followed_at = datetime.strptime(followed_at, '%Y-%m-%dT%H:%M:%SZ')
+        if datetime.now() - followed_at >= timedelta(days=7):
             try:
-                bet = message[message.index(keyword) + len(keyword):]
+                bet = arguments[1]
                 if isinstance(int(bet), numbers.Number):
                     if int(bet) <= 0:
                         send_message("Please don't try to invoke the apocalypse. Thanks.")
-                    elif displayname in bets.keys():
-                        bets[displayname] = bet
+                    elif userid in bets.keys():
+                        bets[userid] = bet
                         betsec = int(bet) * 60
-                        t = threading.Timer(betsec, announcer, [s, displayname, bet])
-                        timers[displayname] = t
-                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-                            for key in bets:
-                                f.write(key + ":" + str(bets[key]) + "\n")
-                        send_message("@" + displayname + " Bet updated! Your new bet is: "
-                                     + bet + " minutes!")
+                        t = threading.Timer(betsec, announcer, [userid, username, bet])
+                        timers[username] = t
+                        Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+                        send_message(f"@{username} Bet updated! Your new bet is: {bet} minutes!")
                     else:
-                        bets[displayname] = bet
+                        bets[userid] = bet
                         betsec = int(bet) * 60
-                        t = threading.Timer(betsec, announcer, [displayname, bet])
-                        timers[displayname] = t
-                        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-                            for key in bets:
-                                f.write(key + ":" + str(bets[key]) + "\n")
-                        send_message("@" + displayname + " Bet registered: " + bet + " minutes!")
+                        t = threading.Timer(betsec, announcer, [username, bet])
+                        timers[username] = t
+                        Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+                        send_message(f"@{username} Bet registered: {bet} minutes!")
                 else:
                     send_message("Bet is not a number")
             except ValueError as e:
                 if str(e) == 'substring not found':
                     send_message("Use !bet <number> to enter the competition!")
                 else:
-                    send_message("%s is not a valid bet. Please use whole numbers only." % bet)
+                    send_message(f"{bet} is not a valid bet. Please use whole numbers only.")
             except Exception as errormsg:
                 errorlog(errormsg, 'Bonertimer/bet()', message)
                 send_message("There was an error registering your bet. Please try again.")
@@ -494,83 +442,83 @@ def bet(displayname, message, ismod):
 
 
 def addbet(message):
-    global bets; global timers
+    global bets
+    global timers
     try:
-        addbet = message.split(' ')
-        bets[addbet[1]] = addbet[2]
-        t = threading.Timer((int(addbet[2]) * 60), announcer, [addbet[1], addbet[2]])
-        timers[addbet[1]] = t
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt", 'w') as f:
-            for key in bets:
-                f.write(key + ":" + str(bets[key]) + "\n")
-        send_message("Bet for " + addbet[1] + " with " + addbet[2] +
-                     " minutes added to pool!")
+        arguments = message.split(' ')
+        username = arguments[1]
+        bet = arguments[2]
+        userid = usernametoid(username)
+
+        bets[userid] = bet
+        t = threading.Timer((int(bet) * 60), announcer, [username, bet])
+        timers[username] = t
+        Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+        send_message(f"Bet for {username} with {bet} minutes added to pool!")
     except Exception as errormsg:
         send_message("Error adding bet for this user.")
         errorlog(errormsg, 'Bonertimer/addbet()', message)
 
 
 def removebet(message):
-    global bets; global timers
+    global bets
+    global timers
     try:
         rembet = message.split(" ")[1]
-        try:
-            if all(i.isdigit() for i in rembet):
-                if int(rembet) in list(bets.values()):
-                    if list(bets.values()).count(int(rembet)) > 1:
-                        userbets = []
-                        index = 0
-                        for i in list(bets.values()):
-                            if int(rembet) == i:
-                                userbets.append(list(bets.keys())[index])
-                            index += 1
-                        send_message("Found more than one bet of " + rembet +
-                                     " by these users: " + str(userbets))
+        if all(i.isdigit() for i in rembet):
+            if int(rembet) in list(bets.values()):
+                if list(bets.values()).count(int(rembet)) > 1:
+                    users = []
+                    index = 0
+                    for i in list(bets.values()):
+                        if int(rembet) == i:
+                            users.append(list(bets.keys())[index])
+                        index += 1
+                    send_message(f"Found more than one bet of {rembet} by these users: {str(users)}")
 
-                    else:
-                        rembet = list(bets.keys())[list(bets.values()).index(int(rembet))]
-                        del bets[rembet]
-                        del timers[rembet]
-                        send_message("Bet for " + rembet + " removed from pool.")
                 else:
-                    raise Exception
+                    userid = list(bets.keys())[list(bets.values()).index(int(rembet))]
+                    username = idtousername(userid)
+                    del bets[userid]
+                    del timers[username]
+                    send_message(f"Bet for {username} removed from pool.")
             else:
-                if rembet in list(bets.keys()):
-                    del bets[rembet]
-                    del timers[rembet]
-                    send_message("Bet for " + rembet + " removed from pool")
-                else:
-                    raise Exception
-        except Exception:
-            send_message("There are no bets with this name or value.")
+                raise Exception
         else:
-            with open(f'{os.path.dirname(os.path.dirname(__file__))}/{folder}/files/Bets.txt', 'w') as f:
-                for key in bets:
-                    f.write(key + ":" + str(bets[key]) + "\n")
+            if rembet in list(bets.keys()):
+                userid = usernametoid(rembet)
 
+                del bets[userid]
+                del timers[rembet]
+                Database.deleteoneindb("Bets", {"userid": userid})
+                send_message(f"Bet for {rembet} removed from pool")
+            else:
+                raise Exception
     except Exception as errormsg:
         send_message("Error removing user from current pool.")
         errorlog(errormsg, 'Bonertimer/removebet()', message)
 
 
 def clearbets():
-    global bets; global timers
+    global bets
+    global timers
     try:
         bets = {}
         timers = {}
         send_message("Bets cleared!")
+        Database.clearcollection("Bets")
     except Exception as errormsg:
         send_message("Error clearing the bets. Error logged.")
         errorlog(errormsg, 'Bonertimer/clearbets()', '')
 
 
-def mybet(displayname):
+def mybet(username, userid):
     try:
-        if bets.get(displayname):
-            send_message(displayname + " your bet is: " +
-                         str(bets.get(displayname)) + " minutes!")
+        if bets.get(userid):
+            send_message(username + " your bet is: " +
+                         str(bets.get(userid)) + " minutes!")
         else:
             send_message("No bet registered!")
     except Exception as errormsg:
         send_message("There was an error showing your bet!")
-        errorlog(errormsg, 'Bonertimer/mybet()', '')
+        errorlog(errormsg, 'Bonertimer/mybet()', "Username: " + username)

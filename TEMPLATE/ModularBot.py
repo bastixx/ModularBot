@@ -40,7 +40,7 @@ from unidecode import unidecode
 # from responseParse import *
 from Required.Errors import *
 from Required.Getgame import get_current_game
-from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database
+from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database, APICalls
 from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Rules, BonerTimer, RimworldAutomessage,\
     RimworldModLinker, Paddle, Questions, Modlog, Conversions, Random_stuff, SongSuggestions, CustomCommands, \
     responseParse
@@ -182,6 +182,7 @@ def main(s=sock):
     Errorlog.load_errorlog(FOLDER)
 
     # Resolve user id to channel id via the Twitch API
+    # TODO change.
     try:
         url = "https://api.twitch.tv/helix/users?login=" + CHANNEL.decode()
         headers = {'Client-ID': CLIENTID, 'Accept': 'application/vnd.twitchtv.v5+json',
@@ -194,6 +195,8 @@ def main(s=sock):
 
     # Load all the modules that were enabled in the config file
     Database.load_database(FOLDER)
+    APICalls.load_apicalls(CLIENTID, channel_id)
+
     # load_tagger()
 
     if enabled("RU"):
@@ -267,7 +270,7 @@ def main(s=sock):
                     # Only works after twitch is done announcing stuff (modt = Message of the day)
                     if modt:
                         if line.find("PRIVMSG") != -1:
-                            displayname, username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
+                            username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
                             msgtype = "PRIVMSG"
                         elif line.find("CLEARCHAT") != -1:
                             Tagger.tagclearchat(line)
@@ -285,10 +288,11 @@ def main(s=sock):
                             msgtype = "NOTICE"
 
                         if msgtype == "PRIVMSG":
-                            Logger.logger(userid, displayname, message, issub, ismod)
+                            Logger.logger(userid, username, message, issub, ismod)
 
                         # Unshortener TODO fix this thing
                         # if enabled("US"):
+                        #     # disable("US")
                         #     tempmessage = message.split(" ")
                         #     for shorturl in tempmessage:
                         #         if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
@@ -352,7 +356,7 @@ def main(s=sock):
 
                                     elif "!join" in messagelow[0:5]:
                                         custommodule = "RF"
-                                        Raffles.join_raffle(displayname, message, issub, ismod)
+                                        Raffles.join_raffle(userid, username, message, issub, ismod)
 
                                 if enabled("RO"):
                                     if "!roulette" in messagelow[0:9] and not oncooldown("RO", "roulette"):
@@ -360,7 +364,7 @@ def main(s=sock):
                                         functionname = "roulette"
                                         cooldown_time = 20
 
-                                        Roulette.roulette(displayname)
+                                        Roulette.roulette(username)
 
                                 if enabled("PA"):
                                     if "!paddle" in messagelow[0:7] and not oncooldown("PA", "paddle"):
@@ -368,7 +372,7 @@ def main(s=sock):
                                         try:
                                             cooldown_time = 20
                                             functionname = "paddle"
-                                            Paddle.paddle(displayname, message)
+                                            Paddle.paddle(username, message)
 
                                         except InsufficientParameterException:
                                             cooldown_time = 0
@@ -411,11 +415,11 @@ def main(s=sock):
 
                                     elif "!openbets" in messagelow[0:9] and ismod:
                                         custommodule = "BT"
-                                        BonerTimer.bets(message)
+                                        BonerTimer.func_bets(message)
 
                                     elif "!closebets" in messagelow[0:10] and ismod:
                                         custommodule = "BT"
-                                        BonerTimer.bets(message)
+                                        BonerTimer.func_bets(message)
 
                                     elif "!betstats" in messagelow[0:9]:
                                         custommodule = "BT"
@@ -423,11 +427,11 @@ def main(s=sock):
 
                                     elif "!bet" in messagelow[0:4]:
                                         custommodule = "BT"
-                                        BonerTimer.bet(displayname, message, ismod)
+                                        BonerTimer.bet(username, userid, message, ismod)
 
                                     elif "!mybet" in messagelow[0:6]:
                                         custommodule = "BT"
-                                        BonerTimer.mybet(displayname)
+                                        BonerTimer.mybet(userid)
 
                                     elif "!clearbets" in messagelow[0:10] and ismod:
                                         custommodule = "BT"

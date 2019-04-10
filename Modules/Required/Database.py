@@ -18,6 +18,19 @@ def getallfromdb(collection):
         raise Exception
 
 
+def getonefromdb(collection, filter={}):
+    try:
+        mycol = db[collection]
+        mydocs = mycol.find(filter)
+        dictionary = {}
+        for document in mydocs:
+            dictionary = document[0]
+        return dictionary
+    except Exception as errormsg:
+        errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")
+        raise Exception
+
+
 def insertoneindb(collection, data):
     try:
         mycol = db[collection]

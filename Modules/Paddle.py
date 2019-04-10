@@ -5,7 +5,7 @@ from Required.Sendmessage import send_message
 from Required.Errors import InsufficientParameterException
 
 
-def paddle(displayname, message):
+def paddle(username, message):
     messagesplit = message.split(" ")
     if len(messagesplit) != 2:
         raise InsufficientParameterException
@@ -13,7 +13,7 @@ def paddle(displayname, message):
     if randint == 1:
         send_message("/timeout %s 5 Get paddled!" % messagesplit[1])
         send_message("%s got paddled so hard by %s they need a few seconds to recover..." %
-                     (messagesplit[1].strip("@"), displayname))
+                     (messagesplit[1].strip("@"), username))
     else:
         send_message("%s gets a paddling from %s! andyt90bat" %
-                     (messagesplit[1].strip("@"), displayname))
+                     (messagesplit[1].strip("@"), username))

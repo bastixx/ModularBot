@@ -150,7 +150,7 @@ def raffle(message):
         errorlog(errormsg, "!raffle", message)
 
 
-def join_raffle(displayname, message, issub, ismod):
+def join_raffle(userid, username, message, issub, ismod):
     global raffles
     allowed = False
     arguments = message.split(" ")
@@ -158,10 +158,6 @@ def join_raffle(displayname, message, issub, ismod):
 
     time_now = datetime.now()
     try:
-        url = 'https://api.twitch.tv/helix/users?login=%s' % displayname
-        headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-        r = requests.get(url, headers=headers).json()
-        userid = r["data"][0]['id']
 
         if ismod:
             followed_at = '2010-01-01T22:33:44Z'
@@ -202,21 +198,21 @@ def join_raffle(displayname, message, issub, ismod):
 
     if allowed:
         try:
-            if displayname not in raffles[raffle]:
-                if displayname not in rafflewinners[raffle]:
-                    raffles[raffle].append(displayname)
-                    Database.insertoneindb("raffle_" + raffle, {"username": displayname, "Haswon": False})
-                    send_message("@%s joined raffle: \"%s\"!" % (displayname, raffle))
+            if userid not in raffles[raffle]:
+                if userid not in rafflewinners[raffle]:
+                    raffles[raffle].append(userid)
+                    Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": username, "Haswon": False})
+                    send_message("@%s joined raffle: \"%s\"!" % (username, raffle))
                 else:
-                    send_message("@%s you already won this raffle!" % displayname)
+                    send_message("@%s you already won this raffle!" % username)
             else:
-                send_message("@%s you are already in this raffle!" % displayname)
+                send_message("@%s you are already in this raffle!" % username)
         except IndexError:
             send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
                          "%s" % ", ".join(raffles.keys()))
         except Exception:
             send_message("Error adding user %s to raffle: \"%s\". Check if you spelled the "
-                         "raffle name correctly." % (displayname, raffle))
+                         "raffle name correctly." % (username, raffle))
     else:
         if mode == 'sub':
             send_message("This raffle is for subscribers only.")

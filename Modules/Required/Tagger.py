@@ -7,15 +7,6 @@ def load_tagger(CLIENTID):
     clientid = CLIENTID
 
 
-# def idlookup(userid):
-#     url = 'https://api.twitch.tv/helix/users?id=' + userid
-#     headers = {'Client-ID': clientid, 'Accept': 'application/json', 'Content-Type': 'application/json'}
-#     result = requests.get(url, headers=headers).json()
-#     displayname = result["data"][0]["display_name"]
-#     username = result["data"][0]["login"]
-#     return displayname, username
-
-
 def tagprivmsg(line):
     tags = {}
     line = line.lstrip("@")
@@ -26,7 +17,7 @@ def tagprivmsg(line):
         tags[key] = value
     ismod = tags.get("mod")
     issub = tags.get("subscriber")
-    displayname = tags.get("display-name")
+    username = tags.get("display-name")
     userid = tags.get("user-id")
 
     # message
@@ -35,12 +26,13 @@ def tagprivmsg(line):
     except:
         message = lineparts[1].rstrip("\r")
 
-    # username
-    try:
-        username = lineparts[1].split("!")[0]
-    except:
-        username = "Undefined_username"
-    return displayname, username, userid, message, issub, ismod
+    # username. This is only set if the displayname is not set.
+    if username == "":
+        try:
+            username = lineparts[1].split("!")[0]
+        except:
+            username = "Undefined_username"
+    return username, userid, message, issub, ismod
 
 
 def tagclearchat(line):
@@ -89,12 +81,15 @@ def tagusernotice(line):
         key, value = tag.split("=")
         tags[key] = value
     message = lineparts[2]
-    displayname = tags.get("display-name")
+    username = tags.get("display-name")
     ismod = tags.get("mod")
     issub = tags.get("subscriber")
     userid = tags.get("user-id")
 
-    logger(userid, displayname, message, issub, ismod)
+    if username == "":
+        username = tags.get("login")
+
+    logger(userid, username, message, issub, ismod)
 
 
 def tagnotice(line):
