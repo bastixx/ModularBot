@@ -224,28 +224,6 @@ def brokenboner():
                  "Use !bet <minutes> to place your bets!")
 
 
-def betstats():
-    if bets != {}:
-        try:
-            betvalues = [int(i) for i in list(bets.values())]
-            lowest = min(betvalues)
-            highest = max(betvalues)
-            betsum = 0.0
-            for key in bets:
-                betsum += int(bets[key])
-            length = len(bets)
-            avg = round((betsum / len(bets)), 2)
-            send_message(str(length) + " people are betting this round. The lowest bet is "
-                         + str(lowest) + " minutes and the highest bet is "
-                         + str(highest) + " minutes. The average is " + str(avg) +
-                         " minutes.")
-        except Exception as errormsg:
-            errorlog(errormsg, 'Bonertimer/betstats', '')
-            send_message("Error calculating numbers")
-    else:
-        send_message("No bets registered!")
-
-
 def bet(username, userid, message, ismod):
     arguments = message.split(" ")
     global bets
