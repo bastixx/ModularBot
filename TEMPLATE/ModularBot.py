@@ -210,7 +210,7 @@ def main(s=sock):
     if enabled("RF"):
         Raffles.load_raffles(CLIENTID, channel_id)
     if enabled("BT"):
-        BonerTimer.load_bonertimer(FOLDER)
+        BonerTimer.load_bonertimer()
     if enabled("RA"):
         RimworldAutomessage.load_rimworldautomessage(channel_id, CLIENTID)
     if enabled("QS"):
@@ -405,45 +405,9 @@ def main(s=sock):
                                         Backseatmessage.backseatmessage(message)
 
                                 if enabled("BT"):
-                                    if "!starttimer" in messagelow[0:11] and ismod and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.timer(message)
-
-                                    elif "!stoptimer" in messagelow[0:10] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.timer(message)
-
-                                    elif "!openbets" in messagelow[0:9] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.func_bets(message)
-
-                                    elif "!closebets" in messagelow[0:10] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.func_bets(message)
-
-                                    elif "!betstats" in messagelow[0:9]:
-                                        custommodule = "BT"
-                                        BonerTimer.betstats()
-
-                                    elif "!bet" in messagelow[0:4]:
+                                    if "!bet" in messagelow[0:4] or "!bets" in messagelow[0:5]:
                                         custommodule = "BT"
                                         BonerTimer.bet(username, userid, message, ismod)
-
-                                    elif "!mybet" in messagelow[0:6]:
-                                        custommodule = "BT"
-                                        BonerTimer.mybet(userid)
-
-                                    elif "!clearbets" in messagelow[0:10] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.clearbets()
-
-                                    elif "!addbet" in messagelow[0:7] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.addbet(message)
-
-                                    elif ("!rembet" in messagelow[0:7] or "!removebet" in messagelow[0:10])and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.removebet(message)
 
                                     elif "!currentboner" in messagelow[0:13] and not oncooldown("BT", "currentboner"):
                                         custommodule = "BT"
@@ -460,15 +424,11 @@ def main(s=sock):
                                     elif "!setboner" in messagelow[0:9] and ismod:
                                         BonerTimer.setboner(message)
 
-                                    elif "!timer" in messagelow[0:6] and not oncooldown("BT", "timer"):
+                                    elif "!timer" in messagelow[0:6] and (not oncooldown("BT", "timer") or ismod):
                                         custommodule = "BT"
                                         functionname = "timer"
                                         cooldown_time = 30
-                                        BonerTimer.timer(message)
-
-                                    elif "!resettimer" in messagelow[0:11] and ismod:
-                                        custommodule = "BT"
-                                        BonerTimer.timer(message)
+                                        BonerTimer.timer(message, ismod)
 
                                     elif "!fidwins" in messagelow[0:8] and ismod:
                                         custommodule = "BT"

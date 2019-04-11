@@ -4,8 +4,15 @@ from Required.Errorlog import errorlog
 
 def load_database(database):
     global db
+    global channel
+    channel = database
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     db = myclient[database]
+
+
+def getchannel():
+    return channel
+
 
 
 def getallfromdb(collection):

@@ -6,11 +6,12 @@ from Required.Sendmessage import send_message
 import Required.Database as Database
 
 
-def load_quotes(FOLDER):
-    global folder
+def load_quotes():
     global quotes
+    global channel
 
-    folder = FOLDER
+    channel = Database.getchannel()
+
     quotes = {}
     try:
         for document in Database.getallfromdb("Quotes"):
@@ -26,7 +27,7 @@ def quote(message, game):
     arguments = message.split(" ")
     try:
         if arguments[1].lower() == "list":
-            send_message(f"Quotelist can be found here: http://www.bastixx.nl/twitch/{folder}/quotes.php")
+            send_message(f"Quotelist can be found here: http://www.bastixx.nl/twitch/{channel}/quotes.php")
         elif arguments[1].lower() == "add":
             try:
                 currentdate = time.strftime("%d/%m/%Y")
