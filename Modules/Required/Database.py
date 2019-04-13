@@ -14,7 +14,6 @@ def getchannel():
     return channel
 
 
-
 def getallfromdb(collection):
     try:
         mycol = db[collection]

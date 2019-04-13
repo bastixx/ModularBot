@@ -3,41 +3,17 @@ import os
 import ctypes
 import socket
 import ast
-import configparser
-import logging
 import threading
-import re
 
 import requests
 import time
-import validators
+# import validators
 from unidecode import unidecode
 
 # Append path to modules to path variable and load custom modules
 # sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
-# from Required.Sendmessage import *
 # from Required.Getgame import *  # TODO Keep as seperate module?
-# from Required.Tagger import *
-# from Required.Errorlog import *
-# from Required.Logger import *
-# from Backseatmessage import *
-# from Roulette import *
-# from Quotes import *
-# from Raffles import *
-# from Deathcounter import *
-# from Rules import *
-# from BonerTimer import *
-# from RimworldAutomessage import load_rimworldautomessage
-# from Paddle import *
-# from Questions import *
-# from Modlog import *
-# from Conversions import *
 # from Random_stuff import *  # TODO split into seperate modules
-# from RimworldModLinker import *
-# from SongSuggestions import *
-# from Required.Database import load_database
-# from CustomCommands import *
-# from responseParse import *
 from Required.Errors import *
 from Required.Getgame import get_current_game
 from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database, APICalls
@@ -54,29 +30,21 @@ def parse_ast(filename):
     with open(filename, "rt") as file:
         return ast.parse(file.read(), filename=filename)
 
+# TODO make this variable get send by the controller.
+Database.load_database(channel)
+config = Database.getonefromdb("Config")
 
-logging.basicConfig()
-# Load all the variables necessary to connect to Twitch IRC from a config file
-config = configparser.ConfigParser()
-config.read('Config.ini')
-settings = config['Settings']
-
-HOST = settings['host']
-NICK = b"%s" % settings['Nickname'].encode()
-PORT = int(settings['port'])
-PASS = b"%s" % settings['Password'].encode()
-CHANNEL = b"%s" % settings['Channel'].encode()
-CLIENTID = settings['Client ID']
+HOST = config["Host"]
+NICK = config["Nickname"].encode()
+PORT = int(config["Port"])
+PASS = config["Password"].encode()
+CHANNEL = channel.encode()
+CLIENTID = config["Client ID"]
 OAUTH = PASS.decode().split(":")[1]
-FOLDER = settings['Folder']
-STEAMAPIKEY = settings['SteamApiKey']
+FOLDER = config["FOLDER"]
+STEAMAPIKEY = config['SteamApiKey']
 
-# For debugging purposes
-debug = config['Debug']
-printmessage = debug.getboolean('Print message')
-printraw = debug.getboolean('Print raw')
-lograw = debug.getboolean('Log raw')
-printparts = debug.getboolean('Print tags')
+printraw = False
 
 modules = {'SM': {"name": 'Sendmessage'},
            'EL': {"name": 'Errorlog'},
@@ -129,17 +97,11 @@ sock.send(b"CAP REQ :twitch.tv/commands \r\n")
 sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
 
-def enabled(module): # MB use this in the giant List of modules?
+def enabled(module):  # MB use this in the giant List of modules?
     return modules[module]["enabled"]
 
 
 def oncooldown(module, func):
-    print("Next use:")
-    print(modules[module]["functions"][func]["next use"])
-    print("time.time:")
-    print(time.time())
-    print("on cooldown:")
-    print(modules[module]["functions"][func]["next use"] >= time.time())
     if modules[module]["functions"][func]["next use"] >= time.time():
         return True
     else:
@@ -239,8 +201,6 @@ def main(s=sock):
             for line in temp:
                 if printraw:
                     print(line)
-                if lograw:
-                    logline(line)
                 # Checks if  message is PING. If so reply pong and extend the timer for a restart
                 if "PING" in line:
                     s.send(b"PONG\r\n")
@@ -269,9 +229,11 @@ def main(s=sock):
 
                     # Only works after twitch is done announcing stuff (modt = Message of the day)
                     if modt:
+                        msgtype = ""
                         if line.find("PRIVMSG") != -1:
                             username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
                             msgtype = "PRIVMSG"
+                            Logger.logger(userid, username, message, issub, ismod)
                         elif line.find("CLEARCHAT") != -1:
                             Tagger.tagclearchat(line)
                             msgtype = "CLEARCHAT"
@@ -287,9 +249,6 @@ def main(s=sock):
                             Tagger.tagnotice(line)
                             msgtype = "NOTICE"
 
-                        if msgtype == "PRIVMSG":
-                            Logger.logger(userid, username, message, issub, ismod)
-
                         # Unshortener TODO fix this thing
                         # if enabled("US"):
                         #     # disable("US")
@@ -299,10 +258,7 @@ def main(s=sock):
                         #             unshorten(shorturl)
 
                         # These are the actual commands
-                        if msgtype != "PRIVMSG":
-                            pass
-
-                        elif message[0] == '!':
+                        if msgtype == "PRIVMSG" and message[0] == '!':
                             cooldown_time = 0
                             try:
                                 messagelow = message.lower()
