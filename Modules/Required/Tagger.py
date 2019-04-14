@@ -2,9 +2,9 @@ from Modlog import *
 from Required.Logger import logger
 
 
-def load_tagger(CLIENTID):
-    global clientid
-    clientid = CLIENTID
+# def load_tagger(CLIENTID):
+#     global clientid
+#     clientid = CLIENTID
 
 
 def tagprivmsg(line):

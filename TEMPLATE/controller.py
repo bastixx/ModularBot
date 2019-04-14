@@ -1,6 +1,7 @@
 from ModularBot import bot
 from Modules.Required import Database as database
-import multiprocessing
+import multiprocessing as mp
+import sys
 
 bots = dict()
 TIMEOUT = 60
@@ -10,10 +11,43 @@ helpDict = {"add": "Adds another bot to the Database, requires a given name", "e
     "lastChat": "Displays the last Chat received by the given Bot to check continued connection to twitch", "remove": "Removes bot from the Bot Database",
     "start": "Starts bot with given name", "status": "Displays Status of the given bot", "stop": "Stops the given bot"}
 
+
+def botStop(bot, name):
+    bot.pop('pipe', None)
+    bot['process'].terminate()
+    if bot['process'].join(TIMEOUT) is None:
+        bot['process'].kill()
+    bot.pop('process', None)
+    return bot
+
+
+def botStart(bot, name):
+    parent, child = mp.Pipe()
+    bot.update('pipe'=parent)
+    process = Process(target=bot(), args=(bot['config'], child, ), Name=name)
+    bot.update('process'=process)
+    process.start()
+    return bot
+
+
+def aliveCheck(bots, key):
+    proc = bots[key].get('process', None)
+    if not proc == None:
+        return not proc.is_alive()
+    return False
+
+
+def pipeCheck(bots, key):
+    proc = bots[key].get('pipe', None)
+    if not proc == None:
+        return not proc.poll(0)
+    return False
+
+
 if __name__ == '__main__':
     mp.set_start_method('spawn')
     database.load_database("controller")
-    for element in getallfromdb("bots"):
+    for element in database.getallfromdb("bots"):
         bots.update(element['name']=dict('config'=element['config_path'])
     for name in bots.keys():
         bots.update(name=botStart(bots[name], name))
@@ -109,33 +143,3 @@ for name in bots.keys:
     bots.update(name=botStop(bots[name], name))
 sys.exit(0)
 
-def botStop(bot, name):
-    bot.pop('pipe', None)
-    bot['process'].terminate()
-    if bot['process'].join(TIMEOUT) is None:
-        bot['process'].kill()
-    bot.pop('process', None)
-    return bot
-
-
-def botStart(bot, name):
-    parent, child = multiprocessing.Pipe()
-    bot.update('pipe'=parent)
-    process = Process(target=ModularBot.bot(), args=(bot['config'], child, ), Name=name)
-    bot.update('process'=process)
-    process.start()
-    return bot
-
-
-def aliveCheck(bots, key):
-    proc = bots[key].get('process', None)
-    if not proc == None:
-        return not proc.is_alive()
-    return False
-
-
-def pipeCheck(bots, key):
-    proc = bots[key].get('pipe', None)
-    if not proc == None:
-        return not proc.poll(0)
-    return False

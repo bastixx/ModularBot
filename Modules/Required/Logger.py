@@ -9,7 +9,7 @@ from Required.Database import insertoneindb
 def logger(userid, displayname, message, issub, ismod, issystem=False):
     try:
         timestamp = str(time.strftime("%d-%m-%Y %H:%M:%S"))
-        print(f"[{timestamp}] {displayname}: {message}")
+        # print(f"[{timestamp}] {displayname}: {message}")
         message = unidecode(message)
         insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid,
                                   "message": message, "sub": issub, "mod": ismod, "systemmessage": issystem})

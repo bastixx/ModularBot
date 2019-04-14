@@ -30,72 +30,6 @@ def parse_ast(filename):
     with open(filename, "rt") as file:
         return ast.parse(file.read(), filename=filename)
 
-# TODO make this variable get send by the controller.
-Database.load_database(channel)
-config = Database.getonefromdb("Config")
-
-HOST = config["Host"]
-NICK = config["Nickname"].encode()
-PORT = int(config["Port"])
-PASS = config["Password"].encode()
-CHANNEL = channel.encode()
-CLIENTID = config["Client ID"]
-OAUTH = PASS.decode().split(":")[1]
-FOLDER = config["FOLDER"]
-STEAMAPIKEY = config['SteamApiKey']
-
-printraw = False
-
-modules = {'SM': {"name": 'Sendmessage'},
-           'EL': {"name": 'Errorlog'},
-           'LO': {"name": 'Logger'},
-           'DC': {"name": 'Deathcounter'},
-           'QU': {"name": 'Quotes'},
-           'RF': {"name": 'Raffles'},
-           'RO': {"name": 'Roulette'},
-           'BSM': {"name": 'Backseatmessage'},
-           'RU': {"name": 'Rules'},
-           'BT': {"name": 'BonerTimer'},
-           'RA': {"name": 'RimworldAutomessage'},
-           'PA': {"name": 'Paddle'},
-           'QS': {"name": 'Questions'},
-           'ML': {"name": 'Modlog'},
-           'CV': {"name": 'Conversions'},
-           'FG': {"name": 'FollowerGoals'},
-           'RML': {"name": 'RimworldModLinker'},
-           'SS': {"name": 'SongSuggestions'},
-           'CC': {"name": 'CustomCommands'},
-           'RP': {"name": 'ResponseParse'}}
-
-# Enabling modules if set to true in config file
-modulesConfig = config['Modules']
-for module in modules.keys():
-    modules[module]["enabled"] = modulesConfig.getboolean(modules[module]["name"])
-    modules[module]["functions"] = {}
-    if modules[module]["enabled"]:
-        tree = parse_ast("../modules/" + modules[module]["name"] + ".py")
-        for func in top_level_functions(tree.body):
-            modules[module]["functions"][func.name] = {"next use": time.time()}
-
-
-modules['other'] = {"name": "Other"}
-# logging.debug("Loaded config.")
-# filter(lambda x: modules[x]["enabled"], modules.keys())
-
-# setting the name of the window to bot name for easier distinguishing
-ctypes.windll.kernel32.SetConsoleTitleW(f"{FOLDER}")
-
-# Connecting to Twitch IRC by passing credentials and joining a certain channel
-sock = socket.socket()
-sock.connect((HOST, PORT))
-sock.send(b"PASS " + PASS + b"\r\n")
-sock.send(b"NICK " + NICK + b"\r\n")
-# Sending a command to make twitch return tags with each message
-sock.send(b"CAP REQ :twitch.tv/tags \r\n")
-sock.send(b"CAP REQ :twitch.tv/commands \r\n")
-# Join the IRC channel of the channel
-sock.send(b"JOIN #" + CHANNEL + b"\r\n")
-
 
 def enabled(module):  # MB use this in the giant List of modules?
     return modules[module]["enabled"]
@@ -113,34 +47,94 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
     comlimits.remove(command)
 
 
-def logline(line):  # Debug setting to save the raw data recieved to a file
-    try:
-        line = unidecode(line)
-        with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime(
-                "%d-%m-%Y") + ".txt", 'a+') as f:
-            f.write("[%s] %s\n" % (str(time.strftime("%H:%M:%S")), line))
-    except Exception as errormsg:
-        Errorlog.errorlog(errormsg, "logline()", line)
+# def logline(line):  # Debug setting to save the raw data recieved to a file
+#     try:
+#         line = unidecode(line)
+#         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime(
+#                 "%d-%m-%Y") + ".txt", 'a+') as f:
+#             f.write("[%s] %s\n" % (str(time.strftime("%H:%M:%S")), line))
+#     except Exception as errormsg:
+#         Errorlog.errorlog(errormsg, "logline()", line)
 
 
-def nopong():  # Function to restart the bot in case of connection lost
-    Errorlog.errorlog("Connection lost, bot restarted", "nopong", '')
-    os.execv(sys.executable, [sys.executable, f"{os.path.dirname(__file__)}/{FOLDER}/{FOLDER}.py"] + sys.argv)
+# def nopong():  # Function to restart the bot in case of connection lost
+#     Errorlog.errorlog("Connection lost, bot restarted", "nopong", '')
+#     os.execv(sys.executable, [sys.executable, f"{os.path.dirname(__file__)}/{FOLDER}/{FOLDER}.py"] + sys.argv)
 
 
-def main(s=sock):
+def bot(channel):
+    global modules
+    # TODO make this variable get send by the controller.
+    Database.load_database(channel)
+    config = Database.getonefromdb("Config")
+
+    HOST = config["Host"]
+    NICK = config["Nickname"].encode()
+    PORT = int(config["Port"])
+    PASS = config["Password"].encode()
+    CHANNEL = channel.encode()
+    CLIENTID = config["Client ID"]
+    OAUTH = PASS.decode().split(":")[1]
+    FOLDER = config["FOLDER"]
+    STEAMAPIKEY = config['SteamApiKey']
+
+    printraw = False
+
+    modules = {'SM': {"name": 'Sendmessage'},
+               'EL': {"name": 'Errorlog'},
+               'LO': {"name": 'Logger'},
+               'DC': {"name": 'Deathcounter'},
+               'QU': {"name": 'Quotes'},
+               'RF': {"name": 'Raffles'},
+               'RO': {"name": 'Roulette'},
+               'BSM': {"name": 'Backseatmessage'},
+               'RU': {"name": 'Rules'},
+               'BT': {"name": 'BonerTimer'},
+               'RA': {"name": 'RimworldAutomessage'},
+               'PA': {"name": 'Paddle'},
+               'QS': {"name": 'Questions'},
+               'ML': {"name": 'Modlog'},
+               'CV': {"name": 'Conversions'},
+               'FG': {"name": 'FollowerGoals'},
+               'RML': {"name": 'RimworldModLinker'},
+               'SS': {"name": 'SongSuggestions'},
+               'CC': {"name": 'CustomCommands'},
+               'RP': {"name": 'ResponseParse'}}
+
+    # Enabling modules if set to true in config file
+    modulesconfig = config['Modules']
+    for module in modules.keys():
+        modules[module]["enabled"] = modulesconfig.getboolean(modules[module]["name"])
+        modules[module]["functions"] = {}
+        if modules[module]["enabled"]:
+            tree = parse_ast("../modules/" + modules[module]["name"] + ".py")
+            for func in top_level_functions(tree.body):
+                modules[module]["functions"][func.name] = {"next use": time.time()}
+
+    modules['other'] = {"name": "Other"}
+    # Connecting to Twitch IRC by passing credentials and joining a certain channel
+    sock = socket.socket()
+    sock.connect((HOST, PORT))
+    sock.send(b"PASS " + PASS + b"\r\n")
+    sock.send(b"NICK " + NICK + b"\r\n")
+    # Sending a command to make twitch return tags with each message
+    sock.send(b"CAP REQ :twitch.tv/tags \r\n")
+    sock.send(b"CAP REQ :twitch.tv/commands \r\n")
+    # Join the IRC channel of the channel
+    sock.send(b"JOIN #" + CHANNEL + b"\r\n")
+
     global comlimits
     readbuffer = ""
     modt = False
     comlimits = []
 
     # Starting the timer in case of a disconnect
-    keepalivetimer = threading.Timer(310, nopong)
-    keepalivetimer.start()
+    # keepalivetimer = threading.Timer(310, nopong)
+    # keepalivetimer.start()
 
     # Loading the basic modules
-    Tagger.load_tagger(CLIENTID)
-    Sendmessage.load_send_message(FOLDER, CHANNEL, s)
+    # Tagger.load_tagger(CLIENTID)
+    Sendmessage.load_send_message(FOLDER, CHANNEL, sock)
     Errorlog.load_errorlog(FOLDER)
 
     # Resolve user id to channel id via the Twitch API
@@ -194,22 +188,22 @@ def main(s=sock):
     while True:
         try:
             # Read messages from buffer to temp, which we then line by line disect.
-            readbuffer = readbuffer + s.recv(1024).decode()
+            readbuffer = readbuffer + sock.recv(1024).decode()
             temp = readbuffer.split("\n")
             readbuffer = temp.pop()
 
             for line in temp:
-                if printraw:
-                    print(line)
+                # if printraw:
+                #     print(line)
                 # Checks if  message is PING. If so reply pong and extend the timer for a restart
                 if "PING" in line:
-                    s.send(b"PONG\r\n")
-                    try:
-                        keepalivetimer.cancel()
-                        keepalivetimer = threading.Timer(310, nopong)
-                        keepalivetimer.start()
-                    except Exception as errormsg:
-                        Errorlog.errorlog(errormsg, "keepalivetimer", '')
+                    sock.send(b"PONG\r\n")
+                    # try:
+                    #     keepalivetimer.cancel()
+                    #     keepalivetimer = threading.Timer(310, nopong)
+                    #     keepalivetimer.start()
+                    # except Exception as errormsg:
+                    #     Errorlog.errorlog(errormsg, "keepalivetimer", '')
 
                     # if modules["FG"]["Enabled"]:
                     #     try:
@@ -445,8 +439,8 @@ def main(s=sock):
                                         if messagelow.split(" ")[0] in customcommands.keys():
                                             CustomCommands.eval_command(message)
 
-                                if '!restart' in messagelow[0:8] and username == 'bastixx669':
-                                    nopong()
+                                # if '!restart' in messagelow[0:8] and username == 'bastixx669':
+                                #     nopong()
 
                                 elif "!module" in messagelow[0:7] and username == 'bastixx669':
                                     messageparts = message.split(" ")
@@ -469,7 +463,7 @@ def main(s=sock):
                                                     f.write(lineinfile)
                                             if not var_break:
                                                 Sendmessage.send_message(f"Module {keyword} enabled.")
-                                                nopong()
+                                                # nopong()
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/enable", message)
                                             Sendmessage.send_message("Error enabling this custommodule.")
@@ -491,7 +485,7 @@ def main(s=sock):
                                                     f.write(lineinfile)
                                             if not var_break:
                                                 Sendmessage.send_message(f"Module {keyword} disabled.")
-                                                nopong()
+                                                # nopong()
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/disable", message)
                                             Sendmessage.send_message("Error disabling this custommodule.")
@@ -500,16 +494,11 @@ def main(s=sock):
                                 Sendmessage.send_message("There was an error with the command. "
                                                          "Please check your command and try again.")
 
-                                print(f"Message: {message}")
-                                print(f"Line: {line}")
-
                             finally:
                                 if cooldown_time != 0:
                                     # tempdict = {custommodule: {"functions": {functionname: {"next use": time.time() + cooldown_time}}}}
                                     modules[custommodule]["functions"][functionname] = {"next use": time.time() + cooldown_time}
                                     # modules.update(tempdict)
-
-                                    print(f"Module: {custommodule}")
                         else:
                             if enabled('RP'):
                                 responseParse.parse_response(message)
@@ -532,7 +521,6 @@ def main(s=sock):
             raise errormsg
 
 
-main()
 # todo add cache for follows
 # todo rework bonertimer module
 # todo streamline functions/names

@@ -15,7 +15,7 @@ def follows(userid):
         headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
         r = requests.get(url, headers=headers).json()
 
-        # Returns data about when x followed y, or {} if x doesnt follow y
+        # Returns data about when x follows y, or {} if x doesnt follow y
         return r.data[0]
     except Exception as errormsg:
         errorlog(errormsg, 'APICalls/follows()', "Userid:" + userid)
