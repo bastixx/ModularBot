@@ -30,7 +30,7 @@ def getonefromdb(collection, filter={}):
         mydocs = mycol.find(filter)
         dictionary = {}
         for document in mydocs:
-            dictionary = document[0]
+            dictionary = document
         return dictionary
     except Exception as errormsg:
         errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")

@@ -4,7 +4,6 @@ import ctypes
 import socket
 import ast
 import threading
-
 import requests
 import time
 # import validators
@@ -19,9 +18,9 @@ from unidecode import unidecode
 from Modules.Required.Errors import *
 from Modules.Required.Getgame import get_current_game
 from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database, APICalls
-from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Rules, BonerTimer, RimworldAutomessage,\
-    RimworldModLinker, Paddle, Questions, Modlog, Conversions, Random_stuff, SongSuggestions, CustomCommands, \
-    responseParse
+from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Rules, BrokenBoner, RimworldAutomessage,\
+    RimworldModLinker, Paddle, Questions, Modlog, Conversions, Unshorten, SongSuggestions, CustomCommands, \
+    responseParse, Pun, FollowerGoals
 
 
 def top_level_functions(body):
@@ -66,116 +65,123 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 
 def botinstance(channelid, channelname, pipe):
     global modules
-    # TODO make this variable get send by the controller.
-    Database.load_database(channelname)
-    config = Database.getonefromdb("Config")
+    sys.stderr = open(f"D:\Dropbox\Dropbox\Python\ModularBot\Bot\{channelname}_errorlog.txt", 'w+')
+    sys.stdout = open(f"D:\Dropbox\Dropbox\Python\ModularBot\Bot\{channelname}_log.txt", 'w+')
+    try:
+        Database.load_database(channelname)
+        config = Database.getonefromdb("Config")
+        HOST = config["Host"]
+        NICK = config["Nickname"].encode()
+        PORT = int(config["Port"])
+        PASS = config["Password"].encode()
+        CHANNEL = channelname.encode()
+        CLIENTID = config["Client ID"]
+        OAUTH = PASS.decode().split(":")[1]
+        FOLDER = config["Folder"]
+        STEAMAPIKEY = config['SteamAPIkey']
+        # Headers for the Twitch API calls being made.
+        headers = {'Client-ID': CLIENTID, 'Accept': 'application/vnd.twitchtv.v5+json',
+                   'Authorization': "OAuth " + OAUTH}
 
-    HOST = config["Host"]
-    NICK = config["Nickname"].encode()
-    PORT = int(config["Port"])
-    PASS = config["Password"].encode()
-    CHANNEL = channelname.encode()
-    CLIENTID = config["Client ID"]
-    OAUTH = PASS.decode().split(":")[1]
-    FOLDER = config["FOLDER"]
-    STEAMAPIKEY = config['SteamApiKey']
-    # Headers for the Twitch API calls being made.
-    headers = {'Client-ID': CLIENTID, 'Accept': 'application/vnd.twitchtv.v5+json',
-               'Authorization': "OAuth " + OAUTH}
+        modules = {'SM': {"name": 'Sendmessage'},
+                   'EL': {"name": 'Errorlog'},
+                   'LO': {"name": 'Logger'},
+                   'DC': {"name": 'Deathcounter'},
+                   'QU': {"name": 'Quotes'},
+                   'RF': {"name": 'Raffles'},
+                   'RO': {"name": 'Roulette'},
+                   'BSM': {"name": 'Backseatmessage'},
+                   'RU': {"name": 'Rules'},
+                   'BT': {"name": 'BrokenBoner'},
+                   'RA': {"name": 'RimworldAutomessage'},
+                   'PA': {"name": 'Paddle'},
+                   'QS': {"name": 'Questions'},
+                   'ML': {"name": 'Modlog'},
+                   'CV': {"name": 'Conversions'},
+                   'FG': {"name": 'FollowerGoals'},
+                   'RML': {"name": 'RimworldModLinker'},
+                   'SS': {"name": 'SongSuggestions'},
+                   'CC': {"name": 'CustomCommands'},
+                   'RP': {"name": 'ResponseParse'},
+                   'US': {"name": 'Unshorten'},
+                   'PU': {"name": 'Pun'}}
 
-    printraw = False
+        # Enabling modules if set to true in config file
+        modulesconfig = {}
+        for document in Database.getallfromdb('Modules'):
+            modulesconfig[document["module"]] = {"enabled": document["enabled"], "mandatory": document["mandatory"]}
 
-    modules = {'SM': {"name": 'Sendmessage'},
-               'EL': {"name": 'Errorlog'},
-               'LO': {"name": 'Logger'},
-               'DC': {"name": 'Deathcounter'},
-               'QU': {"name": 'Quotes'},
-               'RF': {"name": 'Raffles'},
-               'RO': {"name": 'Roulette'},
-               'BSM': {"name": 'Backseatmessage'},
-               'RU': {"name": 'Rules'},
-               'BT': {"name": 'BonerTimer'},
-               'RA': {"name": 'RimworldAutomessage'},
-               'PA': {"name": 'Paddle'},
-               'QS': {"name": 'Questions'},
-               'ML': {"name": 'Modlog'},
-               'CV': {"name": 'Conversions'},
-               'FG': {"name": 'FollowerGoals'},
-               'RML': {"name": 'RimworldModLinker'},
-               'SS': {"name": 'SongSuggestions'},
-               'CC': {"name": 'CustomCommands'},
-               'RP': {"name": 'ResponseParse'}}
+        for module in modules.keys():
+            modules[module]["enabled"] = modulesconfig[modules[module]["name"]]
+            modules[module]["functions"] = {}
+            if modules[module]["enabled"] and not modulesconfig[modules[module]["name"]]["mandatory"]:
+                tree = parse_ast("modules/" + modules[module]["name"] + ".py")
+                for func in top_level_functions(tree.body):
+                    modules[module]["functions"][func.name] = {"next use": time.time()}
 
-    # Enabling modules if set to true in config file
-    modulesconfig = config['Modules']
-    for module in modules.keys():
-        modules[module]["enabled"] = modulesconfig.getboolean(modules[module]["name"])
-        modules[module]["functions"] = {}
-        if modules[module]["enabled"]:
-            tree = parse_ast("../modules/" + modules[module]["name"] + ".py")
-            for func in top_level_functions(tree.body):
-                modules[module]["functions"][func.name] = {"next use": time.time()}
+        modules['other'] = {"name": "Other"}
+        # Connecting to Twitch IRC by passing credentials and joining a certain channel
+        sock = socket.socket()
+        sock.connect((HOST, PORT))
+        sock.send(b"PASS " + PASS + b"\r\n")
+        sock.send(b"NICK " + NICK + b"\r\n")
+        # Sending a command to make twitch return tags with each message
+        sock.send(b"CAP REQ :twitch.tv/tags \r\n")
+        sock.send(b"CAP REQ :twitch.tv/commands \r\n")
+        # Join the IRC channel of the channel
+        sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
-    modules['other'] = {"name": "Other"}
-    # Connecting to Twitch IRC by passing credentials and joining a certain channel
-    sock = socket.socket()
-    sock.connect((HOST, PORT))
-    sock.send(b"PASS " + PASS + b"\r\n")
-    sock.send(b"NICK " + NICK + b"\r\n")
-    # Sending a command to make twitch return tags with each message
-    sock.send(b"CAP REQ :twitch.tv/tags \r\n")
-    sock.send(b"CAP REQ :twitch.tv/commands \r\n")
-    # Join the IRC channel of the channel
-    sock.send(b"JOIN #" + CHANNEL + b"\r\n")
+        global comlimits
+        readbuffer = ""
+        modt = False
+        comlimits = []
 
-    global comlimits
-    readbuffer = ""
-    modt = False
-    comlimits = []
+        # Starting the timer in case of a disconnect
+        # keepalivetimer = threading.Timer(310, nopong)
+        # keepalivetimer.start()
 
-    # Starting the timer in case of a disconnect
-    # keepalivetimer = threading.Timer(310, nopong)
-    # keepalivetimer.start()
+        # Loading the basic modules
+        # Tagger.load_tagger(CLIENTID)
+        Sendmessage.load_send_message(FOLDER, CHANNEL, sock)
+        Errorlog.load_errorlog(FOLDER)
 
-    # Loading the basic modules
-    # Tagger.load_tagger(CLIENTID)
-    Sendmessage.load_send_message(FOLDER, CHANNEL, sock)
-    Errorlog.load_errorlog(FOLDER)
+        # Load all the modules that were enabled in the config file
+        Database.load_database(FOLDER)
+        APICalls.load_apicalls(CLIENTID, channelid)
+    except Exception as errormsg:
+        Errorlog.errorlog(errormsg, "Bot/startup", "Channel:" + channelname)
+        pipe.send(f"Error: {errormsg}")
 
-    # Load all the modules that were enabled in the config file
-    Database.load_database(FOLDER)
-    APICalls.load_apicalls(CLIENTID, channelid)
+        # load_tagger()
 
-    # load_tagger()
-
-    if enabled("RU"):
-        Rules.load_rules()
-    if enabled("BSM"):
-        Backseatmessage.load_bsmessage()
-    if enabled("DC"):
-        Deathcounter.load_deaths()
-    if enabled("QU"):
-        Quotes.load_quotes()
-    if enabled("RF"):
-        Raffles.load_raffles(CLIENTID, channelid)
-    if enabled("BT"):
-        BonerTimer.load_bonertimer()
-    if enabled("RA"):
-        RimworldAutomessage.load_rimworldautomessage(channelid, CLIENTID)
-    if enabled("QS"):
-        Questions.load_questions()
-    if enabled("ML"):
-        Modlog.load_modlog(channelid, headers)
-    if enabled("FG"):
-        Random_stuff.load_followergoals(FOLDER)
-    if enabled("RML"):
-        RimworldModLinker.load_mod(STEAMAPIKEY)
-    if enabled("SS"):
-        SongSuggestions.load_suggestions()
-    if enabled("CC"):
-        customcommands = CustomCommands.load_commands()
-    if enabled("RP"):
-        responseParse.load_responses()
+        if enabled("RU"):
+            Rules.load_rules()
+        if enabled("BSM"):
+            Backseatmessage.load_bsmessage()
+        if enabled("DC"):
+            Deathcounter.load_deaths()
+        if enabled("QU"):
+            Quotes.load_quotes()
+        if enabled("RF"):
+            Raffles.load_raffles(CLIENTID, channelid)
+        if enabled("BT"):
+            BrokenBoner.load_bonertimer()
+        if enabled("RA"):
+            RimworldAutomessage.load_rimworldautomessage(channelid, CLIENTID)
+        if enabled("QS"):
+            Questions.load_questions()
+        if enabled("ML"):
+            Modlog.load_modlog(channelid, headers)
+        if enabled("FG"):
+            FollowerGoals.load_followergoals(FOLDER)
+        if enabled("RML"):
+            RimworldModLinker.load_mod(STEAMAPIKEY)
+        if enabled("SS"):
+            SongSuggestions.load_suggestions()
+        if enabled("CC"):
+            customcommands = CustomCommands.load_commands()
+        if enabled("RP"):
+            responseParse.load_responses()
 
     # Infinite loop waiting for commands
     while True:
@@ -256,7 +262,7 @@ def botinstance(channelid, channelname, pipe):
                                     functionname = "pun"
                                     cooldown_time = 30
 
-                                    Random_stuff.pun()
+                                    Pun.pun()
 
                                 elif "!commandlist" in messagelow[0:12] and not oncooldown("other", "commandlist"):
                                     functionname = "commandlist"
@@ -350,36 +356,36 @@ def botinstance(channelid, channelname, pipe):
                                 if enabled("BT"):
                                     if "!bet" in messagelow[0:4] or "!bets" in messagelow[0:5]:
                                         custommodule = "BT"
-                                        BonerTimer.bet(username, userid, message, ismod)
+                                        BrokenBoner.bet(username, userid, message, ismod)
 
                                     elif "!currentboner" in messagelow[0:13] and not oncooldown("BT", "currentboner"):
                                         custommodule = "BT"
                                         functionname = "currentboner"
                                         cooldown_time = 30
-                                        BonerTimer.currentboner()
+                                        BrokenBoner.currentboner()
 
                                     elif "!brokenboner" in messagelow[0:12] and not oncooldown("BT", "brokenboner"):
                                         custommodule = "BT"
                                         functionname = "brokenboner"
                                         cooldown_time = 30
-                                        BonerTimer.brokenboner()
+                                        BrokenBoner.brokenboner()
 
                                     elif "!setboner" in messagelow[0:9] and ismod:
-                                        BonerTimer.setboner(message)
+                                        BrokenBoner.setboner(message)
 
                                     elif "!timer" in messagelow[0:6] and (not oncooldown("BT", "timer") or ismod):
                                         custommodule = "BT"
                                         functionname = "timer"
                                         cooldown_time = 30
-                                        BonerTimer.timer(message, ismod)
+                                        BrokenBoner.timer(message, ismod)
 
                                     elif "!fidwins" in messagelow[0:8] and ismod:
                                         custommodule = "BT"
-                                        BonerTimer.fidwins()
+                                        BrokenBoner.fidwins()
 
                                     elif "!winner" in messagelow[0:7] and ismod:
                                         custommodule = "BT"
-                                        BonerTimer.winner(message)
+                                        BrokenBoner.winner(message)
 
                                 if enabled("QU"):
                                     if "!question" in messagelow[0:9] and not oncooldown("QU", "question"):
@@ -493,7 +499,7 @@ def botinstance(channelid, channelname, pipe):
                                     modules[custommodule]["functions"][functionname] = {"next use": time.time() + cooldown_time}
                                     # modules.update(tempdict)
                         else:
-                            if enabled('RP'):
+                            if enabled('RP') and msgtype == "PRIVMSG":
                                 responseParse.parse_response(message)
 
                     for l in parts:
