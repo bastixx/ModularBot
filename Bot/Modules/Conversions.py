@@ -31,19 +31,17 @@ def convert(message):
     send_message("Unable to convert this. Unknown format or typo. "
          "Supported formats are: "
          "Mi, KM, °F, °C, °K, KG, lb, cm, ft and in.")
-    
-
 
 def convert_feet&inches(match):
     feet, inches = float(match.group(1)), float(match.group(2))
     cm = (feet * 30.48) + (inches * 2.54)
     send_message(f"{feet} ft and {inches} in is {round(cm, 2)} cm!")
-    
+
 def convert_feet(match):
     feet = float(match.group(1))
     cm = (feet * 30.48)
     send_message(f"{feet} ft is {round(cm, 2)} cm!")
-        
+
 def convert_inches(match):
     inch = float(match.group(1))
     cm = (inch * 2.54)
@@ -54,7 +52,7 @@ def convert_centimetres(match):
     tempinches, feet = math.modf(cm * 0.03281)
     inches = tempinches * 12
     send_message(f"{cm} cm is {int(feet)}ft {round(inches, 1)}in!")
-                
+
 def convert_stone(match):
     lb = float(match.group(1))
     kg = lb * 0.45359237
@@ -74,7 +72,7 @@ def convert_kilometres(match):
     miles = float(match.group(1))
     kilometres = miles / 1.609344
     send_message(f"{miles} mi is {round(kilometres, 2)} km!")
-                                
+
 def convert_fahrenheit(match):
     fahrenheit = float(match.group(1))
     celsius = (fahrenheit - 32) / 1.8
