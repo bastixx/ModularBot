@@ -436,9 +436,6 @@ def botinstance(channelid, channelname, pipe):
                                     if "!command" in messagelow[0:8] and ismod:
                                         custommodule = "CC"
                                         CustomCommands.func_command(message)
-                                    else:
-                                        if messagelow.split(" ")[0] in customcommands.keys():
-                                            CustomCommands.eval_command(message)
 
                                 # if '!restart' in messagelow[0:8] and username == 'bastixx669':
                                 #     nopong()
@@ -492,6 +489,10 @@ def botinstance(channelid, channelname, pipe):
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/disable", message)
                                             Sendmessage.send_message("Error disabling this custommodule.")
+                                    
+                                    else:
+                                        CustomCommands.check_command(message)
+
                             except Exception as errormsg:
                                 Errorlog.errorlog(errormsg, "main/functions", message)
                                 Sendmessage.send_message("There was an error with the command. "
