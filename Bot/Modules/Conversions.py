@@ -5,7 +5,7 @@ from Modules.Required.Errorlog import errorlog
 from Modules.Required.Sendmessage import send_message
 
 patterns = {
-    "Feet & inches": {"pattern": "([0-9,\.]+ ?)(?:ft|\') ?([0-9,\.]+ ?)(?:in|\'\')", "function": "convert_feet&inches"},
+    "Feet & inches": {"pattern": "([0-9,\.]+ ?)(?:ft|\') ?([0-9,\.]+ ?)(?:in|\'\')", "function": "convert_feetandinches"},
     "Feet": {"pattern": "([0-9,\.]+ ?)(?:ft|')", "function": "convert_feet"},
     "Inches": {"pattern": "([0-9,\.]+ ?)in", "function": "convert_inches"},
     "Centimetres": {"pattern": "([0-9,\.]+ ?)cm", "function": "convert_centimetres"},
@@ -32,7 +32,7 @@ def convert(message):
          "Supported formats are: "
          "Mi, KM, °F, °C, °K, KG, lb, cm, ft and in.")
 
-def convert_feet&inches(match):
+def convert_feetandinches(match):
     feet, inches = float(match.group(1)), float(match.group(2))
     cm = (feet * 30.48) + (inches * 2.54)
     send_message(f"{feet} ft and {inches} in is {round(cm, 2)} cm!")
