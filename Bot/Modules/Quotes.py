@@ -50,6 +50,7 @@ def quote(message, game):
                 newquote, said_by = newquote.split("-")
                 quotes[arguments[2]]["quote"] = newquote
                 quotes[arguments[2]]["said_by"] = said_by
+                Database.updateoneindb("Quotes", {"_id": arguments[2]}, {"quote": newquote, "said_by": said_by})
                 send_message(f"Quote {arguments[2]} updated!")
             except:
                 send_message("There was an error editing this quote. Please try again.")
