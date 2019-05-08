@@ -33,12 +33,28 @@ def quote(message, game):
                 currentdate = time.strftime("%d/%m/%Y")
 
                 newquote = " ".join(arguments[2:])
-                quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
-                Database.insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "game": game, "date": currentdate})
+                newquote, said_by = newquote.split("-")
+                quotes[str(len(quotes) + 1)] = f'{newquote} - {said_by} [{game}] [{currentdate}]'
+                # quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
+                Database.insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "said_by": said_by , "game": game, "date": currentdate})
                 send_message("Quote %d added!" % len(quotes))
             except Exception as errormsg:
-                send_message("There was an error adding this quote. Please try again!")
+                send_message("There was an error adding this quote. Please try again.")
+                send_message("Make sure the quote is in the format: \"Quote\" - username!")
                 errorlog(errormsg, "Quotes/addquote()", message)
+        
+        elif arguments[1].lower() == "edit":
+            # !quote edit 25 newquote - user
+            try:
+                newquote = " ".join(arguments[3:])
+                newquote, said_by = newquote.split("-")
+                quotes[arguments[2]]["quote"] = newquote
+                quotes[arguments[2]]["said_by"] = said_by
+                send_message(f"Quote {arguments[2]} updated!")
+            except:
+                send_message("There was an error editing this quote. Please try again.")
+                errorlog(errormsg, "Quotes/addquote()", message)
+        
         elif arguments[1].lower() == "remove":
             try:
                 quotestemp = {}
@@ -64,7 +80,7 @@ def quote(message, game):
 
             except Exception as errormsg:
                 errorlog(errormsg, "Quotes/removequote()", message)
-                send_message("There was an error removing this quote. Please ask Bastixx to check!")
+                send_message("There was an error removing this quote. Please try again.")
         else:
             try:
                 if quotes:
