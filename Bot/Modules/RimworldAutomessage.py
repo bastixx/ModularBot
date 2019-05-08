@@ -27,7 +27,7 @@ def rimworldautomessage():
     game = get_current_game(channel_id, client_id)
 
     url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
-    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+    headers = {'Client-ID': client_id, 'Accept': 'application/json'}
     r = requests.get(url, headers=headers).json()
     response = r["data"]
     try:
