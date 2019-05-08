@@ -27,7 +27,7 @@ def rimworldautomessage():
     game = channel_game()
     islive = channel_is_live()
     try:
-        if islive == "live" and game == "RimWorld":
+        if islive and game == "RimWorld":
             send_message(messagetext)
 
     except IndexError:
