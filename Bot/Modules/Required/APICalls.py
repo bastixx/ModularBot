@@ -21,7 +21,7 @@ def follows(userid):
         errorlog(errormsg, 'APICalls/follows()', "Userid:" + userid)
 
 
-def idtousername(userid):
+def id_to_username(userid):
     username = ""
     try:
         url = 'https://api.twitch.tv/helix/users?id=' + userid
@@ -38,7 +38,7 @@ def idtousername(userid):
         errorlog(errormsg, 'APICalls/idtousername()', "Displayname:" + username)
 
 
-def usernametoid(username):
+def username_to_id(username):
     userid = ""
     try:
         url = 'https://api.twitch.tv/helix/users?login=' + username
@@ -49,3 +49,27 @@ def usernametoid(username):
 
     except Exception as errormsg:
         errorlog(errormsg, 'APICalls/usernametoid()', "Userid:" + userid)
+
+
+def channel_is_live():
+    result = "Empty"
+    try:
+        url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
+        headers = {'Client-ID': client_id, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+        response = requests.get(url, headers=headers).json()
+        islive = response["data"][0]["type"]
+        if islive == "live":
+            return True
+        else:
+            return False
+
+    except Exception as errormsg:
+        errorlog(errormsg, 'APICalls/islive()', result)
+
+
+def channel_game():
+    url = 'https://api.twitch.tv/kraken/channels/%s/' % channel_id
+    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+    response = requests.get(url, headers=headers).json()
+    game = response[0]["game"]
+    return game
