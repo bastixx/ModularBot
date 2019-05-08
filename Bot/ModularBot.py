@@ -445,26 +445,27 @@ def botinstance(channelid, channelname, pipe):
 
                                 elif "!module" in messagelow[0:7] and username == 'bastixx669':
                                     messageparts = message.split(" ")
-                                    var_break = False
+#                                     var_break = False
                                     if messageparts[1] == "enable":
                                         try:
                                             templist = []
                                             keyword = " ".join(messageparts[2:])
-                                            with open('config.ini', 'r+') as f:
-                                                for lineinfile in f:
-                                                    if keyword in lineinfile:
-                                                        if "False" in lineinfile:
-                                                            lineinfile = lineinfile.replace('False', 'True')
-                                                        else:
-                                                            Sendmessage.send_message("Module already enabled.")
-                                                            var_break = True
-                                                    templist.append(lineinfile)
-                                                f.seek(0)
-                                                for lineinfile in templist:
-                                                    f.write(lineinfile)
-                                            if not var_break:
-                                                Sendmessage.send_message(f"Module {keyword} enabled.")
-                                                # nopong()
+                                             # TODO Replace with updated code.
+#                                             with open('config.ini', 'r+') as f:
+#                                                 for lineinfile in f:
+#                                                     if keyword in lineinfile:
+#                                                         if "False" in lineinfile:
+#                                                             lineinfile = lineinfile.replace('False', 'True')
+#                                                         else:
+#                                                             Sendmessage.send_message("Module already enabled.")
+#                                                             var_break = True
+#                                                     templist.append(lineinfile)
+#                                                 f.seek(0)
+#                                                 for lineinfile in templist:
+#                                                     f.write(lineinfile)
+#                                             if not var_break:
+#                                                 Sendmessage.send_message(f"Module {keyword} enabled.")
+#                                                 # nopong()
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/enable", message)
                                             Sendmessage.send_message("Error enabling this custommodule.")
@@ -472,21 +473,22 @@ def botinstance(channelid, channelname, pipe):
                                         try:
                                             templist = []
                                             keyword = " ".join(messageparts[2:])
-                                            with open('config.ini', 'r+') as f:
-                                                for lineinfile in f:
-                                                    if keyword in lineinfile:
-                                                        if "True" in lineinfile:
-                                                            lineinfile = lineinfile.replace('True', 'False')
-                                                        else:
-                                                            Sendmessage.send_message("Module already disabled.")
-                                                            var_break = True
-                                                    templist.append(lineinfile)
-                                                f.seek(0)
-                                                for lineinfile in templist:
-                                                    f.write(lineinfile)
-                                            if not var_break:
-                                                Sendmessage.send_message(f"Module {keyword} disabled.")
-                                                # nopong()
+                                            # TODO Replace with updated code.
+#                                             with open('config.ini', 'r+') as f:
+#                                                 for lineinfile in f:
+#                                                     if keyword in lineinfile:
+#                                                         if "True" in lineinfile:
+#                                                             lineinfile = lineinfile.replace('True', 'False')
+#                                                         else:
+#                                                             Sendmessage.send_message("Module already disabled.")
+#                                                             var_break = True
+#                                                     templist.append(lineinfile)
+#                                                 f.seek(0)
+#                                                 for lineinfile in templist:
+#                                                     f.write(lineinfile)
+#                                             if not var_break:
+#                                                 Sendmessage.send_message(f"Module {keyword} disabled.")
+#                                                 # nopong()
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/disable", message)
                                             Sendmessage.send_message("Error disabling this custommodule.")
@@ -513,16 +515,15 @@ def botinstance(channelid, channelname, pipe):
                                 if modules[custommodule]["config"]["enabled"]:
                                     x = modules[custommodule]["name"]
                                     modulelist.append(x)
-                            timestamp = Logger.logger(0000000, ">>Bot", "Modules loaded: %s" % ", ".join(modulelist), False, True, True)
+                            boottime = Logger.logger(0000000, ">>Bot", "Modules loaded: %s" % ", ".join(modulelist), False, True, True)
 
-                    # Disabled due to testing purposes.
-                    # try:
-                    #     if pipe.poll():
-                    #         controllercommand = pipe.recv()
-                    #         if controllercommand == "lastChat":
-                    #             pipe.send(timestamp)
-                    # except Exception as errormsg:
-                    #     Errorlog.errorlog(errormsg, "Multiprocessing", "")
+                    try:
+                        if pipe.poll():
+                            controllercommand = pipe.recv()
+                            if controllercommand == "boottime":
+                                pipe.send(boottime)
+                    except Exception as errormsg:
+                        Errorlog.errorlog(errormsg, "Multiprocessing", "")
 
         except Exception as errormsg:
             # Disabled due to testing purposes.
@@ -536,8 +537,3 @@ def botinstance(channelid, channelname, pipe):
 # todo add cache for follows
 # todo rework bonertimer module
 # todo streamline functions/names
-
-
-# Testing purposes. This file is not meant to be run directly
-if __name__ == '__main__':
-    botinstance(000000, "Louiseyhannah", "none")
