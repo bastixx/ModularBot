@@ -2,8 +2,8 @@ import threading
 import requests
 
 from Modules.Required.Sendmessage import send_message
-from Modules.Required.Getgame import get_current_game
 from Modules.Required.Errorlog import errorlog
+from Modules.Required.APICalls import channel_is_live, channel_game
 import Modules.Required.Database as Database
 
 
@@ -24,14 +24,10 @@ def load_rimworldautomessage(channelid, CLIENTID):
 
 
 def rimworldautomessage():
-    game = get_current_game(channel_id, client_id)
-
-    url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
-    headers = {'Client-ID': client_id, 'Accept': 'application/json'}
-    r = requests.get(url, headers=headers).json()
-    response = r["data"]
+    game = channel_game()
+    islive = channel_is_live()
     try:
-        if response[0]["type"] == "live" and game == "RimWorld":
+        if islive == "live" and game == "RimWorld":
             send_message(messagetext)
 
     except IndexError:
