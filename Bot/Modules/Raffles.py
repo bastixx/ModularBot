@@ -1,4 +1,3 @@
-import requests
 import random
 from datetime import datetime, timedelta
 
@@ -8,16 +7,9 @@ import Modules.Required.Database as Database
 from Modules.Required.APICalls import username_to_id, follows
 
 
-def load_raffles(CLIENTID, CHANNELID):
+def load_raffles():
     global raffles
-    global rafflewinners
-    global rafflelist
-    global client_id
-    global channel_id
     raffles = {}
-    client_id = CLIENTID
-    channel_id = CHANNELID
-
     try:
         if Database.collectionexists("Raffles"):
             for document in Database.getallfromdb("Raffles"):
@@ -28,34 +20,12 @@ def load_raffles(CLIENTID, CHANNELID):
                 if document["haswon"]:
                     raffles[i]["rafflewinners"][document["userid"]] = document["username"]
 
-        # if Database.collectionexists("Raffles"):
-        #     for document in Database.getallfromdb("Raffles"):
-        #         raffles[document["rafflename"]] = document["mode"]
-        # for i in rafflelist.keys():
-        #     raffles[i] = []
-        #     rafflewinners[i] = []
-
-        #     col = Database.getallfromdb("raffle_" + i)
-        #     for document in col:
-        #         if raffles[i]:
-        #             raffles[i].append(document["username"])
-        #         else:
-        #             raffles[i] = [document["username"]]
-
-        #     for document in col:
-        #         if document["haswon"]:
-        #             if rafflewinners[i]:
-        #                 rafflewinners[i].append(document["username"])
-        #             else:
-        #                 rafflewinners[i] = document["username"]
-
     except Exception as errormsg:
         errorlog(errormsg, "Raffles/Load_raffles()", "")
 
 
 def func_raffle(message):
     global raffles
-    global rafflewinners
     try:
         # !raffle (add|list|etc..) (username) raffle name
         arguments = message.split(" ")
@@ -64,7 +34,6 @@ def func_raffle(message):
             try:
                 raffles[raffle] = {"mode": "all", "raffleentries": {}, "rafflewinners": {}, "silent": False}
                 Database.insertoneindb("Raffles", {"rafflename": raffle, "mode": "all"})
-                # Database.insertoneindb("raffle_" + raffle, {"username": "initialuser", "haswon": False}) -> Not neccesary to create
                 send_message("Raffle \"%s\" created!" % raffle)
             except:
                 send_message(f"Error creating raffle \"%s\"!" % raffle)
@@ -86,7 +55,7 @@ def func_raffle(message):
                 if arguments[2] in ['sub', 'follower', 'follower_7', 'all']:
                     mode = arguments[2]
                     raffle = " ".join(arguments[3:])
-                    Raffles[raffle]["mode"] = mode
+                    raffles[raffle]["mode"] = mode
                     Database.updateoneindb("Raffles", {"rafflename": raffle}, {"mode": mode})
                     send_message(f"Mode changed for raffle {raffle}.")
                 else:
@@ -117,8 +86,8 @@ def func_raffle(message):
             raffle = " ".join(arguments[3:])
             userid = username_to_id(user)
 
-            if userid not in raffles[raffle]["raffleentries".keys()]:
-                if user not in rafflewinners[raffle]["rafflewinners"].keys():
+            if userid not in raffles[raffle]["raffleentries"].keys():
+                if user not in raffles[raffle]["rafflewinners"].keys():
                     raffles[raffle]["raffleentries"][userid] = user
                     Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": user, "haswon": False})
                     send_message("@%s joined raffle: \"%s\"!" % (user, raffle))
@@ -147,8 +116,8 @@ def func_raffle(message):
                 raffles[raffle]["Rafflewinners"] = {}
 
                 Database.updatemanyindb("raffle_" + raffle, {"haswon": True}, {"haswon": False})
-                send_message("All winners for raffle \"%s\" have been reset. " \
-                "Everyone who entered is still in the raffle." % raffle)
+                send_message("All winners for raffle \"%s\" have been reset. " 
+                             "Everyone who entered is still in the raffle." % raffle)
             else:
                 send_message("Raffle \"%s\" has no winners or does not exist." % raffle)
         elif arguments[1] == "stats":
@@ -157,7 +126,7 @@ def func_raffle(message):
                 send_message("There are currently \"%s\" people in this raffle." % len(raffles[raffle]["raffleentries"]))
 
         elif arguments[1] == "mode":
-            send_message("The mode for raffle \"%s\" is: %s" % (raffle ,raffles[raffle]["mode"]))
+            send_message("The mode for raffle \"%s\" is: %s" % (raffle, raffles[raffle]["mode"]))
 
     except IndexError:
         send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
@@ -191,7 +160,7 @@ def join_raffle(userid, username, message, issub, ismod):
 
 
     try:
-        mode = rafflelist[raffle]
+        mode = raffles[raffle]["mode"]
     except:
         send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
                      "%s" % ", ".join(raffles.keys()))

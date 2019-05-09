@@ -1,7 +1,16 @@
 import time
+import multiprocessing
 
-def instance(arg):
+
+def instance(arg, pipe):
+    # try:
     while True:
-        with open(arg + "_out.txt", "a+") as f:
-            f.write(arg)
-        time.sleep(2)
+            pass
+            # if pipe.poll():
+            #     inputtext = pipe.recv(10)
+            #     if inputtext == "exit":
+            #         exit(1)
+        # time.sleep(2)
+    # except Exception as errormsg:
+    #     with open(arg + "_error.txt", "w+") as f:
+    #         f.write(errormsg)

@@ -1,28 +1,15 @@
-import requests
 import time
 import Modules.Required.Database as Database
 
 from Modules.Required.Errorlog import errorlog
+from Modules.Required.APICalls import get_modroom
 
 
 # Try and get the ID for the mod channel. This is used for the moderation log.
-def load_modlog(CHANNEL_ID, headers):
+def load_modlog():
     global modroom_available
     global modroom_id
-    global channel_id
-    channel_id = CHANNEL_ID
-    rooms = {}
-    try:
-        url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
-        r = requests.get(url, headers=headers).json()
-        roomlist = r['rooms']
-        for room in roomlist:
-            rooms[room['name']] = room['_id']
-        modroom_id = rooms['modlog']
-        modroom_available = True
-    except:
-        modroom_available = False
-        print(">>No room to post modlog found.")
+    modroom_id, modroom_available = get_modroom()
 
 
 def modlog(duration, userid, username, reason=""):
@@ -37,9 +24,9 @@ def modlog(duration, userid, username, reason=""):
         if duration == 0:
             message = f"Banned: {username}. Reason: {reason}"
             Database.insertoneindb("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
-                                     "reason": reason, "timestamp": timestamp})
+                                   "reason": reason, "timestamp": timestamp})
             Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
-                                      "sub": issub, "mod": ismod})
+                                   "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
             #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
@@ -68,7 +55,7 @@ def modlog(duration, userid, username, reason=""):
             #         channel_id.encode(), modroom_id.encode(), message.encode()))
 
     except Exception as errormsg:
-        errorlog(errormsg, "Modlog", message)
+        errorlog(errormsg, "Modlog", "")
         raise errormsg
 
 
@@ -86,3 +73,4 @@ def removedmessage(username, userid, message):
     except Exception as errormsg:
         errorlog(errormsg, "Modlog", message)
         raise errormsg
+

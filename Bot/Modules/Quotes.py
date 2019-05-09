@@ -52,7 +52,7 @@ def quote(message, game):
                 quotes[arguments[2]]["said_by"] = said_by
                 Database.updateoneindb("Quotes", {"_id": arguments[2]}, {"quote": newquote, "said_by": said_by})
                 send_message(f"Quote {arguments[2]} updated!")
-            except:
+            except Exception as errormsg:
                 send_message("There was an error editing this quote. Please try again.")
                 errorlog(errormsg, "Quotes/addquote()", message)
         

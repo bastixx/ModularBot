@@ -1,12 +1,6 @@
-import sys
-import os
-import ctypes
 import socket
 import ast
-import threading
-import requests
 import time
-# import validators
 from unidecode import unidecode
 
 # Append path to modules to path variable and load custom modules
@@ -57,16 +51,8 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 #     except Exception as errormsg:
 #         Errorlog.errorlog(errormsg, "logline()", line)
 
-
-# def nopong():  # Function to restart the bot in case of connection lost
-#     Errorlog.errorlog("Connection lost, bot restarted", "nopong", '')
-#     os.execv(sys.executable, [sys.executable, f"{os.path.dirname(__file__)}/{FOLDER}/{FOLDER}.py"] + sys.argv)
-
-
 def botinstance(channelid, channelname, pipe):
     global modules
-    # sys.stderr = open(f"D:\Dropbox\Dropbox\Python\ModularBot\Bot\{channelname}_errorlog.txt", 'w+')
-    # sys.stdout = open(f"D:\Dropbox\Dropbox\Python\ModularBot\Bot\{channelname}_log.txt", 'w+')
     try:
         Database.load_database(channelname)
         config = Database.getonefromdb("Config")
@@ -131,23 +117,14 @@ def botinstance(channelid, channelname, pipe):
         # Join the IRC channel of the channel
         sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
-        # Starting the timer in case of a disconnect
-        # keepalivetimer = threading.Timer(310, nopong)
-        # keepalivetimer.start()
-
         # Loading the basic modules
-        # Tagger.load_tagger(CLIENTID)
         Sendmessage.load_send_message(FOLDER, CHANNEL, sock)
         Errorlog.load_errorlog(FOLDER)
-
-        # Load all the modules that were enabled in the config file
         Database.load_database(FOLDER)
         APICalls.load_apicalls(CLIENTID, channelid)
     except Exception as errormsg:
         Errorlog.errorlog(errormsg, "Bot/startup", "Channel:" + channelname)
         # pipe.send(f"Error: {errormsg}")
-
-        # load_tagger()
 
     if enabled("RU"):
         Rules.load_rules()
@@ -158,7 +135,7 @@ def botinstance(channelid, channelname, pipe):
     if enabled("QU"):
         Quotes.load_quotes()
     if enabled("RF"):
-        Raffles.load_raffles(CLIENTID, channelid)
+        Raffles.load_raffles()
     if enabled("BT"):
         BrokenBoner.load_bonertimer()
     if enabled("RA"):
@@ -174,7 +151,7 @@ def botinstance(channelid, channelname, pipe):
     if enabled("SS"):
         SongSuggestions.load_suggestions()
     if enabled("CC"):
-        customcommands = CustomCommands.load_commands()
+        CustomCommands.load_commands()
     if enabled("RP"):
         responseParse.load_responses()
 
@@ -199,13 +176,6 @@ def botinstance(channelid, channelname, pipe):
                 # Checks if  message is PING. If so reply pong and extend the timer for a restart
                 if "PING" in line:
                     sock.send(b"PONG\r\n")
-                    # try:
-                    #     keepalivetimer.cancel()
-                    #     keepalivetimer = threading.Timer(310, nopong)
-                    #     keepalivetimer.start()
-                    # except Exception as errormsg:
-                    #     Errorlog.errorlog(errormsg, "keepalivetimer", '')
-
                     # if modules["FG"]["Enabled"]:
                     #     try:
                     #         followergoal(channel_id, CHANNEL, CLIENTID)
@@ -437,67 +407,30 @@ def botinstance(channelid, channelname, pipe):
                                         custommodule = "CC"
                                         CustomCommands.func_command(message)
 
-                                # if '!restart' in messagelow[0:8] and username == 'bastixx669':
-                                #     nopong()
-
                                 elif "!module" in messagelow[0:7] and username == 'bastixx669':
-                                    messageparts = message.split(" ")
-#                                     var_break = False
-                                    if messageparts[1] == "enable":
+                                    arguments = message.split(" ")
+                                    if arguments[1] == "enable":
                                         try:
-                                            templist = []
-                                            keyword = " ".join(messageparts[2:])
-                                             # TODO Replace with updated code.
-#                                             with open('config.ini', 'r+') as f:
-#                                                 for lineinfile in f:
-#                                                     if keyword in lineinfile:
-#                                                         if "False" in lineinfile:
-#                                                             lineinfile = lineinfile.replace('False', 'True')
-#                                                         else:
-#                                                             Sendmessage.send_message("Module already enabled.")
-#                                                             var_break = True
-#                                                     templist.append(lineinfile)
-#                                                 f.seek(0)
-#                                                 for lineinfile in templist:
-#                                                     f.write(lineinfile)
-#                                             if not var_break:
-#                                                 Sendmessage.send_message(f"Module {keyword} enabled.")
-#                                                 # nopong()
+                                            Database.updateoneindb("Modules", {"name": arguments[1]}, {"enabled": True}, True)
+                                            Sendmessage.send_message(f"Module {arguments[1]} enabled.")
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/enable", message)
-                                            Sendmessage.send_message("Error enabling this custommodule.")
-                                    elif messageparts[1] == "disable":
+                                            Sendmessage.send_message("Error enabling this module!")
+                                    elif arguments[1] == "disable":
                                         try:
-                                            templist = []
-                                            keyword = " ".join(messageparts[2:])
-                                            # TODO Replace with updated code.
-#                                             with open('config.ini', 'r+') as f:
-#                                                 for lineinfile in f:
-#                                                     if keyword in lineinfile:
-#                                                         if "True" in lineinfile:
-#                                                             lineinfile = lineinfile.replace('True', 'False')
-#                                                         else:
-#                                                             Sendmessage.send_message("Module already disabled.")
-#                                                             var_break = True
-#                                                     templist.append(lineinfile)
-#                                                 f.seek(0)
-#                                                 for lineinfile in templist:
-#                                                     f.write(lineinfile)
-#                                             if not var_break:
-#                                                 Sendmessage.send_message(f"Module {keyword} disabled.")
-#                                                 # nopong()
+                                            Database.updateoneindb("Modules", {"name": arguments[1]}, {"enabled": False}, True)
+                                            Sendmessage.send_message(f"Module {arguments[1]} disabled.")
                                         except Exception as errormsg:
                                             Errorlog.errorlog(errormsg, "custommodule/disable", message)
-                                            Sendmessage.send_message("Error disabling this custommodule.")
-                                    
-                                    else:
-                                        CustomCommands.check_command(message)
+                                            Sendmessage.send_message("Error disabling this module!")
+
+                                else:
+                                    CustomCommands.check_command(message, username)
 
                             except Exception as errormsg:
                                 Errorlog.errorlog(errormsg, "main/functions", message)
                                 Sendmessage.send_message("There was an error with the command. "
                                                          "Please check your command and try again.")
-
                             finally:
                                 if cooldown_time != 0:
                                     # tempdict = {custommodule: {"functions": {functionname: {"next use": time.time() + cooldown_time}}}}
