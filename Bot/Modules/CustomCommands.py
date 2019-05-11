@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime, timedelta
 
 from Modules.Required.Errorlog import errorlog
 import Modules.Required.Database as Database
@@ -12,9 +13,9 @@ def load_commands():
     customcommands = {}
     cursor = Database.getallfromdb("CustomCommands")
     for document in cursor:
-        customcommands[document["name"]] = {"action": document["action"]}, "timer": document["timer"]}
+        customcommands[document["name"]] = {"action": document["action"], "timer": document["timer"]}
     
-    timer = threading.timer(60, check_timed_commands).start
+    timer = threading.Timer(60, check_timed_commands).start
     check_timed_commands()
     return customcommands
 
@@ -25,11 +26,15 @@ def func_command(message):
     
     if len(arguments) >= 3:
         if arguments[1] == "add":
-            newcommandname = arguments[2]
-            newcommandaction = " ".join(arguments[3:])
-            customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
-            Database.insertoneindb("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
-            send_message(f"Command {newcommandname} added!")
+            try:
+                newcommandname = arguments[2]
+                newcommandaction = " ".join(arguments[3:])
+                customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
+                Database.insertoneindb("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
+                send_message(f"Command {newcommandname} added!")
+            except Exception as errormsg:
+                send_message("Something went wrong. Please check your command and try again.")
+                errorlog(errormsg, "func_command/add()", message)
             
         elif arguments[1] == "remove":
             commandname = arguments[2]
@@ -60,7 +65,8 @@ def func_command(message):
 
 
 def check_command(message, username):
-    
+    global variabledict
+    variabledict = dict()
     variabledict["$user"] = {
         "$user": username
     }
@@ -74,9 +80,11 @@ def check_command(message, username):
 
 
 def replace_variables(command):
+    global variabledict
     for variable in variabledict.keys():
         if variable in command:
             command.replace(variable, variabledict[variable])
+    return command
 
 
 def check_timed_commands():
@@ -85,7 +93,7 @@ def check_timed_commands():
     
     for command in customcommands.keys():
         if customcommands[command]["timer"] != 0:
-            if customcommands[command].get("last_runtime", None) < (datetime.now() - datetime.timedelta(seconds=customcommands[command]["timer"])):
+            if customcommands[command].get("last_runtime", None) < (datetime.now() - timedelta(seconds=customcommands[command]["timer"])):
                 send_message(customcommands[command]["action"])
                 customcommands[command]["last_runtime"] = datetime.now()
                 return

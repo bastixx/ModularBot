@@ -64,7 +64,7 @@ if __name__ == '__main__':
     botlist = ("bastixx669",)
 
     logger = mp.log_to_stderr()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     for element in botlist:
         bots[element] = dict(Name=element)

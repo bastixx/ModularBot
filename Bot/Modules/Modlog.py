@@ -73,4 +73,3 @@ def removedmessage(username, userid, message):
     except Exception as errormsg:
         errorlog(errormsg, "Modlog", message)
         raise errormsg
-

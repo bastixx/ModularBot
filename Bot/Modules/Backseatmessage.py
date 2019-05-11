@@ -1,25 +1,25 @@
 import threading
-import requests
 
 from Modules.Required.Sendmessage import send_message
 from Modules.Required.Errorlog import errorlog
 import Modules.Required.Database as Database
+from Modules.Required.APICalls import channel_is_live
 
 
-def load_bsmessage():
-    global bsmessagestr; global backseating
+def load_bsmessage() -> None:
+    global bsmessagestr
+    global backseating
     backseating = False
 
     try:
-        for document in Database.updateoneindb("BackseatMessage"):
+        for document in Database.getonefromdb("BackseatMessage"):
             bsmessagestr = document["messagetext"]
     except Exception as errormsg:
         errorlog(errormsg, "Backseatmessage/load_bsmessage()", "")
         bsmessagestr = "/me Please don't backseat. This is a blind playthrough!"
-    # TODO Explicitly handle Database connection error(s).
 
 
-def bsmessage():
+def bsmessage() -> None:
     global bstimer
     if backseating:
         try:
@@ -30,8 +30,10 @@ def bsmessage():
             errorlog(errormsg, "Backseatmessage()", '')
 
 
-def backseatmessage(message):
-    global bstimer; global bsmessagestr; global backseating
+def backseatmessage(message) -> None:
+    global bstimer
+    global bsmessagestr
+    global backseating
     messageparts = message.split(" ")
     if messageparts[1] == "on":
         if not backseating:
@@ -62,14 +64,8 @@ def backseatmessage(message):
             send_message("There was an error changing the backseatmessage. Please try again.")
 
 
-def bsmcheck(channel_id, client_id):
+def bsmcheck() -> None:
     global backseating
-    url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
-    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-    r = requests.get(url, headers=headers).json()
-    response = r["data"]
-    try:
-        if response[0]["type"] == "live":
-            pass
-    except:
-        backseating = False
+    if not channel_is_live():
+            backseating = False
+

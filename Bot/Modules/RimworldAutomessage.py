@@ -5,15 +5,11 @@ from Modules.Required.Sendmessage import send_message
 from Modules.Required.Errorlog import errorlog
 from Modules.Required.APICalls import channel_is_live, channel_game
 import Modules.Required.Database as Database
+# TODO Replace this module with a timed CustomCommand entry.
 
 
-def load_rimworldautomessage(channelid, CLIENTID):
+def load_rimworldautomessage() -> None:
     global messagetext
-    global channel_id
-    global client_id
-    channel_id = channelid
-    client_id = CLIENTID
-
     try:
         for document in Database.getallfromdb("RimworldAutomessage"):
             messagetext = document["messagetext"]
@@ -23,7 +19,7 @@ def load_rimworldautomessage(channelid, CLIENTID):
     threading.Timer(300, rimworldautomessage).start()
 
 
-def rimworldautomessage():
+def rimworldautomessage() -> None:
     game = channel_game()
     islive = channel_is_live()
     try:
@@ -38,7 +34,7 @@ def rimworldautomessage():
         threading.Timer(900, rimworldautomessage).start()
 
 
-def setmessage(message):
+def setmessage(message: str) -> None:
     global messagetext
     arguments = message.split(" ")
     try:
@@ -49,4 +45,3 @@ def setmessage(message):
     except Exception as errormsg:
         errorlog(errormsg, "Rimworldautomessage/setmessage()", message)
         send_message("There was an error setting the message. Please check your command and try again.")
-

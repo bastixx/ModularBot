@@ -13,7 +13,8 @@ def load_raffles():
     try:
         if Database.collectionexists("Raffles"):
             for document in Database.getallfromdb("Raffles"):
-                raffles[document["rafflename"]] = {"mode": document["mode"], "raffleentries": {}, "rafflewinners": {}, "silent": False}
+                raffles[document["rafflename"]] = {"mode": document["mode"], "raffleentries": {}, "rafflewinners": {},
+                                                   "silent": document["silent"]}
         for i in raffles.keys():
             for document in Database.getallfromdb("raffle_" + i):
                 raffles[i]["raffleentries"][document["userid"]] = document["username"]
@@ -35,8 +36,10 @@ def func_raffle(message):
                 raffles[raffle] = {"mode": "all", "raffleentries": {}, "rafflewinners": {}, "silent": False}
                 Database.insertoneindb("Raffles", {"rafflename": raffle, "mode": "all"})
                 send_message("Raffle \"%s\" created!" % raffle)
-            except:
+            except Exception as errormsg:
                 send_message(f"Error creating raffle \"%s\"!" % raffle)
+                errorlog(errormsg, "Func_raffle/add()", message)
+
         elif arguments[1] == "remove":
             try:
                 if raffle in raffles.keys():
@@ -46,40 +49,81 @@ def func_raffle(message):
                     send_message("Raffle \"%s\" deleted!" % raffle)
                 else:
                     send_message("This raffle does not exist!")
-            except Exception as e:
+            except Exception as errormsg:
                 send_message("Error removing raffle!")
-                print(e)
+                errorlog(errormsg, "Func_raffle/remove()", message)
+
+        elif arguments[1] == "get":
+            # !raffle get mode|silent raffle
+            raffle = " ".join(arguments[3:])
+            try:
+                if raffle in raffles.keys():
+                    if arguments[2] == "mode":
+                        send_message(f"Current mode for raffle {raffle} is: {raffles[raffle]['mode']}.")
+                    elif arguments[2] == "silent":
+                        if raffles[raffle]['mode']:
+                            send_message(f"Silent mode for raffle {raffle} is enabled.")
+                        else:
+                            send_message(f"Silent mode for raffle {raffle} is disabled.")
+                    else:
+                        send_message("For the option \"get\" the allowed arguments are: \"mode\" and \"silent\".")
+            except Exception as errormsg:
+                send_message("Error changing mode for this raffle.")
+                errorlog(errormsg, "Func_raffle/get()", message)
+
         elif arguments[1] == "set":
             # !raffle set mode raffle
             try:
-                if arguments[2] in ['sub', 'follower', 'follower_7', 'all']:
-                    mode = arguments[2]
-                    raffle = " ".join(arguments[3:])
-                    raffles[raffle]["mode"] = mode
-                    Database.updateoneindb("Raffles", {"rafflename": raffle}, {"mode": mode})
-                    send_message(f"Mode changed for raffle {raffle}.")
+                if arguments[2] == "mode":
+                    if arguments[3] in ['sub', 'follower', 'follower_7', 'all']:
+                        mode = arguments[3]
+                        raffle = " ".join(arguments[4:])
+                        raffles[raffle]["mode"] = mode
+                        Database.updateoneindb("Raffles", {"rafflename": raffle}, {"mode": mode})
+                        send_message(f"Mode changed for raffle {raffle}.")
+                    else:
+                        send_message("Correct modes are: sub, follower, follower_7 and all")
+                elif arguments[2] == "silent":
+                    newmode = arguments[3]
+                    raffle = " ".join(arguments[4:])
+                    if raffle in raffles.keys():
+                        if newmode == "on":
+                            raffles[raffle]["silent"] = True
+                            send_message(f"Silent mode enabled for raffle {raffle}.")
+                        elif newmode == "off":
+                            raffles[raffle]["silent"] = False
+                            send_message(f"Silent mode disabled for raffle {raffle}.")
+                        else:
+                            send_message("For the option \"silent\" the allowed arguments are: \"on\" and \"off\".")
                 else:
-                    send_message("Correct modes are: sub, follower, follower_7 and all")
+                    send_message("For the option \"set\" the allowed arguments are: \"mode\" and \"silent\".")
             except Exception as errormsg:
                 send_message("Error changing mode for this raffle.")
-                errorlog(errormsg, "Raffle/set()", message)
+                errorlog(errormsg, "Func_raffle/set()", message)
 
         elif arguments[1] == "list":
             if len(raffles > 0):
                 send_message("Current raffles are: %s." % ", ".join(raffles.keys()))
             else:
                 send_message("There are currently no raffles going.")
-        elif arguments[1] == "roll":
-            if len(raffles[raffle]["raffleentries"]) == 0:
-                send_message("No contestants left!")
-            else:
-                rafflewinnerid = random.choice(raffles[raffle]["raffleentries"].keys())
-                rafflewinnername = raffles[raffle]["raffleentries"][rafflewinnerid]
-                raffles[raffle]["raffleentries"].pop(rafflewinnerid)
-                raffles[raffle]["rafflewinners"][rafflewinnerid] = rafflewinnername
 
-                Database.updateoneindb("raffle_" + raffle, {"userid": rafflewinnerid}, {"haswon": True})
-                send_message("The winner is: %s!" % rafflewinnername)
+        # Command to roll a winner for a raffle. Mod only
+        elif arguments[1] == "roll":
+            try:
+                if len(raffles[raffle]["raffleentries"]) == 0:
+                    send_message("No contestants left!")
+                else:
+                    rafflewinnerid = random.choice(raffles[raffle]["raffleentries"].keys())
+                    rafflewinnername = raffles[raffle]["raffleentries"][rafflewinnerid]
+                    raffles[raffle]["raffleentries"].pop(rafflewinnerid)
+                    raffles[raffle]["rafflewinners"][rafflewinnerid] = rafflewinnername
+
+                    Database.updateoneindb("raffle_" + raffle, {"userid": rafflewinnerid}, {"haswon": True})
+                    send_message("The winner is: %s!" % rafflewinnername)
+            except Exception as errormsg:
+                send_message("Error rolling a winner for this raffle.")
+                errorlog(errormsg, "Func_raffle/roll()", message)
+
         # Command to add a user to an raffle. Mod only.
         elif arguments[1] == "adduser":
             user = arguments[2]
@@ -128,6 +172,9 @@ def func_raffle(message):
         elif arguments[1] == "mode":
             send_message("The mode for raffle \"%s\" is: %s" % (raffle, raffles[raffle]["mode"]))
 
+        else:
+            send_message("Unknown command. Please check your message and try again.")
+
     except IndexError:
         send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
                      "%s" % ", ".join(raffles.keys()))
@@ -137,7 +184,7 @@ def func_raffle(message):
         send_message("There was an unexpected error. Please check your comamnd and try again.")
 
 
-def join_raffle(userid, username, message, issub, ismod):
+def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -> None:
     global raffles
     allowed = False
     arguments = message.split(" ")
@@ -157,7 +204,6 @@ def join_raffle(userid, username, message, issub, ismod):
     except Exception as errormsg:
         following = False
         errorlog(errormsg, "Raffles/join()", message)
-
 
     try:
         mode = raffles[raffle]["mode"]
@@ -183,18 +229,22 @@ def join_raffle(userid, username, message, issub, ismod):
             if userid not in raffles[raffle]["raffleentries"].keys():
                 if userid not in raffles[raffle]["Rafflewinners"].keys():
                     raffles[raffle]["raffleentries"][userid] = username
-                    Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": username, "haswon": False})
-                    send_message("@%s joined raffle: \"%s\"!" % (username, raffle))
+                    Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": username,
+                                                                "haswon": False})
+                    if not raffles[raffle]['silent']:
+                        send_message("@%s joined raffle: \"%s\"!" % (username, raffle))
                 else:
                     send_message("@%s you already won this raffle!" % username)
             else:
                 send_message("@%s you are already in this raffle!" % username)
         except IndexError:
-            send_message("To join a raffle, use !join <raffle name>. Current raffles are: " \
+            send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
                          "%s" % ", ".join(raffles.keys()))
-        except Exception:
-            send_message("Error adding user %s to raffle: \"%s\". Check if you spelled the " \
+        except Exception as errormsg:
+            send_message("Error adding user %s to raffle: \"%s\". Check if you spelled the "
                          "raffle name correctly." % (username, raffle))
+            errorlog(errormsg, "Raffles/join()", message)
+
     else:
         if mode == 'sub':
             send_message("This raffle is for subscribers only.")

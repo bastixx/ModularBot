@@ -10,7 +10,7 @@ from unidecode import unidecode
 # from Random_stuff import *  # TODO split into seperate modules
 
 from Modules.Required.Errors import *
-from Modules.Required.Getgame import get_current_game
+# from Modules.Required.Getgame import get_current_game
 from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database, APICalls
 from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Rules, BrokenBoner, RimworldAutomessage,\
     RimworldModLinker, Paddle, Questions, Modlog, Conversions, Unshorten, SongSuggestions, CustomCommands, \
@@ -42,16 +42,7 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
     comlimits.remove(command)
 
 
-# def logline(line):  # Debug setting to save the raw data recieved to a file
-#     try:
-#         line = unidecode(line)
-#         with open(f"{os.path.dirname(os.path.dirname(__file__))}/{FOLDER}/files/chatlogs/raw-" + time.strftime(
-#                 "%d-%m-%Y") + ".txt", 'a+') as f:
-#             f.write("[%s] %s\n" % (str(time.strftime("%H:%M:%S")), line))
-#     except Exception as errormsg:
-#         Errorlog.errorlog(errormsg, "logline()", line)
-
-def botinstance(channelid, channelname, pipe):
+def botinstance(channelid: str, channelname: str, pipe):
     global modules
     try:
         Database.load_database(channelname)
@@ -66,8 +57,6 @@ def botinstance(channelid, channelname, pipe):
         FOLDER = config["Folder"]
         STEAMAPIKEY = config['SteamAPIkey']
         # Headers for the Twitch API calls being made.
-        headers = {'Client-ID': CLIENTID, 'Accept': 'application/vnd.twitchtv.v5+json',
-                   'Authorization': "OAuth " + OAUTH}
 
         modules = {'SM': {"name": 'Sendmessage'},
                    'EL': {"name": 'Errorlog'},
@@ -139,11 +128,11 @@ def botinstance(channelid, channelname, pipe):
     if enabled("BT"):
         BrokenBoner.load_bonertimer()
     if enabled("RA"):
-        RimworldAutomessage.load_rimworldautomessage(channelid, CLIENTID)
+        RimworldAutomessage.load_rimworldautomessage()
     if enabled("QS"):
         Questions.load_questions()
     if enabled("ML"):
-        Modlog.load_modlog(channelid, headers)
+        Modlog.load_modlog()
     if enabled("FG"):
         FollowerGoals.load_followergoals(FOLDER)
     if enabled("RML"):
@@ -183,7 +172,7 @@ def botinstance(channelid, channelname, pipe):
                     #         Errorlog.errorlog(errormsg, "Main/followergoal()", "")
 
                     if enabled("BSM"):
-                        Backseatmessage.bsmcheck(channelid, CLIENTID)
+                        Backseatmessage.bsmcheck()
 
                 else:
                     # Splits the given string so we can work with it better
@@ -256,16 +245,14 @@ def botinstance(channelid, channelname, pipe):
                                         custommodule = "DC"
                                         functionname = "func_deaths"
 
-                                        game = str(get_current_game(channelid, CLIENTID)).lower()
-                                        cooldown_time = Deathcounter.func_deaths(message, game, ismod)
+                                        cooldown_time = Deathcounter.func_deaths(message, APICalls.channel_game(), ismod)
 
                                     if "!dead" in messagelow[0:5] and not oncooldown("DC", "dead") and (ismod or issub):
                                         custommodule = "DC"
                                         functionname = "dead"
                                         cooldown_time = 10
 
-                                        game = str(get_current_game(channelid, CLIENTID)).lower()
-                                        Deathcounter.dead(game)
+                                        Deathcounter.dead(APICalls.channel_game())
 
                                 if enabled("RF"):
                                     if ("!raffle" in messagelow[0:7] or "!giveaway" in messagelow[0:9]) and ismod:
@@ -273,7 +260,7 @@ def botinstance(channelid, channelname, pipe):
                                         functionname = "raffle"
                                         cooldown_time = 5
 
-                                        Raffles.raffle(message)
+                                        Raffles.func_raffle(message)
 
                                     elif "!join" in messagelow[0:5]:
                                         custommodule = "RF"
@@ -318,8 +305,7 @@ def botinstance(channelid, channelname, pipe):
                                         functionname = "quote"
                                         cooldown_time = 15
 
-                                        game = get_current_game(channelid, CLIENTID)
-                                        Quotes.quote(message, game)
+                                        Quotes.quote(message, APICalls.channel_game())
 
                                 if enabled("BSM"):
                                     if ("!backseatmessage" in messagelow[0:16] or '!bsm' in messagelow[0:4]) and ismod:

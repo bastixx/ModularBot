@@ -27,7 +27,7 @@ def read_kbd_input(inputQueue):
         inputQueue.put(input_str)
 
 
-def botStop(bot, name):
+def bot_stop(bot, name):
     bot.pop('pipe', None)
     bot['process'].terminate()
     if bot['process'].join(TIMEOUT) is None:
@@ -36,7 +36,7 @@ def botStop(bot, name):
     return bot
 
 
-def botStart(bot, name):
+def bot_start(bot, name):
     parent, child = mp.Pipe()
     bot['pipe'] = parent
     process = mp.Process(target=botinstance, args=[bot['ChannelId'], bot["ChannelName"], child], name=name)
@@ -45,7 +45,7 @@ def botStart(bot, name):
     return bot
 
 
-def aliveCheck(bots, key):
+def alive_check(bots, key):
     proc = bots[key].get('process', None)
     if proc is not None:
         alive = proc.is_alive()
@@ -54,19 +54,20 @@ def aliveCheck(bots, key):
     return False
 
 
-def pipeCheck(bots, key):
+def pipe_check(bots, key):
     proc = bots[key].get('pipe', None)
     if proc is not None:
         return proc.poll()
     return False
 
+
 if __name__ == '__main__':
-    mp.set_start_method('spawn')
+    # mp.set_start_method('spawn')
     database.load_database("Controller")
     for element in database.getallfromdb("ChannelsTest"):
         bots[element['ChannelName']] = dict(ChannelName=element['ChannelName'], ChannelId=element["ChannelId"])
     for name in bots.keys():
-        bots[name] = botStart(bots[name], name)
+        bots[name] = bot_start(bots[name], name)
 
     EXIT_COMMAND = "exit"
     inputQueue = queue.Queue()
@@ -90,11 +91,11 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = botStop(bots[x], x)
-                            bots[x] = botStart(bots[x], x)
+                            bots[x] = bot_stop(bots[x], x)
+                            bots[x] = bot_start(bots[x], x)
                     else:
-                        bots[lsplit[1]] = botStop(bots[lsplit[1]], lsplit[1])
-                        bots[lsplit[1]] = botStart(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_start(bots[lsplit[1]], lsplit[1])
 
             elif 'stop' in input_str[:5]:
                 lsplit = input_str.split(" ")
@@ -103,9 +104,9 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = botStop(bots[x], x)
+                            bots[x] = bot_stop(bots[x], x)
                     else:
-                        bots[lsplit[1]] = botStop(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]], lsplit[1])
 
             elif 'start' in input_str[:6]:
                 lsplit = input_str.split(" ")
@@ -114,9 +115,9 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = botStart(bots[x], x)
+                            bots[x] = bot_start(bots[x], x)
                     else:
-                        bots[lsplit[1]] = botStart(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_start(bots[lsplit[1]], lsplit[1])
 
             elif 'help' in input_str[:4]:
                 lsplit = input_str.split(" ")
@@ -151,12 +152,12 @@ if __name__ == '__main__':
             elif input_str != '':
                 print('"%s" is not a recognised command.' % input_str)
 
-        dead = filter(lambda x: aliveCheck(bots, x), bots.keys())
+        dead = filter(lambda x: alive_check(bots, x), bots.keys())
         if dead:
             for name in dead:
                 print("Bot for Channel %s has died" % name)
-                bots[name] = botStart(bots[name], name)
-        piped = filter(lambda x: pipeCheck(bots, x), bots.keys())
+                bots[name] = bot_start(bots[name], name)
+        piped = filter(lambda x: pipe_check(bots, x), bots.keys())
         if piped:
             for name in piped:
                 print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
@@ -166,10 +167,9 @@ if __name__ == '__main__':
                 print(f"Is bot {bot} alive?: {bots[bot]['process'].is_alive()}")
 
         count += 1
-
         time.sleep(5)
 
 for name in bots.keys():
-    botStop(bots[name], name)
+    bot_stop(bots[name], name)
 sys.exit(0)
 

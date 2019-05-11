@@ -8,10 +8,15 @@ def load_apicalls(CLIENTID, CHANNELID):
     global headers
     channel_id = CHANNELID
     client_id = CLIENTID
-    headers = {'Client-ID': client_id, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+
+    # Using V5 of the API.
+    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+    # Not sure if content-type is neccecary.
+    # headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json',
+    #            'Content-Type': 'application/json'}
 
 
-def follows(userid):
+def follows(userid: str) -> dict:
     try:
         url = 'https://api.twitch.tv/helix/users/follows?from_id=%s&to_id=%s' % (userid, channel_id)
         r = requests.get(url, headers=headers).json()
@@ -22,7 +27,7 @@ def follows(userid):
         errorlog(errormsg, 'APICalls/follows()', "Userid:" + userid)
 
 
-def id_to_username(userid):
+def id_to_username(userid: str) -> str:
     username = ""
     try:
         url = 'https://api.twitch.tv/helix/users?id=' + userid
@@ -38,7 +43,7 @@ def id_to_username(userid):
         errorlog(errormsg, 'APICalls/idtousername()', "Displayname:" + username)
 
 
-def username_to_id(username):
+def username_to_id(username: str) -> str:
     userid = ""
     try:
         url = 'https://api.twitch.tv/helix/users?login=' + username
@@ -50,7 +55,7 @@ def username_to_id(username):
         errorlog(errormsg, 'APICalls/usernametoid()', "Userid:" + userid)
 
 
-def channel_is_live():
+def channel_is_live() -> bool:
     result = "Empty"
     try:
         url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
@@ -64,14 +69,14 @@ def channel_is_live():
         errorlog(errormsg, 'APICalls/islive()', result)
 
 
-def channel_game():
+def channel_game() -> str:
     url = 'https://api.twitch.tv/kraken/channels/%s/' % channel_id
     response = requests.get(url, headers=headers).json()
     game = response[0]["game"]
     return game
 
 
-def get_modroom():
+def get_modroom() -> (str, bool):
     rooms = {}
     url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
     response = requests.get(url, headers=headers).json()
