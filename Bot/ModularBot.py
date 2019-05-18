@@ -1,7 +1,6 @@
 import socket
 import ast
 import time
-from unidecode import unidecode
 
 # Append path to modules to path variable and load custom modules
 # sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
@@ -53,7 +52,7 @@ def botinstance(channelid: str, channelname: str, pipe):
         PASS = config["Password"].encode()
         CHANNEL = channelname.encode()
         CLIENTID = config["Client ID"]
-        OAUTH = PASS.decode().split(":")[1]
+        # OAUTH = PASS.decode().split(":")[1]
         FOLDER = config["Folder"]
         STEAMAPIKEY = config['SteamAPIkey']
         # Headers for the Twitch API calls being made.

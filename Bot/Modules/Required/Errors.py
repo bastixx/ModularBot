@@ -4,7 +4,8 @@ class InsufficientParameterException(Exception):
         self.command = command
 
     def __str__(self):
-        return "Command %s called with insufficient Parameters" % command
+        return "Command %s called with insufficient Parameters" % self.command
+
 
 class UnexpectedBotClosure(Exception):
     """One Bot Instance Unexpectedly close"""

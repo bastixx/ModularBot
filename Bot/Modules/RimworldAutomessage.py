@@ -1,5 +1,4 @@
 import threading
-import requests
 
 from Modules.Required.Sendmessage import send_message
 from Modules.Required.Errorlog import errorlog

@@ -16,7 +16,7 @@ def load_followergoals(folder):
         errorlog(errormsg, "load_followergoals()", '')
 
 
-def bits(channel_id, client_id):
+def bits():
     # postponed untill i figure out why this requires authentication and how to implement.
     pass
 

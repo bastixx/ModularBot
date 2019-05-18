@@ -7,7 +7,7 @@ from Modules.Required.Sendmessage import send_message
 from Modules.Required.Errorlog import errorlog
 from datetime import datetime, date, timedelta
 import Modules.Required.Database as Database
-from Modules.Required.APICalls import follows, usernametoid, idtousername
+from Modules.Required.APICalls import follows, username_to_id, id_to_username
 
 
 def load_bonertimer():
@@ -259,7 +259,7 @@ def bet(username, userid, message, ismod):
                 arguments = message.split(' ')
                 username = arguments[1]
                 bet = arguments[2]
-                userid = usernametoid(username)
+                userid = username_to_id(username)
 
                 bets[userid] = bet
                 t = threading.Timer((int(bet) * 60), announcer, [username, bet])
@@ -285,7 +285,7 @@ def bet(username, userid, message, ismod):
 
                         else:
                             userid = list(bets.keys())[list(bets.values()).index(int(rembet))]
-                            username = idtousername(userid)
+                            username = id_to_username(userid)
                             del bets[userid]
                             del timers[username]
                             send_message(f"Bet for {username} removed from pool.")
@@ -293,7 +293,7 @@ def bet(username, userid, message, ismod):
                         raise Exception
                 else:
                     if rembet in list(bets.keys()):
-                        userid = usernametoid(rembet)
+                        userid = username_to_id(rembet)
 
                         del bets[userid]
                         del timers[rembet]
