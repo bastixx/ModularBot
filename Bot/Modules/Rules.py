@@ -8,7 +8,7 @@ def load_rules():
     rules = {}
     warnings = {}
     try:
-        col = Database.getallfromdb("Rules")
+        col = Database.getall("Rules")
         for document in col:
             rules[document["_id"]] = {"rule": document["Rule"], "1": document["first_timeout"],
                                       "2": document["second_timeout"], "3": document["third_timeout"]}

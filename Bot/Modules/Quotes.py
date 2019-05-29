@@ -14,7 +14,7 @@ def load_quotes():
 
     quotes = {}
     try:
-        for document in Database.getallfromdb("Quotes"):
+        for document in Database.getall("Quotes"):
             quotes[document["_id"]] = f'{document["quote"]} - {document["said_by"]} [{document["game"]}] ' \
                                       f'[{document["date"]}]'
     except Exception as errormsg:
@@ -36,7 +36,7 @@ def quote(message, game):
                 newquote, said_by = newquote.split("-")
                 quotes[str(len(quotes) + 1)] = f'{newquote} - {said_by} [{game}] [{currentdate}]'
                 # quotes[str(len(quotes) + 1)] = newquote + " [%s] [%s]" % (game, currentdate)
-                Database.insertoneindb("Quotes", {"_id": (len(quotes)), "quote": newquote, "said_by": said_by , "game": game, "date": currentdate})
+                Database.insertone("Quotes", {"_id": (len(quotes)), "quote": newquote, "said_by": said_by , "game": game, "date": currentdate})
                 send_message("Quote %d added!" % len(quotes))
             except Exception as errormsg:
                 send_message("There was an error adding this quote. Please try again.")
@@ -50,7 +50,7 @@ def quote(message, game):
                 newquote, said_by = newquote.split("-")
                 quotes[arguments[2]]["quote"] = newquote
                 quotes[arguments[2]]["said_by"] = said_by
-                Database.updateoneindb("Quotes", {"_id": arguments[2]}, {"quote": newquote, "said_by": said_by})
+                Database.updateone("Quotes", {"_id": arguments[2]}, {"quote": newquote, "said_by": said_by})
                 send_message(f"Quote {arguments[2]} updated!")
             except Exception as errormsg:
                 send_message("There was an error editing this quote. Please try again.")
@@ -72,7 +72,7 @@ def quote(message, game):
                     game = game.rstrip("]")
                     date = date.rstrip("]")
 
-                    Database.insertoneindb("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
+                    Database.insertone("Tempquotes", {"_id": val, "quote": quote, "game": game, "date": date})
 
                 Database.clearcollection("Quotes")
                 Database.copycollection("Tempquotes", "Quotes")

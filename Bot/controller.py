@@ -64,8 +64,8 @@ def pipe_check(bots, key):
 if __name__ == '__main__':
     # mp.set_start_method('spawn')
     database.load_database("Controller")
-    for element in database.getallfromdb("ChannelsTest"):
-        bots[element['ChannelName']] = dict(ChannelName=element['ChannelName'], ChannelId=element["ChannelId"])
+    for element in database.getall("Channels"):
+        bots[element['name']] = dict(ChannelName=element['name'], ChannelId=element["id"])
     for name in bots.keys():
         bots[name] = bot_start(bots[name], name)
 

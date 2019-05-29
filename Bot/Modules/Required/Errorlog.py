@@ -1,17 +1,14 @@
 from datetime import datetime
-import pymongo
+import json
 
 
 def load_errorlog(FOLDER):
     global folder
-    global collection
     folder = FOLDER
-    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-    db = myclient[FOLDER]
-    collection = db["Errorlog"]
 
 
 def errorlog(error: Exception, functionname: str, message: str):
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    collection.insert_one({"timestamp": now, "error": str(error), "function": functionname, "message": message})
+    with open(f"../../Data/{folder}_errorlog.json", 'a+') as f:
+        json.dump({"timestamp": now, "error": str(error), "function": functionname, "message": message}, f)
     print(f"{now} : {str(error)} : {functionname} : {message}")

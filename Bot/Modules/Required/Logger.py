@@ -3,7 +3,7 @@ import time
 import os
 
 from Modules.Required.Errorlog import errorlog
-from Modules.Required.Database import insertoneindb
+from Modules.Required.Database import insertone
 
 
 def logger(userid, displayname, message, issub, ismod, issystem=False):
@@ -11,7 +11,7 @@ def logger(userid, displayname, message, issub, ismod, issystem=False):
         timestamp = str(time.strftime("%d-%m-%Y %H:%M:%S"))
         print(f"[{timestamp}] {displayname}: {message}")
         message = unidecode(message)
-        insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid,
+        insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid,
                                   "message": message, "sub": issub, "mod": ismod, "systemmessage": issystem})
 
         return timestamp

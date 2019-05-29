@@ -12,11 +12,11 @@ def load_raffles():
     raffles = {}
     try:
         if Database.collectionexists("Raffles"):
-            for document in Database.getallfromdb("Raffles"):
+            for document in Database.getall("Raffles"):
                 raffles[document["rafflename"]] = {"mode": document["mode"], "raffleentries": {}, "rafflewinners": {},
                                                    "silent": document["silent"]}
         for i in raffles.keys():
-            for document in Database.getallfromdb("raffle_" + i):
+            for document in Database.getall("raffle_" + i):
                 raffles[i]["raffleentries"][document["userid"]] = document["username"]
                 if document["haswon"]:
                     raffles[i]["rafflewinners"][document["userid"]] = document["username"]
@@ -34,7 +34,7 @@ def func_raffle(message):
         if arguments[1] == "add":
             try:
                 raffles[raffle] = {"mode": "all", "raffleentries": {}, "rafflewinners": {}, "silent": False}
-                Database.insertoneindb("Raffles", {"rafflename": raffle, "mode": "all"})
+                Database.insertone("Raffles", {"rafflename": raffle, "mode": "all"})
                 send_message("Raffle \"%s\" created!" % raffle)
             except Exception as errormsg:
                 send_message(f"Error creating raffle \"%s\"!" % raffle)
@@ -45,7 +45,7 @@ def func_raffle(message):
                 if raffle in raffles.keys():
                     del raffles[raffle]
                     Database.deletecollection("raffle_" + raffle)
-                    Database.deleteoneindb("Raffles", {"rafflename": raffle})
+                    Database.deleteone("Raffles", {"rafflename": raffle})
                     send_message("Raffle \"%s\" deleted!" % raffle)
                 else:
                     send_message("This raffle does not exist!")
@@ -79,7 +79,7 @@ def func_raffle(message):
                         mode = arguments[3]
                         raffle = " ".join(arguments[4:])
                         raffles[raffle]["mode"] = mode
-                        Database.updateoneindb("Raffles", {"rafflename": raffle}, {"mode": mode})
+                        Database.updateone("Raffles", {"rafflename": raffle}, {"mode": mode})
                         send_message(f"Mode changed for raffle {raffle}.")
                     else:
                         send_message("Correct modes are: sub, follower, follower_7 and all")
@@ -118,7 +118,7 @@ def func_raffle(message):
                     raffles[raffle]["raffleentries"].pop(rafflewinnerid)
                     raffles[raffle]["rafflewinners"][rafflewinnerid] = rafflewinnername
 
-                    Database.updateoneindb("raffle_" + raffle, {"userid": rafflewinnerid}, {"haswon": True})
+                    Database.updateone("raffle_" + raffle, {"userid": rafflewinnerid}, {"haswon": True})
                     send_message("The winner is: %s!" % rafflewinnername)
             except Exception as errormsg:
                 send_message("Error rolling a winner for this raffle.")
@@ -133,7 +133,7 @@ def func_raffle(message):
             if userid not in raffles[raffle]["raffleentries"].keys():
                 if user not in raffles[raffle]["rafflewinners"].keys():
                     raffles[raffle]["raffleentries"][userid] = user
-                    Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": user, "haswon": False})
+                    Database.insertone("raffle_" + raffle, {"userid": userid, "username": user, "haswon": False})
                     send_message("@%s joined raffle: \"%s\"!" % (user, raffle))
                 else:
                     send_message("user @%s already won this raffle!" % user)
@@ -148,7 +148,7 @@ def func_raffle(message):
             
             if userid in raffles[raffle]["raffleentries"].keys():
                 raffles[raffle]["raffleentries"].pop(userid)
-                Database.deleteoneindb("raffle_" + raffle, {"userid": userid})
+                Database.deleteone("raffle_" + raffle, {"userid": userid})
                 send_message("@%s removed from raffle: \"%s\"!" % (user, raffle))
             else:
                 send_message("User @%s is not in this raffle!" % user)
@@ -229,7 +229,7 @@ def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -
             if userid not in raffles[raffle]["raffleentries"].keys():
                 if userid not in raffles[raffle]["Rafflewinners"].keys():
                     raffles[raffle]["raffleentries"][userid] = username
-                    Database.insertoneindb("raffle_" + raffle, {"userid": userid, "username": username,
+                    Database.insertone("raffle_" + raffle, {"userid": userid, "username": username,
                                                                 "haswon": False})
                     if not raffles[raffle]['silent']:
                         send_message("@%s joined raffle: \"%s\"!" % (username, raffle))

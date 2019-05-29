@@ -23,9 +23,9 @@ def load_bonertimer():
     timers = {}
     endings = []
 
-    for document in Database.getallfromdb("Endings"):
+    for document in Database.getall("Endings"):
         endings.append(document["ending"])
-    titleholder = Database.getonefromdb("Titleholder")["username"]
+    titleholder = Database.getone("Titleholder")["username"]
 
 
 def announcer(userid, username, bettime):
@@ -102,8 +102,8 @@ def timer(message, ismod):
                                      endtime + " minute(s)! The winner is: " + winner +
                                      " with " + str(winningtime) + " minutes!")
 
-                    Database.insertoneindb("Bonerwinners", {"name(s)": winner, "time": winningtime})
-                    Database.insertoneindb("BonerTitleholder", {"name": winner})
+                    Database.insertone("Bonerwinners", {"name(s)": winner, "time": winningtime})
+                    Database.insertone("BonerTitleholder", {"name": winner})
                 else:
                     send_message("Bones have been broken! The timer is on" + endtime + " minutes. No bets are within "
                                  "5 minutes of the timer. That means there is no winner this round!")
@@ -151,7 +151,7 @@ def fidwins():
                 t.cancel()
             time.sleep(1)
             timers = {}
-            Database.updateoneindb("Titleholder", {}, {"username": "FideliasFK"}, True)
+            Database.updateone("Titleholder", {}, {"username": "FideliasFK"}, True)
             timenow = datetime.time(datetime.now())
             timer = datetime.combine(date.today(), timenow) - datetime.combine(date.today(), starttime)
             endtime = str(timer).split(':')[1]
@@ -180,7 +180,7 @@ def winner(message):
                 t.cancel()
             time.sleep(1)
             timers = {}
-            Database.updateoneindb("Titleholder", {}, {"username": winner})
+            Database.updateone("Titleholder", {}, {"username": winner})
             send_message(f"The winner this round is {winner}!")
         else:
             send_message("There is no timer active!")
@@ -198,7 +198,7 @@ def setboner(message):
     arguments = message.split(" ")
     try:
         titleholder = arguments[1]
-        Database.updateoneindb("Titleholder", {}, {"username": titleholder}, True)
+        Database.updateone("Titleholder", {}, {"username": titleholder}, True)
         send_message(f"Registered {titleholder} as the new owner of \"Broken Boner\" ")
     except ValueError:
         send_message("Unable to determine new titleholder. Please check your command.")
@@ -264,7 +264,7 @@ def bet(username, userid, message, ismod):
                 bets[userid] = bet
                 t = threading.Timer((int(bet) * 60), announcer, [username, bet])
                 timers[username] = t
-                Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+                Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
                 send_message(f"Bet for {username} with {bet} minutes added to pool!")
             except Exception as errormsg:
                 send_message("Error adding bet for this user.")
@@ -297,7 +297,7 @@ def bet(username, userid, message, ismod):
 
                         del bets[userid]
                         del timers[rembet]
-                        Database.deleteoneindb("Bets", {"userid": userid})
+                        Database.deleteone("Bets", {"userid": userid})
                         send_message(f"Bet for {rembet} removed from pool")
                     else:
                         raise Exception
@@ -355,14 +355,14 @@ def bet(username, userid, message, ismod):
                             betsec = int(bet) * 60
                             t = threading.Timer(betsec, announcer, [userid, username, bet])
                             timers[username] = t
-                            Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+                            Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
                             send_message(f"@{username} Bet updated! Your new bet is: {bet} minutes!")
                         else:
                             bets[userid] = bet
                             betsec = int(bet) * 60
                             t = threading.Timer(betsec, announcer, [username, bet])
                             timers[username] = t
-                            Database.updateoneindb("Bets", {"userid": userid}, {"bet": bet}, True)
+                            Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
                             send_message(f"@{username} Bet registered: {bet} minutes!")
                     else:
                         send_message("Bet is not a number")

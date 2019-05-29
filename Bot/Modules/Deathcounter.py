@@ -8,7 +8,7 @@ def load_deaths():
     deaths = {}
 
     try:
-        for document in Database.getallfromdb("Deaths"):
+        for document in Database.getall("Deaths"):
             deaths[document["game"]] = document["deaths"]
     except Exception as errormsg:
         errorlog(errormsg, "Deathcounter/Load_deaths()", "")
@@ -72,7 +72,7 @@ def func_deaths(message, game, ismod):
 
     finally:
         if not skipdb:
-            Database.updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
+            Database.updateone("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
         return cooldown_time
 
 
@@ -83,7 +83,7 @@ def dead(game):
         else:
             deaths[game] = 1
         send_message("A new death! Deathcount: %d!" % deaths[game])
-        Database.updateoneindb("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
+        Database.updateone("Deaths", {"game": game}, {"$set": {"deaths": deaths[game]}}, True)
     except Exception as errormsg:
         send_message("A error occured. Please try again.")
         errorlog(errormsg, "!dead", '')

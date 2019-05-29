@@ -4,9 +4,7 @@ import logging
 import sys
 import threading
 import queue
-
-bots = dict()
-TIMEOUT = 60
+import time
 
 
 def read_kbd_input(inputQueue):
@@ -19,10 +17,9 @@ def read_kbd_input(inputQueue):
 def botStop(bot):
     bot['pipe'] = None
     bot['process'].terminate()
-    if bot['process'].join(TIMEOUT) is None:
-        print("Bot seems to still be alive after %s seconds.." % TIMEOUT)
-        bot['process'].kill()
+    bot['process'].join(TIMEOUT)
     bot['process'] = None
+    print(f"Bot {bot['Name']} stopped.")
     return bot
 
 
@@ -32,6 +29,8 @@ def botStart(bot, name):
     process = mp.Process(target=instance, args=[bot["Name"], child], name=name)
     bot['process'] = process
     process.start()
+    print(f"Starting bot {name}....")
+    time.sleep(1)
     return bot
 
 
@@ -59,9 +58,11 @@ def boottimeCheck(bot):
 
 
 if __name__ == '__main__':
+    bots = dict()
+    TIMEOUT = 60
     # mp.set_start_method('spawn')
     # Get botlist from database
-    botlist = ("bastixx669",)
+    botlist = ("instance1", "instance2")
 
     logger = mp.log_to_stderr()
     logger.setLevel(logging.DEBUG)
@@ -85,13 +86,13 @@ if __name__ == '__main__':
     EXIT_COMMAND = "exit"
     inputQueue = queue.Queue()
 
-    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=True)
+    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=False)
     inputThread.start()
     while True:
 
         if inputQueue.qsize() > 0:
             input_str = inputQueue.get()
-
+            print(input_str)
             if 'exit' in input_str[:4]:
                 break
 
@@ -102,10 +103,10 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = botStop(bots[x], x)
+                            bots[x] = botStop(bots[x])
                             bots[x] = botStart(bots[x], x)
                     else:
-                        bots[lsplit[1]] = botStop(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = botStop(bots[lsplit[1]])
                         bots[lsplit[1]] = botStart(bots[lsplit[1]], lsplit[1])
 
             elif 'stop' in input_str[:5]:
@@ -142,13 +143,13 @@ if __name__ == '__main__':
 
             elif 'status' in input_str[:6]:
                 for bot in bots.keys():
-                    if bots[bot]["process"] != None:
+                    if bots[bot]["process"] is not None:
                         alive = bots[bot]['process'].is_alive()
                         if alive:
                             print("%s: OK" % bot)
                         else:
                             print("%s: Not OK!" % bot)
-                        print("%s: Booted on: %s" % (bot, boottimeCheck(bot)))
+                        # print("%s: Booted on: %s" % (bot, boottimeCheck(bot)))
                     else:
                         print("Bot %s is stopped." % bots[bot]['Name'])
 
@@ -186,6 +187,8 @@ if __name__ == '__main__':
             for name in piped:
                 print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
 
-for name in bots.keys():
-    botStop(bots[name], name)
-sys.exit(0)
+        # time.sleep(1)
+
+    for name in bots.keys():
+        botStop(bots[name])
+    sys.exit(0)

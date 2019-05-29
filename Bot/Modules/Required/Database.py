@@ -1,4 +1,5 @@
-import pymongo
+import json
+import os.path
 from Modules.Required.Errorlog import errorlog
 
 
@@ -6,104 +7,131 @@ def load_database(database):
     global db
     global channel
     channel = database
-    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-    db = myclient[database]
+    try:
+        print(os.path.abspath(__file__))
+        with open(f"../../Data/{database}.json") as f:
+            db = json.load(f)
+    except Exception as errormsg:
+        errorlog(errormsg, "Database/Load_database()", "Error reading JSON file:")
+
+
+def write_to_file(database):
+    try:
+        with open(database + ".json", 'w') as f:
+            json.dump(database, f)
+    except Exception as errormsg:
+        errorlog(errormsg, "Database/write_to_file()", f"Error writing to db file {database}: ")
 
 
 def getchannel():
     return channel
 
 
-def getallfromdb(collection):
+# Returns all entries in a collection.
+def getall(collection: str) -> dict:
     try:
-        mycol = db[collection]
-        mydocs = mycol.find({})
-        return mydocs
+        return db[collection]
     except Exception as errormsg:
         errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")
         raise Exception
 
 
-def getonefromdb(collection, filter={}):
+# Returns the first entry matching the filter.
+# The dbfilter argument needs to be a dict with a single key-value pair.
+def getone(collection: str, dbfilter={}) -> dict:
     try:
-        mycol = db[collection]
-        mydocs = mycol.find(filter)
-        dictionary = {}
-        for document in mydocs:
-            dictionary = document
-        return dictionary
+        for item in db[collection]:
+            for key, value in item:
+                if item[key] == dbfilter[key]:
+                    return item
+        return {}
     except Exception as errormsg:
         errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")
         raise Exception
 
 
-def insertoneindb(collection, data):
+# Inserts an entry into the specified collection.
+def insertone(collection: str, data: dict):
     try:
-        mycol = db[collection]
-        mycol.insert_one(data)
+        # TODO add check if entry is unique?
+        db[collection].append(data)
     except Exception as errormsg:
-        errorlog(errormsg, "Database/insertone()", "data: " + data)
+        errorlog(errormsg, "Database/insertone()", "data: " + str(data))
         raise Exception
 
 
-def deleteoneindb(collection, filter):
+# Removes first occurence of an entry matching the filter.
+# The dbfilter argument needs to be a dict with a single key-value pair.
+def deleteone(collection: str, dbfilter: dict):
     try:
-        mycol = db[collection]
-        mycol.delete_one(filter)
+        for item in db[collection]:
+            for key, value in item:
+                if item[key] == dbfilter[key]:
+                    db[collection].remove(item)
     except Exception as errormsg:
-        errorlog(errormsg, "Database/deleteone()", "filter: " + filter)
+        errorlog(errormsg, "Database/deleteone()", "filter: " + str(dbfilter))
         raise Exception
 
 
-def deletecollection(collection):
+# Deletes a collection from the database.
+def deletecollection(collection: str):
     try:
-        db.drop_collection(collection)
+        del db[collection]
     except Exception as errormsg:
         errorlog(errormsg, "Database/deletecollection()", "collection: " + collection)
         raise Exception
 
 
-def updateoneindb(collection, fltr, data, upsert=False):
+# Updates the first entry in the collection with new values based on a filter.
+# Optional flag to create the entry if it does not exist -> CURRENTLY UNUSED!
+# The dbfilter argument needs to be a dict with a single key-value pair.
+def updateone(collection: str, dbfilter: dict, data: dict, create=False):
     try:
-        mycol = db[collection]
-        mycol.update_one(fltr, data, upsert, upsert)
+        for item in db[collection]:
+            for key, value in item:
+                if item[key] == dbfilter[key]:
+                    db[collection][item].update(data)
+                    return
     except Exception as errormsg:
-        errorlog(errormsg, "Database/updateone()", "filter: " + fltr + " Data: " + data)
+        errorlog(errormsg, "Database/updateone()", "filter: " + str(dbfilter) + " Data: " + str(data))
         raise Exception
 
 
-def updatemanyindb(collection, filter, data):
+# Updates many entries in the collection with new values based on a filter.
+# The dbfilter argument needs to be a dict with a single key-value pair.
+def updatemanyindb(collection: str, dbfilter: dict, data: dict):
     try:
-        mycol = db[collection]
-        mycol.update_many(filter, data)
+        for item in db[collection]:
+            for key, value in item:
+                if item[key] == dbfilter[key]:
+                    db[collection][item].update(data)
     except Exception as errormsg:
-        errorlog(errormsg, "Database/updatemany()", "filter: " + filter + " Data: " + data)
+        errorlog(errormsg, "Database/updatemany()", "filter: " + str(dbfilter) + " Data: " + str(data))
         raise Exception
 
 
-def clearcollection(collection):
+# Clears a collection of all entries.
+def clearcollection(collection: str):
     try:
-        mycol = db[collection]
-        mycol.delete_many({})
-        return True
+        db[collection] = []
     except Exception as errormsg:
         errorlog(errormsg, "Database/clearcollection()", collection)
         return Exception
 
 
-def copycollection(oldcollection, newcollection):
+# Makes a copy from the specified colletion.
+def copycollection(oldcollection: str, newcollection: str):
     try:
-        db[oldcollection].copyTo(newcollection)
-        return True
+        db[newcollection] = list(db[oldcollection])
     except Exception as errormsg:
         errorlog(errormsg, "Database/clearcollection()", f"old: {oldcollection}, new: {newcollection}")
         return Exception
 
 
-def collectionexists(collection):
+# Check if a collection exists.
+def collectionexists(collection: str):
     try:
-        collectionnames = db.list_collection_names()
-        if collection in collectionnames:
+        if collection in db.Keys():
             return True
         else:
             return False

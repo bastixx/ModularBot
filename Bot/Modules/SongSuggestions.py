@@ -48,7 +48,7 @@ def suggest(message):
                 suggestion = suggestion.replace(elem, "")
 
         suggestion = " ".join(suggestion)
-        Database.insertoneindb("SongSuggestions", {"suggestion": suggestion, "on_spotify": songonspotify(suggestion)})
+        Database.insertone("SongSuggestions", {"suggestion": suggestion, "on_spotify": songonspotify(suggestion)})
         send_message("Song suggestion registered!")
     except Exception as errormsg:
         send_message("There was an error adding this. Please try again!")

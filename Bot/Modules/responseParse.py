@@ -7,7 +7,7 @@ def load_responses():
     global responsedict
     responsedict = {}
     try:
-        for document in Database.getallfromdb("Responses"):
+        for document in Database.getall("Responses"):
             responsedict[document["phrase"]] = document["response"]
     except Exception as errormsg:
         errorlog(errormsg, "responseParse/loadResponses", "")

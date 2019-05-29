@@ -23,9 +23,9 @@ def modlog(duration, userid, username, reason=""):
     try:
         if duration == 0:
             message = f"Banned: {username}. Reason: {reason}"
-            Database.insertoneindb("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
+            Database.insertone("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
                                    "reason": reason, "timestamp": timestamp})
-            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                    "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -34,9 +34,9 @@ def modlog(duration, userid, username, reason=""):
         elif duration <= 5:
             message = f"purged: {username}. reason: {reason}"
 
-            Database.insertoneindb("Modlog", {"action": "purged", "username": username, "duration": duration,
+            Database.insertone("Modlog", {"action": "purged", "username": username, "duration": duration,
                                      "reason": reason, "timestamp": timestamp})
-            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                       "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -44,10 +44,10 @@ def modlog(duration, userid, username, reason=""):
             #         channel_id.encode(), modroom_id.encode(), message.encode()))
         else:
             message = f"Timed out: {username}. Duration: {duration}. Reason: {reason}"
-            Database.insertoneindb("Modlog", {"action": "timed out", "username": username, "duration": duration,
+            Database.insertone("Modlog", {"action": "timed out", "username": username, "duration": duration,
                                      "reason": reason, "timestamp": timestamp})
 
-            Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
+            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
                                       "sub": issub, "mod": ismod})
             # if modroom_available:
             #     s.send(
@@ -66,9 +66,9 @@ def removedmessage(username, userid, message):
     displayname = "MOD-ACTION"
     try:
         message = f"Removed message from: {username}. Message: {removedmessage}"
-        Database.insertoneindb("Modlog", {"action": "message removed", "username": username, "userid": userid,
+        Database.insertone("Modlog", {"action": "message removed", "username": username, "userid": userid,
                                  "message": message, "timestamp": timestamp})
-        Database.insertoneindb("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid, "message": message,
+        Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid, "message": message,
                                   "sub": issub, "mod": ismod})
     except Exception as errormsg:
         errorlog(errormsg, "Modlog", message)

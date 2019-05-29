@@ -11,7 +11,7 @@ def load_commands():
     global customcommands
     global timer
     customcommands = {}
-    cursor = Database.getallfromdb("CustomCommands")
+    cursor = Database.getall("CustomCommands")
     for document in cursor:
         customcommands[document["name"]] = {"action": document["action"], "timer": document["timer"]}
     
@@ -30,7 +30,7 @@ def func_command(message):
                 newcommandname = arguments[2]
                 newcommandaction = " ".join(arguments[3:])
                 customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
-                Database.insertoneindb("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
+                Database.insertone("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
                 send_message(f"Command {newcommandname} added!")
             except Exception as errormsg:
                 send_message("Something went wrong. Please check your command and try again.")
@@ -39,7 +39,7 @@ def func_command(message):
         elif arguments[1] == "remove":
             commandname = arguments[2]
             customcommands.remove(commandname)
-            Database.deleteoneindb("CustomCommands", {"name": commandname})
+            Database.deleteone("CustomCommands", {"name": commandname})
             send_message(f"Command {commandname} removed!")
             
         elif arguments[1] == "edit":
@@ -52,11 +52,11 @@ def func_command(message):
                         send_message("Minimum time is 120 seconds (2 minutes).")
                     else:
                         customcommands[commandname]["timer"] = int(arguments[4])
-                        Database.updateoneindb("CustomCommands", {"name": commandname}, {"timer": int(arguments[4])})
+                        Database.updateone("CustomCommands", {"name": commandname}, {"timer": int(arguments[4])})
                 else:
                     if len(arguments) > 4:
                         customcommands[commandname] = newcommandaction
-                        Database.updateoneindb("CustomCommands", {"name": commandname}, {"action": newcommandaction})
+                        Database.updateone("CustomCommands", {"name": commandname}, {"action": newcommandaction})
                 send_message(f"Command {commandname} updated!")
             else:
                 send_message(f"Command {commandname} does not exist!")

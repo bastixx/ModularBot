@@ -10,7 +10,7 @@ import Modules.Required.Database as Database
 def load_rimworldautomessage() -> None:
     global messagetext
     try:
-        for document in Database.getallfromdb("RimworldAutomessage"):
+        for document in Database.getall("RimworldAutomessage"):
             messagetext = document["messagetext"]
     except:
         messagetext = "/me If you want a colonist to be renamed to your username then join our raffle!" \
@@ -39,7 +39,7 @@ def setmessage(message: str) -> None:
     try:
         if arguments[1] == "set":
             messagetext = " ".join(arguments[2:])
-            Database.updateoneindb("RimworldAutomessage", {}, {"messagetext": messagetext}, True)
+            Database.updateone("RimworldAutomessage", {}, {"messagetext": messagetext}, True)
             send_message("Message updated!")
     except Exception as errormsg:
         errorlog(errormsg, "Rimworldautomessage/setmessage()", message)

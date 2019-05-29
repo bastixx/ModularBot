@@ -11,6 +11,7 @@ Production/
 TEMPLATE/files/chatlogs/*.txt
 TEMPLATE/files/errorlog/*.txt
 TEMPLATE/files/raffle/*.txt
+/Data
 
 # Ignore python project files
 /.idea

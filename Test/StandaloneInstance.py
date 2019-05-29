@@ -2,14 +2,7 @@ import socket
 import ast
 import time
 
-# Append path to modules to path variable and load custom modules
-# sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
-
-# from Required.Getgame import *  # TODO Keep as seperate module?
-# from Random_stuff import *  # TODO split into seperate modules
-
 from Modules.Required.Errors import *
-# from Modules.Required.Getgame import get_current_game
 from Modules.Required import Sendmessage, Tagger, Errorlog, Logger, Database, APICalls
 from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Rules, BrokenBoner, RimworldAutomessage,\
     RimworldModLinker, Paddle, Questions, Modlog, Conversions, Unshorten, SongSuggestions, CustomCommands, \
@@ -41,8 +34,9 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
     comlimits.remove(command)
 
 
-def botinstance(channelid: str, channelname: str, pipe):
-    global modules
+if __name__ == '__main__':
+    channelname = "Bastixx669"
+    channelid = "Bastixx669"
     try:
         Database.load_database(channelname)
         config = Database.getone("Config")
@@ -112,7 +106,6 @@ def botinstance(channelid: str, channelname: str, pipe):
         APICalls.load_apicalls(CLIENTID, channelid)
     except Exception as errormsg:
         Errorlog.errorlog(errormsg, "Bot/startup", "Channel:" + channelname)
-        # pipe.send(f"Error: {errormsg}")
 
     if enabled("RU"):
         Rules.load_rules()
@@ -201,14 +194,6 @@ def botinstance(channelid: str, channelname: str, pipe):
                         elif line.find("NOTICE") != -1:
                             Tagger.tagnotice(line)
                             msgtype = "NOTICE"
-
-                        # Unshortener TODO fix this thing
-                        # if enabled("US"):
-                        #     # disable("US")
-                        #     tempmessage = message.split(" ")
-                        #     for shorturl in tempmessage:
-                        #         if validators.url("http://" + shorturl) or validators.url("https://" + shorturl):
-                        #             unshorten(shorturl)
 
                         # These are the actual commands
                         if msgtype == "PRIVMSG" and message[0] == '!':
@@ -436,13 +421,6 @@ def botinstance(channelid: str, channelname: str, pipe):
                                     modulelist.append(x)
                             boottime = Logger.logger(0000000, ">>Bot", "Modules loaded: %s" % ", ".join(modulelist), False, True, True)
 
-                    try:
-                        if pipe.poll():
-                            controllercommand = pipe.recv()
-                            if controllercommand == "boottime":
-                                pipe.send(boottime)
-                    except Exception as errormsg:
-                        Errorlog.errorlog(errormsg, "Multiprocessing", "")
 
         except Exception as errormsg:
             # Disabled due to testing purposes.
@@ -451,8 +429,3 @@ def botinstance(channelid: str, channelname: str, pipe):
             # except Exception:
             #     Errorlog.errorlog(errormsg, 'Main()', '')
             raise errormsg
-
-
-# todo add cache for follows
-# todo rework bonertimer module
-# todo streamline functions/names

@@ -10,7 +10,7 @@ def load_questions():
     questions = {}
     try:
         if Database.collectionexists("Questions"):
-            for document in Database.getallfromdb("Questions"):
+            for document in Database.getall("Questions"):
                 questions[document["_id"]] = document["question"]
     except Exception as errormsg:
         errorlog(errormsg, "Questions/Load_questions()", "")
@@ -28,11 +28,11 @@ def question(message, ismod):
             for i in range(1, len(questions)):
                 if i not in questions.keys():
                     questions[i] = newquestion
-                    Database.insertoneindb("Questions", {"_id": i, "question": newquestion})
+                    Database.insertone("Questions", {"_id": i, "question": newquestion})
                     created = True
             if not created:
                 questions[str(len(questions) + 1)] = newquestion
-                Database.insertoneindb("Questions", {"_id": len(questions), "question": newquestion})
+                Database.insertone("Questions", {"_id": len(questions), "question": newquestion})
             send_message("question %d added!" % len(questions))
         except Exception as errormsg:
             send_message("There was an error adding this question. Please try again!")
@@ -43,7 +43,7 @@ def question(message, ismod):
         try:
             if questions.get(arguments[2], False):
                 del questions[arguments[2]]
-                Database.deleteoneindb("Questions", {"_id": arguments[2]})
+                Database.deleteone("Questions", {"_id": arguments[2]})
             send_message("Question %s removed!" % arguments[2])
 
         except KeyError:
@@ -59,7 +59,7 @@ def question(message, ismod):
             if questions.get(arguments[2], False):
                 newquestion = " ".join(arguments[3:])
                 questions[arguments[2]] = newquestion
-                Database.updateoneindb("Questions", {"_id": arguments[2]}, {"question": newquestion})
+                Database.updateone("Questions", {"_id": arguments[2]}, {"question": newquestion})
                 send_message(f"Question {arguments[2]} updated: {newquestion}")
         except Exception as errormsg:
             errorlog(errormsg, "Questions/edit()", message)

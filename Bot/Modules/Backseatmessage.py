@@ -12,7 +12,7 @@ def load_bsmessage() -> None:
     backseating = False
 
     try:
-        for document in Database.getonefromdb("BackseatMessage"):
+        for document in Database.getone("BackseatMessage"):
             bsmessagestr = document["messagetext"]
     except Exception as errormsg:
         errorlog(errormsg, "Backseatmessage/load_bsmessage()", "")
@@ -57,7 +57,7 @@ def backseatmessage(message) -> None:
 
             # Empty filter will match all elements,
             # but since there will be only 1 element in the database this won't be an issue.
-            Database.updateoneindb("BackseatMessage", {}, {"messagetext": bsmessagestr}, True)
+            Database.updateone("BackseatMessage", {}, {"messagetext": bsmessagestr}, True)
             send_message("Backseat message changed.")
         except Exception as errormsg:
             errorlog(errormsg, 'backseatmessage/set()', message)
