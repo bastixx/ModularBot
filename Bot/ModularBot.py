@@ -1,6 +1,7 @@
 import socket
 import ast
 import time
+import pprint
 
 # Append path to modules to path variable and load custom modules
 # sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
@@ -44,56 +45,69 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 def botinstance(channelid: str, channelname: str, pipe):
     global modules
     try:
+        Errorlog.load_errorlog(channelname)
         Database.load_database(channelname)
         config = Database.getone("Config")
-        HOST = config["Host"]
+        HOST = "tmi.twitch.tv"
         NICK = config["Nickname"].encode()
-        PORT = int(config["Port"])
+        PORT = 6667
         PASS = config["Password"].encode()
         CHANNEL = channelname.encode()
-        CLIENTID = config["Client ID"]
+        CLIENTID = config["ClientID"]
         # OAUTH = PASS.decode().split(":")[1]
-        FOLDER = config["Folder"]
         STEAMAPIKEY = config['SteamAPIkey']
         # Headers for the Twitch API calls being made.
 
-        modules = {'SM': {"name": 'Sendmessage'},
-                   'EL': {"name": 'Errorlog'},
-                   'LO': {"name": 'Logger'},
-                   'DC': {"name": 'Deathcounter'},
-                   'QU': {"name": 'Quotes'},
-                   'RF': {"name": 'Raffles'},
-                   'RO': {"name": 'Roulette'},
-                   'BSM': {"name": 'Backseatmessage'},
-                   'RU': {"name": 'Rules'},
-                   'BT': {"name": 'BrokenBoner'},
-                   'RA': {"name": 'RimworldAutomessage'},
-                   'PA': {"name": 'Paddle'},
-                   'QS': {"name": 'Questions'},
-                   'ML': {"name": 'Modlog'},
-                   'CV': {"name": 'Conversions'},
-                   'FG': {"name": 'FollowerGoals'},
-                   'RML': {"name": 'RimworldModLinker'},
-                   'SS': {"name": 'SongSuggestions'},
-                   'CC': {"name": 'CustomCommands'},
-                   'RP': {"name": 'ResponseParse'},
-                   'US': {"name": 'Unshorten'},
-                   'PU': {"name": 'Pun'}}
+        modules = {'Sendmessage': {},
+                   'Errorlog': {},
+                   'Logger': {},
+                   'Deathcounter': {},
+                   'Quotes': {},
+                   'Raffles': {},
+                   'Roulette': {},
+                   'Backseatmessage': {},
+                   'Rules': {},
+                   'BrokenBoner': {},
+                   'RimworldAutomessage': {},
+                   'Paddle': {},
+                   'Questions': {},
+                   'Modlog': {},
+                   'Conversions': {},
+                   'FollowerGoals': {},
+                   'RimworldModLinker': {},
+                   'SongSuggestions': {},
+                   'CustomCommands': {}}
+                   # 'ResponseParse': {}}
+                   # 'Unshorten': {},
+                   # 'Pun': {}}
 
         # Enabling modules if set to true in config file
-        modulesconfig = {}
         for document in Database.getall('Modules'):
-            modulesconfig[document["module"]] = {"enabled": document["enabled"], "mandatory": document["mandatory"]}
+            modules[document["module"]] = {"enabled": document["enabled"], "mandatory": document["mandatory"]}
 
+        Database.load_database("Modules")
+        for document in Database.getall('Config'):
+            modules[document["Name"]]["functionlist"] = document["functions"]
+
+        pprint.pprint(modules)
+        Database.load_database(channelname)
+        # TODO replace with database entry?
+        # for module in modules.keys():
+        #     modules[module]["config"] = modulesconfig[modules[module]["name"]]
+        #     modules[module]["functions"] = {}
+        #     if modules[module]["config"]["enabled"] and not modulesconfig[modules[module]["name"]]["mandatory"]:
+        #         tree = parse_ast("../../modules/" + modules[module]["name"] + ".py")
+        #         for func in top_level_functions(tree.body):
+        #             modules[module]["functions"][func.name] = {"next use": time.time()}
+
+        var_time = time.time()
         for module in modules.keys():
-            modules[module]["config"] = modulesconfig[modules[module]["name"]]
-            modules[module]["functions"] = {}
-            if modules[module]["config"]["enabled"] and not modulesconfig[modules[module]["name"]]["mandatory"]:
-                tree = parse_ast("modules/" + modules[module]["name"] + ".py")
-                for func in top_level_functions(tree.body):
-                    modules[module]["functions"][func.name] = {"next use": time.time()}
+            modules[module]["functions"] = dict()
+            for function in modules[module]["functionlist"]:
+                modules[module]["functions"][function] = {"next use": var_time}
 
         # modules['other'] = {"name": "Other"}
+
         # Connecting to Twitch IRC by passing credentials and joining a certain channel
         sock = socket.socket()
         sock.connect((HOST, PORT))
@@ -106,9 +120,8 @@ def botinstance(channelid: str, channelname: str, pipe):
         sock.send(b"JOIN #" + CHANNEL + b"\r\n")
 
         # Loading the basic modules
-        Sendmessage.load_send_message(FOLDER, CHANNEL, sock)
-        Errorlog.load_errorlog(FOLDER)
-        Database.load_database(FOLDER)
+        Sendmessage.load_send_message(channelname, CHANNEL, sock)
+        Database.load_database(channelname)
         APICalls.load_apicalls(CLIENTID, channelid)
     except Exception as errormsg:
         Errorlog.errorlog(errormsg, "Bot/startup", "Channel:" + channelname)
@@ -133,7 +146,7 @@ def botinstance(channelid: str, channelname: str, pipe):
     if enabled("ML"):
         Modlog.load_modlog()
     if enabled("FG"):
-        FollowerGoals.load_followergoals(FOLDER)
+        FollowerGoals.load_followergoals(channelname)
     if enabled("RML"):
         RimworldModLinker.load_mod(STEAMAPIKEY)
     if enabled("SS"):
@@ -229,7 +242,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                     cooldown_time = 30
 
                                     Sendmessage.send_message(f"Commands for this channel can be found here: "
-                                                             f"http://www.bastixx.nl/twitch/{FOLDER}/commands.php")
+                                                             f"http://www.bastixx.nl/twitch/{channelname}/commands.php")
 
                                 if enabled("RU"):
                                     if "!rule" in messagelow[0:5] and ismod and not oncooldown("RU", "rule"):

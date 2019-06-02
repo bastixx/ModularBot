@@ -1,10 +1,9 @@
 from ModularBot import botinstance
 from Modules.Required import Database as database
-import multiprocessing as mp
+import multiprocessing as mp, logging
 import sys
 import threading
 import queue
-import time
 
 bots = dict()
 TIMEOUT = 60
@@ -49,7 +48,6 @@ def alive_check(bots, key):
     proc = bots[key].get('process', None)
     if proc is not None:
         alive = proc.is_alive()
-        print(alive)
         return not alive
     return False
 
@@ -157,19 +155,12 @@ if __name__ == '__main__':
             for name in dead:
                 print("Bot for Channel %s has died" % name)
                 bots[name] = bot_start(bots[name], name)
-        piped = filter(lambda x: pipe_check(bots, x), bots.keys())
-        if piped:
-            for name in piped:
-                print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
+        # piped = filter(lambda x: pipe_check(bots, x), bots.keys())
+        # if piped:
+        #     for name in piped:
+        #         print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
 
-        if count % 500 == 0:
-            for bot in bots:
-                print(f"Is bot {bot} alive?: {bots[bot]['process'].is_alive()}")
-
-        count += 1
-        time.sleep(5)
 
 for name in bots.keys():
     bot_stop(bots[name], name)
 sys.exit(0)
-

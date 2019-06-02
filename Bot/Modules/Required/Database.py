@@ -1,6 +1,6 @@
 import json
-import os.path
 from Modules.Required.Errorlog import errorlog
+from pathlib import Path
 
 
 def load_database(database):
@@ -8,8 +8,9 @@ def load_database(database):
     global channel
     channel = database
     try:
-        print(os.path.abspath(__file__))
-        with open(f"../../Data/{database}.json") as f:
+        base_path = Path(__file__).parent
+        file_path = (base_path / f"../../Data/{database}.json").resolve()
+        with open(file_path) as f:
             db = json.load(f)
     except Exception as errormsg:
         errorlog(errormsg, "Database/Load_database()", "Error reading JSON file:")
@@ -32,7 +33,7 @@ def getall(collection: str) -> dict:
     try:
         return db[collection]
     except Exception as errormsg:
-        errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")
+        errorlog(errormsg, "Database/getall()", f"Collection: {collection}")
         raise Exception
 
 
@@ -41,12 +42,14 @@ def getall(collection: str) -> dict:
 def getone(collection: str, dbfilter={}) -> dict:
     try:
         for item in db[collection]:
-            for key, value in item:
-                if item[key] == dbfilter[key]:
+            if dbfilter == {}:
+                return item
+            for key, value in item.items():
+                if item[key] == dbfilter.get(key, None):
                     return item
         return {}
     except Exception as errormsg:
-        errorlog(errormsg, "Database/getallfromDB()", f"Collection: {collection}")
+        errorlog(errormsg, "Database/getone()", f"Collection: {collection}")
         raise Exception
 
 
@@ -65,8 +68,8 @@ def insertone(collection: str, data: dict):
 def deleteone(collection: str, dbfilter: dict):
     try:
         for item in db[collection]:
-            for key, value in item:
-                if item[key] == dbfilter[key]:
+            for key, value in item.items():
+                if item[key] == dbfilter.get(key, None):
                     db[collection].remove(item)
     except Exception as errormsg:
         errorlog(errormsg, "Database/deleteone()", "filter: " + str(dbfilter))
@@ -88,8 +91,8 @@ def deletecollection(collection: str):
 def updateone(collection: str, dbfilter: dict, data: dict, create=False):
     try:
         for item in db[collection]:
-            for key, value in item:
-                if item[key] == dbfilter[key]:
+            for key, value in item.items():
+                if item[key] == dbfilter.get(key, None):
                     db[collection][item].update(data)
                     return
     except Exception as errormsg:
@@ -102,8 +105,8 @@ def updateone(collection: str, dbfilter: dict, data: dict, create=False):
 def updatemanyindb(collection: str, dbfilter: dict, data: dict):
     try:
         for item in db[collection]:
-            for key, value in item:
-                if item[key] == dbfilter[key]:
+            for key, value in item.items():
+                if item[key] == dbfilter.get(key, None):
                     db[collection][item].update(data)
     except Exception as errormsg:
         errorlog(errormsg, "Database/updatemany()", "filter: " + str(dbfilter) + " Data: " + str(data))
@@ -138,3 +141,4 @@ def collectionexists(collection: str):
     except Exception as errormsg:
         errorlog(errormsg, "Database/doescollectionexitt()", collection)
         return Exception
+
