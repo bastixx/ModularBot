@@ -134,11 +134,11 @@ def copycollection(oldcollection: str, newcollection: str):
 # Check if a collection exists.
 def collectionexists(collection: str):
     try:
-        if collection in db.Keys():
+        if collection in db.keys():
             return True
         else:
             return False
     except Exception as errormsg:
-        errorlog(errormsg, "Database/doescollectionexitt()", collection)
+        errorlog(errormsg, "Database/collectionexists()", "Collection: " + collection)
         return Exception
 

@@ -60,7 +60,10 @@ def channel_is_live() -> bool:
     try:
         url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
         response = requests.get(url, headers=headers).json()
-        islive = response["data"][0]["type"]
+        if len(response["data"]) != 0:
+            islive = response["data"][0]["type"]
+        else:
+            islive = ""
         if islive == "live":
             return True
         else:
@@ -80,7 +83,10 @@ def get_modroom() -> (str, bool):
     rooms = {}
     url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
     response = requests.get(url, headers=headers).json()
-    roomlist = response['rooms']
+    try:
+        roomlist = response['rooms']
+    except:
+        roomlist = []
     for room in roomlist:
         rooms[room['name']] = room['_id']
 

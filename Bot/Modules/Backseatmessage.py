@@ -12,8 +12,7 @@ def load_bsmessage() -> None:
     backseating = False
 
     try:
-        for document in Database.getone("BackseatMessage"):
-            bsmessagestr = document["messagetext"]
+        bsmessagestr = Database.getone("Backseatmessage")
     except Exception as errormsg:
         errorlog(errormsg, "Backseatmessage/load_bsmessage()", "")
         bsmessagestr = "/me Please don't backseat. This is a blind playthrough!"

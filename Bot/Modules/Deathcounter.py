@@ -8,7 +8,7 @@ def load_deaths():
     deaths = {}
 
     try:
-        for document in Database.getall("Deaths"):
+        for document in Database.getall("Deathcounter"):
             deaths[document["game"]] = document["deaths"]
     except Exception as errormsg:
         errorlog(errormsg, "Deathcounter/Load_deaths()", "")
