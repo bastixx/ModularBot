@@ -186,7 +186,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                     #     except Exception as errormsg:
                     #         Errorlog.errorlog(errormsg, "Main/followergoal()", "")
 
-                    if enabled("BSM"):
+                    if enabled("Backseatmessage"):
                         Backseatmessage.bsmcheck()
 
                 else:

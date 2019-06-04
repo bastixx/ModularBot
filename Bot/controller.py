@@ -4,6 +4,7 @@ import multiprocessing as mp, logging
 import sys
 import threading
 import queue
+import time
 
 bots = dict()
 TIMEOUT = 60
@@ -15,7 +16,8 @@ helpDict = {
     "help": "Displays Commandlist or if command given details on the command",
     "lastChat": "Displays the last Chat received by the given Bot to check continued connection to twitch",
     "remove": "Removes bot from the Bot Database",
-    "start": "Starts bot with given name", "status": "Displays Status of the given bot",
+    "start": "Starts bot with given name",
+    "status": "Displays Status of the given bot",
     "stop": "Stops the given bot"}
 
 
@@ -26,12 +28,12 @@ def read_kbd_input(inputQueue):
         inputQueue.put(input_str)
 
 
-def bot_stop(bot, name):
-    bot.pop('pipe', None)
+def bot_stop(bot):
+    bot['pipe'] = None
     bot['process'].terminate()
-    if bot['process'].join(TIMEOUT) is None:
-        bot['process'].kill()
-    bot.pop('process', None)
+    bot['process'].join(TIMEOUT)
+    bot['process'] = None
+    print(f"Bot {bot['ChannelName']} stopped.")
     return bot
 
 
@@ -41,6 +43,8 @@ def bot_start(bot, name):
     process = mp.Process(target=botinstance, args=[bot['ChannelId'], bot["ChannelName"], child], name=name)
     bot['process'] = process
     process.start()
+    print(f"Starting bot {name}....")
+    time.sleep(1)
     return bot
 
 
@@ -59,6 +63,14 @@ def pipe_check(bots, key):
     return False
 
 
+def boottimeCheck(bot):
+    proc = bots[bot].get('pipe', None)
+    if proc is not None:
+        proc.send("boottime")
+        return proc.recv()
+    return None
+
+
 if __name__ == '__main__':
     # mp.set_start_method('spawn')
     database.load_database("Controller")
@@ -67,17 +79,16 @@ if __name__ == '__main__':
     for name in bots.keys():
         bots[name] = bot_start(bots[name], name)
 
-    EXIT_COMMAND = "exit"
+    logger = mp.log_to_stderr()
+    logger.setLevel(logging.DEBUG)
+
     inputQueue = queue.Queue()
 
-    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=True)
+    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=False)
     inputThread.start()
-    count = 0
     while True:
-
         if inputQueue.qsize() > 0:
             input_str = inputQueue.get()
-            # print("input_str = {}".format(input_str))
 
             if 'exit' in input_str[:4]:
                 break
@@ -89,10 +100,10 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = bot_stop(bots[x], x)
+                            bots[x] = bot_stop(bots[x])
                             bots[x] = bot_start(bots[x], x)
                     else:
-                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]])
                         bots[lsplit[1]] = bot_start(bots[lsplit[1]], lsplit[1])
 
             elif 'stop' in input_str[:5]:
@@ -102,9 +113,9 @@ if __name__ == '__main__':
                 else:
                     if lsplit[1] == 'all':
                         for x in bots.keys():
-                            bots[x] = bot_stop(bots[x], x)
+                            bots[x] = bot_stop(bots[x])
                     else:
-                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]], lsplit[1])
+                        bots[lsplit[1]] = bot_stop(bots[lsplit[1]])
 
             elif 'start' in input_str[:6]:
                 lsplit = input_str.split(" ")
@@ -120,33 +131,25 @@ if __name__ == '__main__':
             elif 'help' in input_str[:4]:
                 lsplit = input_str.split(" ")
                 if len(lsplit) < 2:
-                    print("Available commands are: add, exit, help, lastChat, remove, start, status, stop")
+                    print("Available commands are: add, exit, help, remove, start, status, stop")
                 else:
                     if lsplit[1] in helpDict.keys():
                         print(helpDict[lsplit[1]])
                     else:
-                        print("Available commands are: add, exit, help, lastChat, remove, start, status, stop")
+                        print("Available commands are: add, exit, help, remove, start, status, stop")
 
-            elif 'lastChat' in input_str[:8]:
-                lsplit = input_str.split(" ")
-                if len(lsplit) < 2 or (not lsplit[1] in bots.keys() and not lsplit[1] == 'all'):
-                    print("lastChat requires a valid bot name to be executed.")
-                else:
-                    if lsplit[1] == 'all':
-                        for x in bots.keys():
-                            bots[x]['pipe'].send("lastChat")
-                            if bots[x]['pipe'].poll(TIMEOUT):
-                                message = bots[x]['pipe'].recv()
-                                print("Last message of bot %s recieved on:" + message % bots[x]['ChannelName'])
-                            else:
-                                print("Bot for %s does not answer right now, consider restarting it." % bots[x]['ChannelName'])
-                    else:
-                        bots[lsplit[1]]['pipe'].send("lastChat")
-                        if bots[lsplit[1]]['pipe'].poll(TIMEOUT):
-                            message = bots[lsplit[1]]['pipe'].recv()
-                            print("Last message of bot %s recieved on:" + message % bots[lsplit[1]]["ChannelName"])
+            elif 'status' in input_str[:6]:
+                for bot in bots.keys():
+                    if bots[bot]["process"] is not None:
+                        alive = bots[bot]['process'].is_alive()
+                        if alive:
+                            print("%s: OK" % bot)
                         else:
-                            print("Bot for %s does not answer right now, consider restarting it." % bots[lsplit[1]]['ChannelName'])
+                            print("%s: Not OK!" % bot)
+                        # print("%s: Booted on: %s" % (bot, boottimeCheck(bot)))
+                    else:
+                        print("Bot %s is stopped." % bots[bot]['ChannelName'])
+
             elif input_str != '':
                 print('"%s" is not a recognised command.' % input_str)
 
@@ -155,12 +158,12 @@ if __name__ == '__main__':
             for name in dead:
                 print("Bot for Channel %s has died" % name)
                 bots[name] = bot_start(bots[name], name)
-        # piped = filter(lambda x: pipe_check(bots, x), bots.keys())
-        # if piped:
-        #     for name in piped:
-        #         print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
+        piped = filter(lambda x: pipe_check(bots, x), bots.keys())
+        if piped:
+            for name in piped:
+                print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
 
 
 for name in bots.keys():
-    bot_stop(bots[name], name)
+    bot_stop(bots[name])
 sys.exit(0)

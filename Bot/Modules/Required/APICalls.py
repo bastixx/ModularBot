@@ -56,7 +56,7 @@ def username_to_id(username: str) -> str:
 
 
 def channel_is_live() -> bool:
-    result = "Empty"
+    result = ""
     try:
         url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
         response = requests.get(url, headers=headers).json()
@@ -73,10 +73,15 @@ def channel_is_live() -> bool:
 
 
 def channel_game() -> str:
-    url = 'https://api.twitch.tv/kraken/channels/%s/' % channel_id
-    response = requests.get(url, headers=headers).json()
-    game = response[0]["game"]
-    return game
+    response = ""
+    try:
+        url = 'https://api.twitch.tv/kraken/channels/%s/' % channel_id
+        response = requests.get(url, headers=headers).json()
+        game = response["game"]
+        return game
+    except Exception as errormsg:
+        errorlog(errormsg, 'APICalls/channel_game()', response)
+
 
 
 def get_modroom() -> (str, bool):
