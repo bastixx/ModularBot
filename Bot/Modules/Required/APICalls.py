@@ -93,7 +93,7 @@ def get_modroom() -> (str, bool):
     except:
         roomlist = []
     for room in roomlist:
-        rooms[room['name']] = room['_id']
+        rooms[room['name']] = room['id']
 
     if "modlog" in rooms.keys():
         modroom_id = rooms['modlog']

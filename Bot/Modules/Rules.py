@@ -10,7 +10,7 @@ def load_rules():
     try:
         col = Database.getall("Rules")
         for document in col:
-            rules[document["_id"]] = {"rule": document["Rule"], "1": document["first_timeout"],
+            rules[document["id"]] = {"rule": document["Rule"], "1": document["first_timeout"],
                                       "2": document["second_timeout"], "3": document["third_timeout"]}
 
     except Exception as errormsg:
