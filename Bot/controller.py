@@ -1,10 +1,10 @@
 from ModularBot import botinstance
 from Modules.Required import Database as database
-import multiprocessing as mp, logging
+import multiprocessing as mp
 import sys
 import threading
 import queue
-import time
+import logging
 
 bots = dict()
 TIMEOUT = 60
@@ -33,6 +33,8 @@ def bot_stop(bot):
     bot['process'].terminate()
     bot['process'].join(TIMEOUT)
     bot['process'] = None
+    bot["boottime"] = None
+    logger.info(f"Bot {bot['ChannelName']} stopped.")
     print(f"Bot {bot['ChannelName']} stopped.")
     return bot
 
@@ -43,8 +45,9 @@ def bot_start(bot, name):
     process = mp.Process(target=botinstance, args=[bot['ChannelId'], bot["ChannelName"], child], name=name)
     bot['process'] = process
     process.start()
-    print(f"Starting bot {name}....")
-    time.sleep(1)
+    logger.info(f"Bot {name} started.")
+    print(f"Bot {name} started.")
+    bot["boottime"] = boottime_check(name)
     return bot
 
 
@@ -63,7 +66,7 @@ def pipe_check(bots, key):
     return False
 
 
-def boottimeCheck(bot):
+def boottime_check(bot):
     proc = bots[bot].get('pipe', None)
     if proc is not None:
         proc.send("boottime")
@@ -72,15 +75,27 @@ def boottimeCheck(bot):
 
 
 if __name__ == '__main__':
-    # mp.set_start_method('spawn')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.ERROR)
+    fh = logging.FileHandler(filename="Log.log", mode="a+")
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
+                                  datefmt='%d-%b-%y %H:%M:%S')
+
+    sh.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(sh)
+    logger.addHandler(fh)
+
     database.load_database("Controller")
     for element in database.getall("Channels"):
         bots[element['name']] = dict(ChannelName=element['name'], ChannelId=element["id"])
     for name in bots.keys():
         bots[name] = bot_start(bots[name], name)
-
-    logger = mp.log_to_stderr()
-    logger.setLevel(logging.DEBUG)
 
     inputQueue = queue.Queue()
 
@@ -143,26 +158,24 @@ if __name__ == '__main__':
                     if bots[bot]["process"] is not None:
                         alive = bots[bot]['process'].is_alive()
                         if alive:
-                            print("%s: OK" % bot)
+                            print(f"{bot}: OK. Booted on: {bots[bot]['boottime']}")
                         else:
-                            print("%s: Not OK!" % bot)
-                        # print("%s: Booted on: %s" % (bot, boottimeCheck(bot)))
+                            print(f"{bot}: not OK! Booted on: {bots[bot]['boottime']}")
                     else:
                         print("Bot %s is stopped." % bots[bot]['ChannelName'])
 
             elif input_str != '':
-                print('"%s" is not a recognised command.' % input_str)
+                print(f'"{input_str}" is not a recognised command.')
 
         dead = filter(lambda x: alive_check(bots, x), bots.keys())
         if dead:
             for name in dead:
-                print("Bot for Channel %s has died" % name)
+                logger.error(f"Bot for Channel {name} has died")
                 bots[name] = bot_start(bots[name], name)
         piped = filter(lambda x: pipe_check(bots, x), bots.keys())
         if piped:
             for name in piped:
-                print("There is something stuck in the pipe of %s: %s" % (name, bots[name]['pipe'].recv()))
-
+                print(f"There is something stuck in the pipe of {name}: {bots[name]['pipe'].recv()}")
 
 for name in bots.keys():
     bot_stop(bots[name])

@@ -1,19 +1,21 @@
 import random
+import logging
 
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.Sendmessage import send_message
 import Modules.Required.Database as Database
 
 
 def load_questions():
     global questions
+    global logger
+    logger = logging.getLogger(__name__)
     questions = {}
     try:
         if Database.collectionexists("Questions"):
             for document in Database.getall("Questions"):
                 questions[document["id"]] = document["question"]
-    except Exception as errormsg:
-        errorlog(errormsg, "Questions/Load_questions()", "")
+    except:
+        logger.exception("")
 
 
 def question(message, ismod):
@@ -34,10 +36,10 @@ def question(message, ismod):
                     questions[str(len(questions) + 1)] = newquestion
                     Database.insertone("Questions", {"id": len(questions), "question": newquestion})
                 send_message("question %d added!" % len(questions))
-            except Exception as errormsg:
+            except:
                 send_message("There was an error adding this question. Please try again!")
-                errorlog(errormsg, "Questions/add()", message)
-            cooldowntime = 5
+                logger.exception(f"Command: {message}")
+                cooldowntime = 5
 
         elif arguments[1] == "remove" and ismod:
             try:
@@ -49,8 +51,8 @@ def question(message, ismod):
             except KeyError:
                 send_message(f'Question number {arguments[2]} does not exist.')
 
-            except Exception as errormsg:
-                errorlog(errormsg, "Questions/remove()", message)
+            except:
+                logger.exception(f"Command: {message}")
                 send_message("There was an error removing this question. Please check your command and try again.")
             cooldowntime = 5
 
@@ -61,8 +63,8 @@ def question(message, ismod):
                     questions[arguments[2]] = newquestion
                     Database.updateone("Questions", {"id": arguments[2]}, {"question": newquestion})
                     send_message(f"Question {arguments[2]} updated: {newquestion}")
-            except Exception as errormsg:
-                errorlog(errormsg, "Questions/edit()", message)
+            except:
+                logger.exception(f"Command: {message}")
                 send_message("There was an error editing this question. Please check your command and try again.")
             cooldowntime = 5
         else:
@@ -84,8 +86,8 @@ def question(message, ismod):
                 send_message("%s: %s" % (randomindex, randomquestion))
             else:
                 send_message("No questions yet!")
-        except Exception as errormsg:
-            errorlog(errormsg, "Question/question()", message)
+        except:
+            logger.exception(f"Command: {message}")
             send_message("Something went wrong, check your command.")
         cooldowntime = 20
 

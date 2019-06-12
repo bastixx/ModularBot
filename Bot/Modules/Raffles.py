@@ -159,7 +159,7 @@ def func_raffle(message):
             if raffle in raffles.keys():
                 raffles[raffle]["Rafflewinners"] = {}
 
-                Database.updatemanyindb("raffle_" + raffle, {"haswon": True}, {"haswon": False})
+                Database.updatemany("raffle_" + raffle, {"haswon": True}, {"haswon": False})
                 send_message("All winners for raffle \"%s\" have been reset. " 
                              "Everyone who entered is still in the raffle." % raffle)
             else:

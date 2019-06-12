@@ -1,7 +1,7 @@
 import socket
-import ast
+import datetime
 import time
-import pprint
+import logging
 
 # Append path to modules to path variable and load custom modules
 # sys.path.append(f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}\\modules')
@@ -16,14 +16,22 @@ from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Ru
     RimworldModLinker, Paddle, Questions, Modlog, Conversions, Unshorten, SongSuggestions, CustomCommands, \
     responseParse, Pun, FollowerGoals
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-def top_level_functions(body):
-    return (f for f in body if isinstance(f, ast.FunctionDef))
+sh = logging.StreamHandler()
+sh = logging.StreamHandler()
+sh.setLevel(logging.ERROR)
+fh = logging.FileHandler(filename="Log.log", mode="a+")
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
+                              datefmt='%d-%b-%y %H:%M:%S')
 
+sh.setFormatter(formatter)
+fh.setFormatter(formatter)
 
-def parse_ast(filename):
-    with open(filename, "rt") as file:
-        return ast.parse(file.read(), filename=filename)
+logger.addHandler(sh)
+logger.addHandler(fh)
 
 
 def enabled(module):  # MB use this in the giant List of modules?
@@ -44,11 +52,19 @@ def command_limiter(command):  # Allows for cooldowns to be set on commands
 
 def botinstance(channelid: str, channelname: str, pipe):
     global modules
+    logger = logging.getLogger(channelname)
+
     try:
         Errorlog.load_errorlog(channelname)
         Logger.load_logger(channelname)
         Database.load_database(channelname)
         config = Database.getone("Config")
+
+    except Exception:
+        logging.exception("Main - Error starting required modules.")
+        exit(0)
+
+    try:
         HOST = "irc.twitch.tv"
         NICK = config["Nickname"].encode()
         PORT = 6667
@@ -90,16 +106,7 @@ def botinstance(channelid: str, channelname: str, pipe):
         for document in Database.getall('Config'):
             modules[document["Name"]]["functionlist"] = document["functions"]
 
-        # pprint.pprint(modules)
         Database.load_database(channelname)
-        # TODO replace with database entry?
-        # for module in modules.keys():
-        #     modules[module]["config"] = modulesconfig[modules[module]["name"]]
-        #     modules[module]["functions"] = {}
-        #     if modules[module]["config"]["enabled"] and not modulesconfig[modules[module]["name"]]["mandatory"]:
-        #         tree = parse_ast("../../modules/" + modules[module]["name"] + ".py")
-        #         for func in top_level_functions(tree.body):
-        #             modules[module]["functions"][func.name] = {"next use": time.time()}
 
         var_time = time.time()
         for module in modules.keys():
@@ -110,7 +117,11 @@ def botinstance(channelid: str, channelname: str, pipe):
                 modules[module]["functions"][function] = {"next use": var_time}
 
         # modules['other'] = {"name": "Other"}
+    except Exception:
+        logging.exception("Main - Error configuring modules dict.")
+        exit(0)
 
+    try:
         # Connecting to Twitch IRC by passing credentials and joining a certain channel
         sock = socket.socket()
         sock.connect((HOST, PORT))
@@ -126,45 +137,48 @@ def botinstance(channelid: str, channelname: str, pipe):
         Sendmessage.load_send_message(channelname, CHANNEL, sock)
         Database.load_database(channelname)
         APICalls.load_apicalls(CLIENTID, channelid)
-    except Exception as errormsg:
-        Errorlog.errorlog(errormsg, "Bot/startup", "Channel: " + channelname)
-        # pipe.send(f"Error: {errormsg}")
+    except:
+        logging.exception("Main - Error connecting to twitch irc.")
+        exit(0)
 
-    if enabled("Rules"):
-        Rules.load_rules()
-    if enabled("Backseatmessage"):
-        Backseatmessage.load_bsmessage()
-    if enabled("Deathcounter"):
-        Deathcounter.load_deaths()
-    if enabled("Quotes"):
-        Quotes.load_quotes()
-    if enabled("Raffles"):
-        Raffles.load_raffles()
-    if enabled("BrokenBoner"):
-        BrokenBoner.load_bonertimer()
-    if enabled("RimworldAutomessage"):
-        RimworldAutomessage.load_rimworldautomessage()
-    if enabled("Questions"):
-        Questions.load_questions()
-    if enabled("Modlog"):
-        Modlog.load_modlog()
-    if enabled("FollowerGoals"):
-        FollowerGoals.load_followergoals(channelname)
-    if enabled("RimworldModLinker"):
-        RimworldModLinker.load_mod(STEAMAPIKEY)
-    if enabled("SongSuggestions"):
-        SongSuggestions.load_suggestions()
-    if enabled("CustomCommands"):
-        CustomCommands.load_commands()
-    if enabled("ResponseParse"):
-        responseParse.load_responses()
+    try:
+        if enabled("Rules"):
+            Rules.load_rules()
+        if enabled("Backseatmessage"):
+            Backseatmessage.load_bsmessage()
+        if enabled("Deathcounter"):
+            Deathcounter.load_deaths()
+        if enabled("Quotes"):
+            Quotes.load_quotes()
+        if enabled("Raffles"):
+            Raffles.load_raffles()
+        if enabled("BrokenBoner"):
+            BrokenBoner.load_bonertimer()
+        if enabled("RimworldAutomessage"):
+            RimworldAutomessage.load_rimworldautomessage()
+        if enabled("Questions"):
+            Questions.load_questions()
+        if enabled("Modlog"):
+            Modlog.load_modlog()
+        if enabled("FollowerGoals"):
+            FollowerGoals.load_followergoals(channelname)
+        if enabled("RimworldModLinker"):
+            RimworldModLinker.load_mod(STEAMAPIKEY)
+        if enabled("SongSuggestions"):
+            SongSuggestions.load_suggestions()
+        if enabled("CustomCommands"):
+            CustomCommands.load_commands()
+        if enabled("ResponseParse"):
+            responseParse.load_responses()
+    except:
+        logging.exception("Main - Error loading modules.")
 
     global comlimits
     readbuffer = ""
     modt = False
     comlimits = []
 
-    print("Setup done, entering command loop...")
+    logging.info("Setup done, entering command loop...")
     # Infinite loop waiting for commands
     while True:
         try:
@@ -185,9 +199,6 @@ def botinstance(channelid: str, channelname: str, pipe):
                     #         followergoal(channel_id, CHANNEL, CLIENTID)
                     #     except Exception as errormsg:
                     #         Errorlog.errorlog(errormsg, "Main/followergoal()", "")
-
-                    if enabled("Backseatmessage"):
-                        Backseatmessage.bsmcheck()
 
                 else:
                     # Splits the given string so we can work with it better
@@ -311,14 +322,14 @@ def botinstance(channelid: str, channelname: str, pipe):
                                     if "!lastquote" in messagelow[0:10] and (not oncooldown("Quotes", "last_quote") or ismod):
                                         custommodule = "Quotes"
                                         functionname = "last_quote"
-                                        cooldown_time = 15
+                                        cooldown_time = 0
 
                                         Quotes.last_quote()
 
                                     elif "!quote" in messagelow[0:6] and (not oncooldown("Quotes", "quote") or ismod):
                                         custommodule = "Quotes"
                                         functionname = "quote"
-                                        cooldown_time = 15
+                                        cooldown_time = 0
 
                                         Quotes.quote(message, APICalls.channel_game())
 
@@ -374,7 +385,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                     if "!convert" in messagelow[0:8] and not oncooldown("Conversions", "convert"):
                                         custommodule = "Conversions"
                                         functionname = "convert"
-                                        cooldown_time = 10
+                                        cooldown_time = 5
                                         Conversions.convert(message)
 
                                 if enabled("RimworldModLinker"):
@@ -408,7 +419,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         custommodule = "CustomCommands"
                                         CustomCommands.func_command(message)
 
-                                elif "!module" in messagelow[0:7] and username == 'bastixx669':
+                                if "!module" in messagelow[0:7] and username == 'bastixx669':
                                     arguments = message.split(" ")
                                     if arguments[1] == "enable":
                                         try:
@@ -426,10 +437,10 @@ def botinstance(channelid: str, channelname: str, pipe):
                                             Sendmessage.send_message("Error disabling this module!")
 
                                 else:
-                                    CustomCommands.check_command(message, username)
+                                    CustomCommands.check_command(messagelow, username)
 
-                            except Exception as errormsg:
-                                Errorlog.errorlog(errormsg, "main/functions", message)
+                            except:
+                                logger.exception(message)
                                 Sendmessage.send_message("There was an error with the command. "
                                                          "Please check your command and try again.")
                             finally:
@@ -444,20 +455,21 @@ def botinstance(channelid: str, channelname: str, pipe):
                     for l in parts:
                         if "End of /NAMES list" in l:
                             modt = True
-                            Logger.logger(0000000, '>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True, True)
+                            logger.info(f'Bot ready in channel {CHANNEL.decode()}')
                             modulelist = []
                             for custommodule in modules.keys():
                                 if modules[custommodule]["enabled"]:
                                     modulelist.append(custommodule)
-                            boottime = Logger.logger(0000000, ">>Bot", "Modules loaded: %s" % ", ".join(modulelist), False, True, True)
+                            logger.info("Modules loaded: %s" % ", ".join(modulelist))
+                            boottime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                    try:
-                        if pipe.poll():
-                            controllercommand = pipe.recv()
-                            if controllercommand == "boottime":
-                                pipe.send(boottime)
-                    except Exception as errormsg:
-                        Errorlog.errorlog(errormsg, "Multiprocessing", "")
+                            try:
+                                if pipe.poll():
+                                    controllercommand = pipe.recv()
+                                    if controllercommand == "boottime":
+                                        pipe.send(boottime)
+                            except Exception as errormsg:
+                                Errorlog.errorlog(errormsg, "Multiprocessing", "")
 
         except Exception as errormsg:
             # Disabled due to testing purposes.
@@ -465,6 +477,7 @@ def botinstance(channelid: str, channelname: str, pipe):
             #     Errorlog.errorlog(errormsg, 'Main()', temp)
             # except Exception:
             #     Errorlog.errorlog(errormsg, 'Main()', '')
+            logging.exception("An exception occured!")
             raise errormsg
 
 

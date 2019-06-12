@@ -1,10 +1,27 @@
 import threading
 from datetime import datetime, timedelta
+import logging
 
 from Modules.Required.Errorlog import errorlog
 import Modules.Required.Database as Database
 from Modules.Required.Sendmessage import send_message
 from Modules.Required.APICalls import channel_is_live
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+sh = logging.StreamHandler()
+sh.setLevel(logging.ERROR)
+fh = logging.FileHandler(filename="Log.log", mode="a+")
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
+                              datefmt='%d-%b-%y %H:%M:%S')
+
+sh.setFormatter(formatter)
+fh.setFormatter(formatter)
+
+logger.addHandler(sh)
+logger.addHandler(fh)
 
 
 def load_commands():
@@ -16,52 +33,55 @@ def load_commands():
         customcommands[document["name"]] = {"action": document["action"], "timer": document["timer"]}
     
     timer = threading.Timer(60, check_timed_commands).start
-    check_timed_commands()
+    check_timed_commands()  # Testing purposes.
     return customcommands
 
 
 def func_command(message):
     global customcommands
     arguments = message.split(" ")
-    
-    if len(arguments) >= 3:
-        if arguments[1] == "add":
-            try:
-                newcommandname = arguments[2]
+
+    try:
+        if len(arguments) >= 3:
+            if arguments[1] == "add":
+                try:
+                    newcommandname = arguments[2]
+                    newcommandaction = " ".join(arguments[3:])
+                    customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
+                    Database.insertone("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
+                    send_message(f"Command {newcommandname} added!")
+                except Exception as errormsg:
+                    send_message("Something went wrong. Please check your command and try again.")
+                    errorlog(errormsg, "func_command/add()", message)
+
+            elif arguments[1] == "remove":
+                commandname = arguments[2]
+                customcommands.remove(commandname)
+                Database.deleteone("CustomCommands", {"name": commandname})
+                send_message(f"Command {commandname} removed!")
+
+            elif arguments[1] == "edit":
+                commandname = arguments[2]
                 newcommandaction = " ".join(arguments[3:])
-                customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
-                Database.insertone("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
-                send_message(f"Command {newcommandname} added!")
-            except Exception as errormsg:
-                send_message("Something went wrong. Please check your command and try again.")
-                errorlog(errormsg, "func_command/add()", message)
-            
-        elif arguments[1] == "remove":
-            commandname = arguments[2]
-            customcommands.remove(commandname)
-            Database.deleteone("CustomCommands", {"name": commandname})
-            send_message(f"Command {commandname} removed!")
-            
-        elif arguments[1] == "edit":
-            commandname = arguments[2]
-            newcommandaction = " ".join(arguments[3:])
-            if commandname in customcommands.keys():
-                # !command edit !testcommand timer 60
-                if arguments[3] == "timer":
-                    if int(arguments[4]) < 120:
-                        send_message("Minimum time is 120 seconds (2 minutes).")
+                if commandname in customcommands.keys():
+                    # !command edit !testcommand timer 60
+                    if arguments[3] == "timer":
+                        if int(arguments[4]) < 120:
+                            send_message("Minimum time is 120 seconds (2 minutes).")
+                        else:
+                            customcommands[commandname]["timer"] = int(arguments[4])
+                            Database.updateone("CustomCommands", {"name": commandname}, {"timer": int(arguments[4])})
                     else:
-                        customcommands[commandname]["timer"] = int(arguments[4])
-                        Database.updateone("CustomCommands", {"name": commandname}, {"timer": int(arguments[4])})
+                        if len(arguments) > 4:
+                            customcommands[commandname] = newcommandaction
+                            Database.updateone("CustomCommands", {"name": commandname}, {"action": newcommandaction})
+                    send_message(f"Command {commandname} updated!")
                 else:
-                    if len(arguments) > 4:
-                        customcommands[commandname] = newcommandaction
-                        Database.updateone("CustomCommands", {"name": commandname}, {"action": newcommandaction})
-                send_message(f"Command {commandname} updated!")
-            else:
-                send_message(f"Command {commandname} does not exist!")
-    else:
-        send_message("Invalid format. Use !command (add|edit|remove) !commandname commandaction.")
+                    send_message(f"Command {commandname} does not exist!")
+        else:
+            send_message("Invalid format. Use !command (add|edit|remove) !commandname commandaction.")
+    except:
+        logger.exception(f"message: {message}")
 
 
 def check_command(message, username):

@@ -1,4 +1,5 @@
 import requests
+import logging
 from Modules.Required.Errorlog import errorlog
 
 
@@ -6,6 +7,8 @@ def load_apicalls(CLIENTID, CHANNELID):
     global channel_id
     global client_id
     global headers
+    global logger
+    logger = logging.getLogger(__name__)
     channel_id = CHANNELID
     client_id = CLIENTID
 
@@ -23,12 +26,11 @@ def follows(userid: str) -> dict:
 
         # Returns data about when x follows y, or {} if x doesnt follow y
         return r.data[0]
-    except Exception as errormsg:
-        errorlog(errormsg, 'APICalls/follows()', "Userid:" + userid)
+    except:
+        logger.exception("")
 
 
 def id_to_username(userid: str) -> str:
-    username = ""
     try:
         url = 'https://api.twitch.tv/helix/users?id=' + userid
         result = requests.get(url, headers=headers).json()
@@ -39,24 +41,22 @@ def id_to_username(userid: str) -> str:
             username = result["data"][0]["login"]
             return username
 
-    except Exception as errormsg:
-        errorlog(errormsg, 'APICalls/idtousername()', "Displayname:" + username)
+    except:
+        logger.exception("")
 
 
 def username_to_id(username: str) -> str:
-    userid = ""
     try:
         url = 'https://api.twitch.tv/helix/users?login=' + username
         result = requests.get(url, headers=headers).json()
         userid = result["data"][0]["id"]
         return userid
 
-    except Exception as errormsg:
-        errorlog(errormsg, 'APICalls/usernametoid()', "Userid:" + userid)
+    except:
+        logger.exception("")
 
 
 def channel_is_live() -> bool:
-    result = ""
     try:
         url = 'https://api.twitch.tv/helix/streams?user_id=%s' % channel_id
         response = requests.get(url, headers=headers).json()
@@ -68,20 +68,18 @@ def channel_is_live() -> bool:
             return True
         else:
             return False
-    except Exception as errormsg:
-        errorlog(errormsg, 'APICalls/islive()', result)
+    except:
+        logger.exception("")
 
 
 def channel_game() -> str:
-    response = ""
     try:
         url = 'https://api.twitch.tv/kraken/channels/%s/' % channel_id
         response = requests.get(url, headers=headers).json()
         game = response["game"]
         return game
-    except Exception as errormsg:
-        errorlog(errormsg, 'APICalls/channel_game()', response)
-
+    except:
+        logger.exception("")
 
 
 def get_modroom() -> (str, bool):
