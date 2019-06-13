@@ -2,30 +2,16 @@ import threading
 import logging
 
 from Modules.Required.Sendmessage import send_message
-from Modules.Required.Errorlog import errorlog
 import Modules.Required.Database as Database
 from Modules.Required.APICalls import channel_is_live
+
+logger = logging.getLogger(__name__)
 
 
 def load_bsmessage() -> None:
     global bsmessagestr
     global backseating
-    global logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
 
-    sh = logging.StreamHandler()
-    sh.setLevel(logging.ERROR)
-    fh = logging.FileHandler(filename="Log.log", mode="a+")
-    fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                                  datefmt='%d-%b-%y %H:%M:%S')
-
-    sh.setFormatter(formatter)
-    fh.setFormatter(formatter)
-
-    logger.addHandler(sh)
-    logger.addHandler(fh)
     backseating = False
 
     try:

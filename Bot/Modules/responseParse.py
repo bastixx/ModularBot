@@ -1,6 +1,9 @@
-from Modules.Required.Errorlog import errorlog
+import logging 
+
 from Modules.Required.Sendmessage import send_message
 import Modules.Required.Database as Database
+
+logger = logging.getLogger(__name__)
 
 
 def load_responses():
@@ -9,12 +12,15 @@ def load_responses():
     try:
         for document in Database.getall("Responses"):
             responsedict[document["phrase"]] = document["response"]
-    except Exception as errormsg:
-        errorlog(errormsg, "responseParse/loadResponses", "")
-        responsedict = dict()
+    except:
+        logger.exception('')
+        return False
 
 
 def parse_response(chat):
-    for x in responsedict.keys():
-        if x in chat:
-            send_message(responsedict[x])
+    try: 
+        for x in responsedict.keys():
+            if x in chat:
+                send_message(responsedict[x])
+    except:
+        logger.exception(f'chat: {chat}')

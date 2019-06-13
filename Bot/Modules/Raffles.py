@@ -1,10 +1,12 @@
 import random
 from datetime import datetime, timedelta
+import logging
 
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.Sendmessage import send_message
 import Modules.Required.Database as Database
 from Modules.Required.APICalls import username_to_id, follows
+
+logger = logging.getLogger(__name__)
 
 
 def load_raffles():
@@ -20,9 +22,9 @@ def load_raffles():
                 raffles[i]["raffleentries"][document["userid"]] = document["username"]
                 if document["haswon"]:
                     raffles[i]["rafflewinners"][document["userid"]] = document["username"]
-
-    except Exception as errormsg:
-        errorlog(errormsg, "Raffles/Load_raffles()", "")
+    except:
+        logger.exception('')
+        return False
 
 
 def func_raffle(message):
@@ -35,23 +37,24 @@ def func_raffle(message):
             try:
                 raffles[raffle] = {"mode": "all", "raffleentries": {}, "rafflewinners": {}, "silent": False}
                 Database.insertone("Raffles", {"rafflename": raffle, "mode": "all"})
-                send_message("Raffle \"%s\" created!" % raffle)
-            except Exception as errormsg:
-                send_message(f"Error creating raffle \"%s\"!" % raffle)
-                errorlog(errormsg, "Func_raffle/add()", message)
+                send_message(f"Raffle \"{raffle}\" created!")
+            except:
+                logger.exception(f'message: {message}')
+                send_message(f"Error creating raffle \"{raffle}\"!")
 
         elif arguments[1] == "remove":
             try:
                 if raffle in raffles.keys():
                     del raffles[raffle]
+                    # TODO update database stuff
                     Database.deletecollection("raffle_" + raffle)
                     Database.deleteone("Raffles", {"rafflename": raffle})
-                    send_message("Raffle \"%s\" deleted!" % raffle)
+                    send_message(f"Raffle \"{raffle}\" deleted!")
                 else:
                     send_message("This raffle does not exist!")
-            except Exception as errormsg:
+            except:
+                logger.exception(f'message: {message}')
                 send_message("Error removing raffle!")
-                errorlog(errormsg, "Func_raffle/remove()", message)
 
         elif arguments[1] == "get":
             # !raffle get mode|silent raffle
@@ -67,9 +70,9 @@ def func_raffle(message):
                             send_message(f"Silent mode for raffle {raffle} is disabled.")
                     else:
                         send_message("For the option \"get\" the allowed arguments are: \"mode\" and \"silent\".")
-            except Exception as errormsg:
+            except:
+                logger.exception(f'message: {message}')
                 send_message("Error changing mode for this raffle.")
-                errorlog(errormsg, "Func_raffle/get()", message)
 
         elif arguments[1] == "set":
             # !raffle set mode raffle
@@ -97,13 +100,13 @@ def func_raffle(message):
                             send_message("For the option \"silent\" the allowed arguments are: \"on\" and \"off\".")
                 else:
                     send_message("For the option \"set\" the allowed arguments are: \"mode\" and \"silent\".")
-            except Exception as errormsg:
+            except:
+                logger.exception(f'message: {message}')
                 send_message("Error changing mode for this raffle.")
-                errorlog(errormsg, "Func_raffle/set()", message)
 
         elif arguments[1] == "list":
             if len(raffles > 0):
-                send_message("Current raffles are: %s." % ", ".join(raffles.keys()))
+                send_message(f"Current raffles are: {", ".join(raffles.keys())}.")
             else:
                 send_message("There are currently no raffles going.")
 
@@ -119,10 +122,10 @@ def func_raffle(message):
                     raffles[raffle]["rafflewinners"][rafflewinnerid] = rafflewinnername
 
                     Database.updateone("raffle_" + raffle, {"userid": rafflewinnerid}, {"haswon": True})
-                    send_message("The winner is: %s!" % rafflewinnername)
-            except Exception as errormsg:
+                    send_message(f"The winner is: {rafflewinnername}!")
+            except:
+                logger.exception(f'message: {message}')
                 send_message("Error rolling a winner for this raffle.")
-                errorlog(errormsg, "Func_raffle/roll()", message)
 
         # Command to add a user to an raffle. Mod only.
         elif arguments[1] == "adduser":
@@ -134,11 +137,11 @@ def func_raffle(message):
                 if user not in raffles[raffle]["rafflewinners"].keys():
                     raffles[raffle]["raffleentries"][userid] = user
                     Database.insertone("raffle_" + raffle, {"userid": userid, "username": user, "haswon": False})
-                    send_message("@%s joined raffle: \"%s\"!" % (user, raffle))
+                    send_message(f"@{user} joined raffle: \"{raffle}\"!")
                 else:
-                    send_message("user @%s already won this raffle!" % user)
+                    send_message(f"user @{user} already won this raffle!")
             else:
-                send_message("User @%s is already in this raffle!" % user)
+                send_message(f"User @{user} is already in this raffle!")
                 
         # Command to remove a user from a raffle. Mod only.
         elif arguments[1] == "removeuser":
@@ -149,9 +152,9 @@ def func_raffle(message):
             if userid in raffles[raffle]["raffleentries"].keys():
                 raffles[raffle]["raffleentries"].pop(userid)
                 Database.deleteone("raffle_" + raffle, {"userid": userid})
-                send_message("@%s removed from raffle: \"%s\"!" % (user, raffle))
+                send_message(f"@{user} removed from raffle: \"{raffle}\"!")
             else:
-                send_message("User @%s is not in this raffle!" % user)
+                send_message(f"User @{user} is not in this raffle!")
                 
         # Command to clear the winners list, allowing everyone to enter and win again. Mod only.
         elif arguments[1] == "resetwinners":
@@ -160,17 +163,17 @@ def func_raffle(message):
                 raffles[raffle]["Rafflewinners"] = {}
 
                 Database.updatemany("raffle_" + raffle, {"haswon": True}, {"haswon": False})
-                send_message("All winners for raffle \"%s\" have been reset. " 
-                             "Everyone who entered is still in the raffle." % raffle)
+                send_message(f"All winners for raffle \"{raffle}\" have been reset. " 
+                             "Everyone who entered is still in the raffle.")
             else:
-                send_message("Raffle \"%s\" has no winners or does not exist." % raffle)
+                send_message(f"Raffle \"{raffle}\" has no winners or does not exist.")
         elif arguments[1] == "stats":
             raffle = " ".join(arguments[2:])
             if raffle in raffles.keys():
-                send_message("There are currently \"%s\" people in this raffle." % len(raffles[raffle]["raffleentries"]))
+                send_message(f"There are currently {len(raffles[raffle]["raffleentries"])} people in this raffle.")
 
         elif arguments[1] == "mode":
-            send_message("The mode for raffle \"%s\" is: %s" % (raffle, raffles[raffle]["mode"]))
+            send_message(f"The mode for raffle \"{raffle}\" is: {raffles[raffle]["mode"]}")
 
         else:
             send_message("Unknown command. Please check your message and try again.")
@@ -178,10 +181,9 @@ def func_raffle(message):
     except IndexError:
         send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
                      "%s" % ", ".join(raffles.keys()))
-
-    except Exception as errormsg:
-        errorlog(errormsg, "!raffle", message)
-        send_message("There was an unexpected error. Please check your comamnd and try again.")
+    except:
+        logger.exception(f'message: {message}')
+        send_message("There was an unexpected error. Please check your command and try again.")
 
 
 def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -> None:
@@ -201,15 +203,14 @@ def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -
         following = True
     except IndexError:
         following = False
-    except Exception as errormsg:
+    except:
         following = False
-        errorlog(errormsg, "Raffles/join()", message)
+        logger.exception(f'message: {message}')
 
     try:
         mode = raffles[raffle]["mode"]
     except:
-        send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
-                     "%s" % ", ".join(raffles.keys()))
+        send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {", ".join(raffles.keys())}")
         return
 
     if mode == "sub" and issub:
@@ -232,18 +233,18 @@ def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -
                     Database.insertone("raffle_" + raffle, {"userid": userid, "username": username,
                                                                 "haswon": False})
                     if not raffles[raffle]['silent']:
-                        send_message("@%s joined raffle: \"%s\"!" % (username, raffle))
+                        send_message(f"@{username} joined raffle: \"{raffle}\"!")
                 else:
-                    send_message("@%s you already won this raffle!" % username)
+                    send_messagef(f"@{username} you already won this raffle!")
             else:
-                send_message("@%s you are already in this raffle!" % username)
+                send_message(f"@{username} you are already in this raffle!")
         except IndexError:
-            send_message("To join a raffle, use !join <raffle name>. Current raffles are: "
-                         "%s" % ", ".join(raffles.keys()))
-        except Exception as errormsg:
-            send_message("Error adding user %s to raffle: \"%s\". Check if you spelled the "
-                         "raffle name correctly." % (username, raffle))
-            errorlog(errormsg, "Raffles/join()", message)
+                send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {", ".join(raffles.keys())}")
+
+        except:
+            logger.exception(f'message: {message}')
+            send_message(f"Error adding user {username} to raffle: \"{raffle}\". Check if you spelled the "
+                         "raffle name correctly.")
 
     else:
         if mode == 'sub':

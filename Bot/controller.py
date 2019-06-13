@@ -4,10 +4,40 @@ import multiprocessing as mp
 import sys
 import threading
 import queue
-import logging
+import logging.config
 
 bots = dict()
 TIMEOUT = 60
+
+loggingconfig = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
+            'dateformat': '%d-%b-%y %H:%M:%S'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'level': 'DEBUG',
+            'stream': 'ext://sys.stdout'
+        },
+        'file':{
+            'level':'INFO',
+            'formatter': 'default',
+            'filename': 'Log.log',
+            'mode': 'a+',
+            'encoding': 'utf-8',
+        },
+    },
+    'root': {
+        'handlers': ['file', 'console'],
+        'level': 'DEBUG',
+    },
+}
 
 
 helpDict = {
@@ -75,21 +105,8 @@ def boottime_check(bot):
 
 
 if __name__ == '__main__':
+    logging.config.dictConfig(loggingconfig)
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setLevel(logging.ERROR)
-    fh = logging.FileHandler(filename="Log.log", mode="a+")
-    fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                                  datefmt='%d-%b-%y %H:%M:%S')
-
-    sh.setFormatter(formatter)
-    fh.setFormatter(formatter)
-
-    logger.addHandler(sh)
-    logger.addHandler(fh)
 
     database.load_database("Controller")
     for element in database.getall("Channels"):

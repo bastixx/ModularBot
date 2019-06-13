@@ -1,75 +1,65 @@
 import time
-import Modules.Required.Database as Database
+import logging
+from pathlib import Path
 
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.APICalls import get_modroom
+
+logger = logging.getLogger(__name__)
 
 
 # Try and get the ID for the mod channel. This is used for the moderation log.
-def load_modlog():
-    global modroom_available
-    global modroom_id
-    modroom_id, modroom_available = get_modroom()
+def load_modlog(channelname: str) -> bool:
+    try:
+        global modroom_available
+        global modroom_id
+        global chatlogpath
+        global modlogpath
+        modroom_id, modroom_available = get_modroom()
+        base_path = Path(__file__).parent
+        chatlogpath = (base_path / f'../Data/{channelname}/chatlog-{str(time.strftime("%d-%m-%Y"))}.log').resolve()
+        modlogpath = (base_path / f"../Data/{channelname}/modlog.log").resolve()
+    except:
+        logger.exception(f'channelname: {channelname}')
+        return False
 
 
-def modlog(duration, userid, username, reason=""):
+def modlog(duration: str, userid: str, username: str, reason="") -> None:
     timestamp = str(time.strftime("%d-%m-%Y %H:%M:%S"))
-    issub = False
-    ismod = False
     duration = int(duration)
-    displayname = "MOD-ACTION"
 
     # Mod action logging
     try:
         if duration == 0:
-            message = f"Banned: {username}. Reason: {reason}"
-            Database.insertone("Modlog", {"action": "banned", "username": username, "userid": userid, "duration": 0,
-                                   "reason": reason, "timestamp": timestamp})
-            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
-                                   "sub": issub, "mod": ismod})
-            # if modroom_available:
-            #     s.send(
-            #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
-            #         channel_id.encode(), modroom_id.encode(), message.encode()))
+            action = 'banned'
         elif duration <= 5:
-            message = f"purged: {username}. reason: {reason}"
-
-            Database.insertone("Modlog", {"action": "purged", "username": username, "duration": duration,
-                                     "reason": reason, "timestamp": timestamp})
-            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
-                                      "sub": issub, "mod": ismod})
-            # if modroom_available:
-            #     s.send(
-            #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
-            #         channel_id.encode(), modroom_id.encode(), message.encode()))
+            action = 'purged'
         else:
-            message = f"Timed out: {username}. Duration: {duration}. Reason: {reason}"
-            Database.insertone("Modlog", {"action": "timed out", "username": username, "duration": duration,
-                                     "reason": reason, "timestamp": timestamp})
+            action = 'timed out'
 
-            Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "message": message,
-                                      "sub": issub, "mod": ismod})
-            # if modroom_available:
-            #     s.send(
-            #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
-            #         channel_id.encode(), modroom_id.encode(), message.encode()))
+        # TODO Settle on final format chatlog & modlog.
+        with open(chatlogpath, 'a+', encoding='UTF-8') as f:
+            f.write(f"{timestamp},MOD-ACTION,Null,{action}: {username}. duration: {duration}. Reason: {reason}")
+        
+        with open(modlogpath, 'a+', encoding='UTF-8') as f:
+            f.write(f"{timestamp},{action},{username},{userid},{reason},{duration}")
 
-    except Exception as errormsg:
-        errorlog(errormsg, "Modlog", "")
-        raise errormsg
+        # if modroom_available:
+        #     s.send(
+        #         b"PRIVMSG #chatrooms:%s:%s :%s\r\n" % (
+        #         channel_id.encode(), modroom_id.encode(), message.encode()))
+
+    except:
+        logger.exception('')
 
 
-def removedmessage(username, userid, message):
+def removedmessage(username: str, userid: str, message: str, reason="") -> None:
     timestamp = str(time.strftime("%d-%m-%Y %H:%M:%S"))
-    issub = False
-    ismod = False
-    displayname = "MOD-ACTION"
+
     try:
-        message = f"Removed message from: {username}. Message: {removedmessage}"
-        Database.insertone("Modlog", {"action": "message removed", "username": username, "userid": userid,
-                                 "message": message, "timestamp": timestamp})
-        Database.insertone("Chatlog", {"timestamp": timestamp, "displayname": displayname, "userid": userid, "message": message,
-                                  "sub": issub, "mod": ismod})
-    except Exception as errormsg:
-        errorlog(errormsg, "Modlog", message)
-        raise errormsg
+        with open(chatlogpath, 'a+', encoding='UTF-8') as f:
+            f.write(f"{timestamp},MOD-ACTION,Null,Removed message from: {username}. Message: {removedmessage}")
+        
+        with open(modlogpath, 'a+', encoding='UTF-8') as f:
+            f.write(f"{timestamp},message removed,{username},{userid},{reason},Null")
+    except:
+        logger.exception(f'message: {message}')

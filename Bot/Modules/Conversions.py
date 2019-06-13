@@ -2,24 +2,9 @@ import re
 import math
 import logging
 
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.Sendmessage import send_message
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-sh = logging.StreamHandler()
-sh.setLevel(logging.ERROR)
-fh = logging.FileHandler(filename="Log.log", mode="a+")
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                              datefmt='%d-%b-%y %H:%M:%S')
-
-sh.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-logger.addHandler(sh)
-logger.addHandler(fh)
 
 patterns = {
     "Feet & inches": {"pattern": "([0-9,\.]+ ?)(?:ft|\') ?([0-9,\.]+ ?)(?:in|\'\')", "function": "convert_feetandinches"},

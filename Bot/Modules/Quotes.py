@@ -7,20 +7,6 @@ from Modules.Required.Sendmessage import send_message
 import Modules.Required.Database as Database
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-sh = logging.StreamHandler()
-sh.setLevel(logging.ERROR)
-fh = logging.FileHandler(filename="Log.log", mode="a+")
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                              datefmt='%d-%b-%y %H:%M:%S')
-
-sh.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-logger.addHandler(sh)
-logger.addHandler(fh)
 
 
 def load_quotes():
@@ -32,9 +18,9 @@ def load_quotes():
         for document in Database.getall("Quotes"):
             quotes[document["id"]] = {"quote": document["quote"], "said_by": document["said_by"], "game": document["game"], "date": document["date"]}
 
-    except Exception as errormsg:
-        errorlog(errormsg, "Quotes/loadquotes()", "")
-        quotes = {}
+    except:
+        logger.exception('')
+        return False
 
 
 def quote(message, game):

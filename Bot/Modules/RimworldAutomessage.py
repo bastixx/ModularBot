@@ -1,10 +1,12 @@
 import threading
+import logging
 
 from Modules.Required.Sendmessage import send_message
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.APICalls import channel_is_live, channel_game
 import Modules.Required.Database as Database
 # TODO Replace this module with a timed CustomCommand entry.
+
+logger = logging.getLogger(__name__)
 
 
 def load_rimworldautomessage() -> None:
@@ -27,8 +29,8 @@ def rimworldautomessage() -> None:
 
     except IndexError:
         pass
-    except Exception as errormsg:
-        errorlog(errormsg, "Rimworldautomessage", '')
+    except:
+        logger.exception('')
     finally:
         threading.Timer(900, rimworldautomessage).start()
 
@@ -41,6 +43,6 @@ def setmessage(message: str) -> None:
             messagetext = " ".join(arguments[2:])
             Database.updateone("RimworldAutomessage", {}, {"messagetext": messagetext}, True)
             send_message("Message updated!")
-    except Exception as errormsg:
-        errorlog(errormsg, "Rimworldautomessage/setmessage()", message)
+    except:
+        logger.exception(f'message: {message}')
         send_message("There was an error setting the message. Please check your command and try again.")

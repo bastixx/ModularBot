@@ -2,18 +2,19 @@ import requests
 import logging
 from Modules.Required.Errorlog import errorlog
 
+logger = logging.getLogger(__name__)
 
-def load_apicalls(CLIENTID, CHANNELID):
+
+def load_apicalls(CLIENTID: str, CHANNELID: str) -> None:
     global channel_id
     global client_id
     global headers
-    global logger
-    logger = logging.getLogger(__name__)
     channel_id = CHANNELID
     client_id = CLIENTID
 
     # Using V5 of the API.
     headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+
     # Not sure if content-type is neccecary.
     # headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json',
     #            'Content-Type': 'application/json'}
@@ -28,6 +29,7 @@ def follows(userid: str) -> dict:
         return r.data[0]
     except:
         logger.exception("")
+        raise Exception
 
 
 def id_to_username(userid: str) -> str:
@@ -43,6 +45,7 @@ def id_to_username(userid: str) -> str:
 
     except:
         logger.exception("")
+        raise Exception
 
 
 def username_to_id(username: str) -> str:
@@ -54,6 +57,7 @@ def username_to_id(username: str) -> str:
 
     except:
         logger.exception("")
+        raise Exception
 
 
 def channel_is_live() -> bool:
@@ -70,6 +74,7 @@ def channel_is_live() -> bool:
             return False
     except:
         logger.exception("")
+        raise Exception
 
 
 def channel_game() -> str:
@@ -83,20 +88,24 @@ def channel_game() -> str:
 
 
 def get_modroom() -> (str, bool):
-    rooms = {}
-    url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
-    response = requests.get(url, headers=headers).json()
     try:
-        roomlist = response['rooms']
-    except:
-        roomlist = []
-    for room in roomlist:
-        rooms[room['name']] = room['id']
+        rooms = {}
+        url = 'https://api.twitch.tv/kraken/chat/%s/rooms' % channel_id
+        response = requests.get(url, headers=headers).json()
+        try:
+            roomlist = response['rooms']
+        except:
+            roomlist = []
+        for room in roomlist:
+            rooms[room['name']] = room['id']
 
-    if "modlog" in rooms.keys():
-        modroom_id = rooms['modlog']
-        modroom_available = True
-    else:
-        modroom_id = None
-        modroom_available = False
-    return modroom_id, modroom_available
+        if "modlog" in rooms.keys():
+            modroom_id = rooms['modlog']
+            modroom_available = True
+        else:
+            modroom_id = None
+            modroom_available = False
+        return modroom_id, modroom_available
+    except:
+        logger.exception('')
+        raise Exception

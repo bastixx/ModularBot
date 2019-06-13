@@ -5,11 +5,11 @@ import time
 import logging
 
 from Modules.Required.Sendmessage import send_message
-from Modules.Required.Errorlog import errorlog
 from datetime import datetime, date, timedelta
 import Modules.Required.Database as Database
 from Modules.Required.APICalls import follows, username_to_id, id_to_username
 
+logger = logging.getLogger(__name__)
 
 def load_bonertimer():
     global timeractive
@@ -23,11 +23,12 @@ def load_bonertimer():
     bets = {}
     timers = {}
     endings = []
-
-    for document in Database.getall("Endings"):
-        endings.append(document["ending"])
-    titleholder = Database.getone("Titleholder")["username"]
-
+    try:    
+        for document in Database.getall("Endings"):
+            endings.append(document["ending"])
+        titleholder = Database.getone("Titleholder")["username"]
+    except:
+        logger.exception("")
 
 def announcer(userid, username, bettime):
     global bets
@@ -41,8 +42,8 @@ def announcer(userid, username, bettime):
         # bets.pop(displayname)
         timers.pop(userid)
 
-    except Exception as errormsg:
-        errorlog(errormsg, "BonerTimer/Announcer()", '')
+    except:
+        logger.exception('')
 
 
 def timer(message, ismod):
@@ -110,8 +111,8 @@ def timer(message, ismod):
                                  "5 minutes of the timer. That means there is no winner this round!")
 
                 # logtofile(folder, "Timer/stoptimer()", f"endtime: {str(endtime)}. Winning time: {str(winningtime)}")
-            except Exception as errormsg:
-                errorlog(errormsg, 'Bonertimer/stoptimer()', "")
+            except:
+                logger.exception(f'message: {message}')
         else:
             send_message("There is currently no timer active!")
     elif arguments[1] == "reset":
@@ -123,8 +124,8 @@ def timer(message, ismod):
             time.sleep(1)
             timers = {}
             send_message("Timer reset. Bets are now open again!")
-        except Exception as errormsg:
-            errorlog(errormsg, "BonerTimer/resettimer()", '')
+        except:
+            logger.exception(f'message: {message}')
     else:
         try:
             if timeractive:
@@ -137,8 +138,8 @@ def timer(message, ismod):
                 send_message("Fid has been alive for: " + endtime)
             else:
                 send_message("There is currently no timer active!")
-        except Exception as errormsg:
-            errorlog(errormsg, "BonerTimer/timer()", '')
+        except:
+            logger.exception(f'message: {message}')
 
 
 def fidwins():
@@ -164,9 +165,9 @@ def fidwins():
             send_message("No boners have been broken this round. The winner is FideliasFK!")
         else:
             send_message("There is no timer active!")
-    except Exception as errormsg:
+    except:
         send_message("Error lettting fid win.")
-        errorlog(errormsg, 'Bonertimer/fidwins', '')
+        logger.exception('')
 
 
 def winner(message):
@@ -187,9 +188,9 @@ def winner(message):
             send_message("There is no timer active!")
     except IndexError:
         send_message("Error setting new winner. Check your command.")
-    except Exception as errormsg:
+    except:
         send_message(f"There was an error setting {winner} as winner.")
-        errorlog(errormsg, 'Bonertimer/winner()', message)
+        logger.exception(f'message: {message}')
     else:
         Database.clearcollection("Bets")
 
@@ -204,16 +205,16 @@ def setboner(message):
     except ValueError:
         send_message("Unable to determine new titleholder. Please check your command.")
 
-    except Exception as errormsg:
+    except:
         send_message("Error changing broken boner. Error logged.")
-        errorlog(errormsg, 'Bonertimer/setboner()', message)
+        logger.exception(f'message: {message}')
 
 
 def currentboner():
     try:
         send_message(f"The current owner of the title \"Broken Boner\" is: {titleholder}!")
-    except Exception as errormsg:
-        errorlog(errormsg, 'Bonertimer/currentboner()', '')
+    except:
+        logger.exception('')
         send_message("Error reading current boner")
 
 
@@ -238,9 +239,10 @@ def bet(username, userid, message, ismod):
                                  str(bets.get(userid)) + " minutes!")
                 else:
                     send_message("No bet registered. Use !bet (number) to place one!")
-            except Exception as errormsg:
+            except:
                 send_message("Something went wrong showing your bet. Please try again.")
-                errorlog(errormsg, 'Bonertimer/mybet()', "Username: " + username)
+                logger.exception(f'message: {message}')
+
         elif arguments[1] == "open" and ismod:
             if not betsopen:
                 betsopen = True
@@ -248,6 +250,7 @@ def bet(username, userid, message, ismod):
                              "Use !bet <number> to join in!")
             else:
                 send_message("Bets already opened!")
+
         elif arguments[1] == "close" and ismod:
             if betsopen:
                 betsopen = False
@@ -265,11 +268,12 @@ def bet(username, userid, message, ismod):
                 bets[userid] = bet
                 t = threading.Timer((int(bet) * 60), announcer, [username, bet])
                 timers[username] = t
-                Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
+                Database.updateone("Bets", {"userid": userid}, {"userid": userid, "bet": bet}, True)
                 send_message(f"Bet for {username} with {bet} minutes added to pool!")
-            except Exception as errormsg:
+            except:
                 send_message("Error adding bet for this user.")
-                errorlog(errormsg, 'Bonertimer/addbet()', message)
+                logger.exception(f'message: {message}')
+
         elif arguments[1] == "remove" and ismod:
             try:
                 rembet = message.split(" ")[1]
@@ -302,18 +306,20 @@ def bet(username, userid, message, ismod):
                         send_message(f"Bet for {rembet} removed from pool")
                     else:
                         raise Exception
-            except Exception as errormsg:
+            except:
                 send_message("Error removing user from current pool.")
-                errorlog(errormsg, 'Bonertimer/removebet()', message)
+                logger.exception(f'message: {message}')
+
         elif arguments[1] == "clear" and ismod:
             try:
                 bets = {}
                 timers = {}
                 send_message("Bets cleared!")
                 Database.clearcollection("Bets")
-            except Exception as errormsg:
+            except:
                 send_message("Error clearing the bets. Error logged.")
-                errorlog(errormsg, 'Bonertimer/clearbets()', '')
+                logger.exception(f'message: {message}')
+
         elif arguments[1] == "stats":
             if bets != {}:
                 try:
@@ -329,8 +335,8 @@ def bet(username, userid, message, ismod):
                                  + str(lowest) + " minutes and the highest bet is "
                                  + str(highest) + " minutes. The average is " + str(avg) +
                                  " minutes.")
-                except Exception as errormsg:
-                    errorlog(errormsg, 'Bonertimer/betstats', '')
+                except:
+                    logger.exception(f'message: {message}')
                     send_message("Error calculating numbers")
             else:
                 send_message("No bets registered!")
@@ -356,14 +362,14 @@ def bet(username, userid, message, ismod):
                             betsec = int(bet) * 60
                             t = threading.Timer(betsec, announcer, [userid, username, bet])
                             timers[username] = t
-                            Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
+                            Database.updateone("Bets", {"userid": userid}, {"userid": userid, "bet": bet}, True)
                             send_message(f"@{username} Bet updated! Your new bet is: {bet} minutes!")
                         else:
                             bets[userid] = bet
                             betsec = int(bet) * 60
                             t = threading.Timer(betsec, announcer, [username, bet])
                             timers[username] = t
-                            Database.updateone("Bets", {"userid": userid}, {"bet": bet}, True)
+                            Database.updateone("Bets", {"userid": userid}, {"userid": userid, "bet": bet}, True)
                             send_message(f"@{username} Bet registered: {bet} minutes!")
                     else:
                         send_message("Bet is not a number")
@@ -372,8 +378,8 @@ def bet(username, userid, message, ismod):
                         send_message("Use !bet <number> to enter!")
                     else:
                         send_message(f"{bet} is not a valid bet. Please use whole numbers only.")
-                except Exception as errormsg:
-                    errorlog(errormsg, 'Bonertimer/bet()', message)
+                except:
+                    logger.exception(f'message: {message}')
                     send_message("There was an error registering your bet. Please try again.")
             else:
                 send_message("This is a community game. You must be following for at least 7 days before you can join!")

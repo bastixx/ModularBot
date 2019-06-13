@@ -1,29 +1,13 @@
 import json
-from Modules.Required.Errorlog import errorlog
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-sh = logging.StreamHandler()
-sh.setLevel(logging.ERROR)
-fh = logging.FileHandler(filename="Log.log", mode="a+")
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                              datefmt='%d-%b-%y %H:%M:%S')
-
-sh.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-logger.addHandler(sh)
-logger.addHandler(fh)
 
 
 def load_database(database):
     global db
     global channel
-    global logger
     channel = database
     try:
         base_path = Path(__file__).parent
@@ -32,6 +16,7 @@ def load_database(database):
             db = json.load(f)
     except:
         logger.exception(f"Database: {database}")
+        raise Exception
 
 
 def write_to_file():
@@ -103,7 +88,7 @@ def deletecollection(collection: str):
 
 
 # Updates the first entry in the collection with new values based on a filter.
-# Optional flag to create the entry if it does not exist -> CURRENTLY UNUSED!
+# Optional flag to create the entry if it does not exist
 # The dbfilter argument needs to be a dict with a single key-value pair.
 def updateone(collection: str, dbfilter: dict, data: dict, create=False):
     global db
@@ -118,6 +103,9 @@ def updateone(collection: str, dbfilter: dict, data: dict, create=False):
                     db[collection][db[collection].index(item)].update(data)
                     write_to_file()
                     return
+        # If it gets here the item has not been found.
+        if create == True:
+            db[collection].append(data)
     except:
         logger.exception(f"Collection: {collection}, Filter: {str(dbfilter)}, Data: {str(data)}")
 
@@ -144,6 +132,7 @@ def clearcollection(collection: str):
         write_to_file()
     except:
         logger.exception(f"Collection: {collection}")
+        raise Exception
 
 
 # Makes a copy from the specified colletion.
@@ -154,6 +143,7 @@ def copycollection(oldcollection: str, newcollection: str):
         write_to_file()
     except:
         logger.exception(f"Oldcollection: {oldcollection}, Newcollection: {newcollection}")
+        raise Exception
 
 
 # Check if a collection exists.
@@ -165,3 +155,4 @@ def collectionexists(collection: str):
             return False
     except:
         logger.exception(f"Collection: {collection}")
+        raise Exception

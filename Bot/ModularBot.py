@@ -16,24 +16,6 @@ from Modules import Backseatmessage, Roulette, Quotes, Raffles, Deathcounter, Ru
     RimworldModLinker, Paddle, Questions, Modlog, Conversions, Unshorten, SongSuggestions, CustomCommands, \
     responseParse, Pun, FollowerGoals
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-sh = logging.StreamHandler()
-sh = logging.StreamHandler()
-sh.setLevel(logging.ERROR)
-fh = logging.FileHandler(filename="Log.log", mode="a+")
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                              datefmt='%d-%b-%y %H:%M:%S')
-
-sh.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-logger.addHandler(sh)
-logger.addHandler(fh)
-
-
 def enabled(module):  # MB use this in the giant List of modules?
     return modules[module]["enabled"]
 
@@ -55,16 +37,14 @@ def botinstance(channelid: str, channelname: str, pipe):
     logger = logging.getLogger(channelname)
 
     try:
-        Errorlog.load_errorlog(channelname)
         Logger.load_logger(channelname)
         Database.load_database(channelname)
-        config = Database.getone("Config")
-
     except Exception:
         logging.exception("Main - Error starting required modules.")
         exit(0)
 
     try:
+        config = Database.getone("Config")
         HOST = "irc.twitch.tv"
         NICK = config["Nickname"].encode()
         PORT = 6667
@@ -143,33 +123,39 @@ def botinstance(channelid: str, channelname: str, pipe):
 
     try:
         if enabled("Rules"):
-            Rules.load_rules()
+            if not Rules.load_rules():
+                modules['Rules']["enabled"] = False
         if enabled("Backseatmessage"):
             Backseatmessage.load_bsmessage()
         if enabled("Deathcounter"):
-            Deathcounter.load_deaths()
+            if not Deathcounter.load_deaths():
+                modules['Deathcounter']['enabled'] = False
         if enabled("Quotes"):
-            Quotes.load_quotes()
+            if not Quotes.load_quotes():
+                modules['Quotes']['enabled'] = False
         if enabled("Raffles"):
-            Raffles.load_raffles()
+            if not Raffles.load_raffles():
+                modules['Raffles']['enabled'] = False
         if enabled("BrokenBoner"):
             BrokenBoner.load_bonertimer()
         if enabled("RimworldAutomessage"):
             RimworldAutomessage.load_rimworldautomessage()
         if enabled("Questions"):
-            Questions.load_questions()
+            if not Questions.load_questions():
+                modules['Questions']['enabled'] = False
         if enabled("Modlog"):
-            Modlog.load_modlog()
+            if not Modlog.load_modlog():
+                modules['Modlog']['enabled'] = False
         if enabled("FollowerGoals"):
             FollowerGoals.load_followergoals(channelname)
-        if enabled("RimworldModLinker"):
-            RimworldModLinker.load_mod(STEAMAPIKEY)
         if enabled("SongSuggestions"):
             SongSuggestions.load_suggestions()
         if enabled("CustomCommands"):
-            CustomCommands.load_commands()
+            if not CustomCommands.load_commands():
+                modules['CustomCommands']['enabled'] = False
         if enabled("ResponseParse"):
-            responseParse.load_responses()
+            if not responseParse.load_responses():
+                modules['ResponseParse']['enabled'] = False
     except:
         logging.exception("Main - Error loading modules.")
 
@@ -178,7 +164,7 @@ def botinstance(channelid: str, channelname: str, pipe):
     modt = False
     comlimits = []
 
-    logging.info("Setup done, entering command loop...")
+    logging.info("Config done, entering command loop...")
     # Infinite loop waiting for commands
     while True:
         try:
@@ -213,7 +199,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                         if line.find("PRIVMSG") != -1:
                             username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
                             msgtype = "PRIVMSG"
-                            Logger.logger(userid, username, message, issub, ismod)
+                            Logger.logger(userid, username, message)
                         elif line.find("CLEARCHAT") != -1:
                             Tagger.tagclearchat(line)
                             msgtype = "CLEARCHAT"
@@ -303,20 +289,10 @@ def botinstance(channelid: str, channelname: str, pipe):
                                 if enabled("Paddle"):
                                     if "!paddle" in messagelow[0:7] and not oncooldown("Paddle", "paddle"):
                                         custommodule = "Paddle"
-                                        try:
-                                            cooldown_time = 20
-                                            functionname = "paddle"
-                                            Paddle.paddle(username, message)
 
-                                        except InsufficientParameterException:
-                                            cooldown_time = 0
-                                            Sendmessage.send_message("Usage: !paddle <username>")
-
-                                        except KeyError:
-                                            pass
-
-                                        except Exception as errormsg:
-                                            Errorlog.errorlog(errormsg, "!paddle", message)
+                                        cooldown_time = 20
+                                        functionname = "paddle"
+                                        Paddle.paddle(username, message)
 
                                 if enabled("Quotes"):
                                     if "!lastquote" in messagelow[0:10] and (not oncooldown("Quotes", "last_quote") or ismod):
@@ -425,15 +401,15 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         try:
                                             Database.updateone("Modules", {"name": arguments[1]}, {"enabled": True}, True)
                                             Sendmessage.send_message(f"Module {arguments[1]} enabled.")
-                                        except Exception as errormsg:
-                                            Errorlog.errorlog(errormsg, "custommodule/enable", message)
+                                        except:
+                                            logger.exception("Error enabling module")
                                             Sendmessage.send_message("Error enabling this module!")
                                     elif arguments[1] == "disable":
                                         try:
                                             Database.updateone("Modules", {"name": arguments[1]}, {"enabled": False}, True)
                                             Sendmessage.send_message(f"Module {arguments[1]} disabled.")
-                                        except Exception as errormsg:
-                                            Errorlog.errorlog(errormsg, "custommodule/disable", message)
+                                        except:
+                                            logger.exception("Error enabling module")
                                             Sendmessage.send_message("Error disabling this module!")
 
                                 else:
@@ -460,7 +436,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                             for custommodule in modules.keys():
                                 if modules[custommodule]["enabled"]:
                                     modulelist.append(custommodule)
-                            logger.info("Modules loaded: %s" % ", ".join(modulelist))
+                            logger.info(f'Modules loaded: {", ".join(modulelist)}')
                             boottime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                             try:
@@ -468,8 +444,8 @@ def botinstance(channelid: str, channelname: str, pipe):
                                     controllercommand = pipe.recv()
                                     if controllercommand == "boottime":
                                         pipe.send(boottime)
-                            except Exception as errormsg:
-                                Errorlog.errorlog(errormsg, "Multiprocessing", "")
+                            except:
+                                logger.exception('Multiprocessing')
 
         except Exception as errormsg:
             # Disabled due to testing purposes.

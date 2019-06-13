@@ -2,39 +2,27 @@ import threading
 from datetime import datetime, timedelta
 import logging
 
-from Modules.Required.Errorlog import errorlog
 import Modules.Required.Database as Database
 from Modules.Required.Sendmessage import send_message
 from Modules.Required.APICalls import channel_is_live
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-sh = logging.StreamHandler()
-sh.setLevel(logging.ERROR)
-fh = logging.FileHandler(filename="Log.log", mode="a+")
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s',
-                              datefmt='%d-%b-%y %H:%M:%S')
-
-sh.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-logger.addHandler(sh)
-logger.addHandler(fh)
 
 
 def load_commands():
-    global customcommands
-    global timer
-    customcommands = {}
-    cursor = Database.getall("CustomCommands")
-    for document in cursor:
-        customcommands[document["name"]] = {"action": document["action"], "timer": document["timer"]}
-    
-    timer = threading.Timer(60, check_timed_commands).start
-    check_timed_commands()  # Testing purposes.
-    return customcommands
+    try:
+        global customcommands
+        global timer
+        customcommands = {}
+        cursor = Database.getall("CustomCommands")
+        for document in cursor:
+            customcommands[document["name"]] = {"action": document["action"], "timer": document["timer"]}
+        
+        timer = threading.Timer(60, check_timed_commands).start
+        check_timed_commands()  # Testing purposes.
+        return customcommands
+    except:
+        logger.exception('')
 
 
 def func_command(message):
@@ -50,9 +38,9 @@ def func_command(message):
                     customcommands[newcommandname] = {"action": newcommandaction, "timer": 0}
                     Database.insertone("CustomCommands", {"name": newcommandname, "action": newcommandaction, "timer": 0})
                     send_message(f"Command {newcommandname} added!")
-                except Exception as errormsg:
+                except:
                     send_message("Something went wrong. Please check your command and try again.")
-                    errorlog(errormsg, "func_command/add()", message)
+                    logger.exception(f'message: {message}')
 
             elif arguments[1] == "remove":
                 commandname = arguments[2]
@@ -85,37 +73,46 @@ def func_command(message):
 
 
 def check_command(message, username):
-    global variabledict
-    variabledict = dict()
-    variabledict["$user"] = {
-        "$user": username
-    }
-    
-    arguments = (message.lower()).split(" ")
-    if arguments[0] in customcommands.keys():
+    try:
+        global variabledict
+        variabledict = dict()
+        variabledict["$user"] = {
+            "$user": username
+        }
         
-        response = customcommands[arguments[0]]["action"]
-        response = replace_variables(response)
-        send_message(response)
+        arguments = (message.lower()).split(" ")
+        if arguments[0] in customcommands.keys():
+            
+            response = customcommands[arguments[0]]["action"]
+            response = replace_variables(response)
+            send_message(response)
+    except:
+        logger.exception(f'message: {message}')
 
 
 def replace_variables(command):
-    global variabledict
-    for variable in variabledict.keys():
-        if variable in command:
-            command.replace(variable, variabledict[variable])
-    return command
+    try:
+        global variabledict
+        for variable in variabledict.keys():
+            if variable in command:
+                command.replace(variable, variabledict[variable])
+        return command
+    except:
+        logger.exception(f'command: {command}')
 
 
 def check_timed_commands():
-    if not channel_is_live():
-        return
-    
-    for command in customcommands.keys():
-        if customcommands[command]["timer"] != 0:
-            if customcommands[command].get("last_runtime", None) < (datetime.now() - timedelta(seconds=customcommands[command]["timer"])):
-                send_message(customcommands[command]["action"])
-                customcommands[command]["last_runtime"] = datetime.now()
-                return
-            
-    timer.start()
+    try:
+        if not channel_is_live():
+            return
+        
+        for command in customcommands.keys():
+            if customcommands[command]["timer"] != 0:
+                if customcommands[command].get("last_runtime", None) < (datetime.now() - timedelta(seconds=customcommands[command]["timer"])):
+                    send_message(customcommands[command]["action"])
+                    customcommands[command]["last_runtime"] = datetime.now()
+                    return
+                
+        timer.start()
+    except:
+        logger.exception('')

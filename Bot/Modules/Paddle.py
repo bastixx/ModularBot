@@ -1,8 +1,10 @@
 import random
+import logging
 
-from Modules.Required.Errorlog import errorlog
 from Modules.Required.Sendmessage import send_message
 from Modules.Required.Errors import InsufficientParameterException
+
+logger = logging.getLogger(__name__)
 
 
 def paddle(username, message):
@@ -18,6 +20,8 @@ def paddle(username, message):
         else:
             send_message("%s gets a paddling from %s! andyt90bat" %
                          (messagesplit[1].strip("@"), username))
-    except Exception as errormsg:
-        errorlog(errormsg, "Paddle/paddle()", message)
+    except InsufficientParameterException:
+        send_message("Usage: !paddle <username>")
+    except:
+        logger.exception(f'message: {message}')
         send_message("Something went wrong. Please check your command and try again.")

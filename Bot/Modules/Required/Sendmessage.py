@@ -1,5 +1,7 @@
-from Modules.Required.Logger import logger
-from Modules.Required.Errorlog import errorlog
+from Modules.Required.Logger import chatlogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_send_message(folder, channel, socket):
@@ -12,6 +14,6 @@ def load_send_message(folder, channel, socket):
 def send_message(message):
     try:
         s.send(b"PRIVMSG #%s :%s\r\n" % (CHANNEL, message.encode()))
-        logger(0000000, ">>BOT", message, False, True, True)
-    except Exception as errormsg:
-        errorlog(errormsg, "Send_message", message)
+        chatlogger(str(0000000), ">>BOT", message)
+    except:
+        logger.exception(f'message: {message}')
