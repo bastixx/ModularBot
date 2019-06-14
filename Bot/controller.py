@@ -4,7 +4,7 @@ import multiprocessing as mp
 import sys
 import threading
 import queue
-import logging.config
+import logging, logging.config, logging.handlers
 
 bots = dict()
 TIMEOUT = 60
@@ -25,12 +25,14 @@ loggingconfig = {
             'level': 'DEBUG',
             'stream': 'ext://sys.stdout'
         },
-        'file':{
-            'level':'INFO',
+        'file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'level': 'INFO',
             'formatter': 'default',
             'filename': 'Log.log',
-            'mode': 'a+',
-            'encoding': 'utf-8',
+            'when': 'd',
+            'interval': 1,
+            'backupCount': 28
         },
     },
     'root': {
@@ -65,7 +67,6 @@ def bot_stop(bot):
     bot['process'] = None
     bot["boottime"] = None
     logger.info(f"Bot {bot['ChannelName']} stopped.")
-    print(f"Bot {bot['ChannelName']} stopped.")
     return bot
 
 
@@ -76,7 +77,6 @@ def bot_start(bot, name):
     bot['process'] = process
     process.start()
     logger.info(f"Bot {name} started.")
-    print(f"Bot {name} started.")
     bot["boottime"] = boottime_check(name)
     return bot
 
@@ -106,7 +106,7 @@ def boottime_check(bot):
 
 if __name__ == '__main__':
     logging.config.dictConfig(loggingconfig)
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('Controller')
 
     database.load_database("Controller")
     for element in database.getall("Channels"):

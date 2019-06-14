@@ -144,7 +144,7 @@ def botinstance(channelid: str, channelname: str, pipe):
             if not Questions.load_questions():
                 modules['Questions']['enabled'] = False
         if enabled("Modlog"):
-            if not Modlog.load_modlog():
+            if not Modlog.load_modlog(channelname):
                 modules['Modlog']['enabled'] = False
         if enabled("FollowerGoals"):
             FollowerGoals.load_followergoals(channelname)
