@@ -18,8 +18,9 @@ def load_modlog(channelname: str) -> bool:
         base_path = Path(__file__).parent
         chatlogpath = (base_path / f'../Data/{channelname}/chatlog-{str(time.strftime("%d-%m-%Y"))}.log').resolve()
         modlogpath = (base_path / f"../Data/{channelname}/modlog.log").resolve()
+        return True
     except:
-        logger.exception(f'channelname: {channelname}')
+        logger.exception('Error loading Module. Module disabled.')
         return False
 
 

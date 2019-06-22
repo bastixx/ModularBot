@@ -9,15 +9,18 @@ import Modules.Required.Database as Database
 logger = logging.getLogger(__name__)
 
 
-def load_rimworldautomessage() -> None:
+def load_rimworldautomessage() -> bool:
     global messagetext
     try:
         for document in Database.getall("RimworldAutomessage"):
             messagetext = document["messagetext"]
+        return True
     except:
+        logger.exception('Error loading Module. Module disabled.')
         messagetext = "/me If you want a colonist to be renamed to your username then join our raffle!" \
                       " Simply type '!join colonist' to enter!"
-    threading.Timer(300, rimworldautomessage).start()
+    finally:
+        threading.Timer(300, rimworldautomessage).start()
 
 
 def rimworldautomessage() -> None:

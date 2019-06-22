@@ -52,10 +52,11 @@ def botinstance(channelid: str, channelname: str, pipe):
         CHANNEL = channelname.encode()
         CLIENTID = config["ClientID"]
         # OAUTH = PASS.decode().split(":")[1]
-        STEAMAPIKEY = config['SteamAPIkey']
+        # STEAMAPIKEY = config['SteamAPIkey']
         # Headers for the Twitch API calls being made.
 
-        modules = {'Sendmessage': {},
+        modules = {'Default': {},
+                   'Sendmessage': {},
                    'Errorlog': {},
                    'Logger': {},
                    'Deathcounter': {},
@@ -74,9 +75,9 @@ def botinstance(channelid: str, channelname: str, pipe):
                    'RimworldModLinker': {},
                    'SongSuggestions': {},
                    'CustomCommands': {},
-                   'ResponseParse': {}}
+                   'ResponseParse': {},
+                   'Pun': {}}
                    # 'Unshorten': {},
-                   # 'Pun': {}}
 
         # Enabling modules if set to true in config file
         for document in Database.getall('Modules'):
@@ -96,7 +97,7 @@ def botinstance(channelid: str, channelname: str, pipe):
             for function in modules[module]["functionlist"]:
                 modules[module]["functions"][function] = {"next use": var_time}
 
-        # modules['other'] = {"name": "Other"}
+        # modules['Other'] = {"name": "Other"}
     except Exception:
         logging.exception("Main - Error configuring modules dict.")
         exit(0)
@@ -199,7 +200,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                         if line.find("PRIVMSG") != -1:
                             username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
                             msgtype = "PRIVMSG"
-                            Logger.logger(userid, username, message)
+                            Logger.chatlogger(userid, username, message)
                         elif line.find("CLEARCHAT") != -1:
                             Tagger.tagclearchat(line)
                             msgtype = "CLEARCHAT"
@@ -230,19 +231,24 @@ def botinstance(channelid: str, channelname: str, pipe):
                                 messagelow = message.lower()
                                 if messagelow == "!test":
                                     Sendmessage.send_message("Test successful. Bot is online!")
+                                    continue
 
-                                elif "!pun" in messagelow[0:4] and not oncooldown("other", "pun"):
+                                elif "!pun" in messagelow[0:4] and not oncooldown("Pun", "pun"):
+                                    custommodule = "Pun"
                                     functionname = "pun"
                                     cooldown_time = 30
 
                                     Pun.pun()
+                                    continue
 
-                                elif "!commandlist" in messagelow[0:12] and not oncooldown("other", "commandlist"):
+                                elif "!commandlist" in messagelow[0:12] and not oncooldown("Default", "commandlist"):
+                                    custommodule = "Default"
                                     functionname = "commandlist"
                                     cooldown_time = 30
 
                                     Sendmessage.send_message(f"Commands for this channel can be found here: "
                                                              f"http://www.bastixx.nl/twitch/{channelname}/commands.php")
+                                    continue
 
                                 if enabled("Rules"):
                                     if "!rule" in messagelow[0:5] and ismod and not oncooldown("Rules", "rule"):
@@ -251,6 +257,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 5
 
                                         Rules.func_rules(message)
+                                        continue
 
                                 if enabled("Deathcounter"):
                                     if "!deaths" in messagelow[0:7] and not oncooldown("Deathcounter", "func_deaths"):
@@ -258,6 +265,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         functionname = "func_deaths"
 
                                         cooldown_time = Deathcounter.func_deaths(message, APICalls.channel_game(), ismod)
+                                        continue
 
                                     if "!dead" in messagelow[0:5] and not oncooldown("Deathcounter", "dead") and (ismod or issub):
                                         custommodule = "Deathcounter"
@@ -265,18 +273,22 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 10
 
                                         Deathcounter.dead(APICalls.channel_game())
+                                        continue
 
                                 if enabled("Raffles"):
-                                    if ("!raffle" in messagelow[0:7] or "!giveaway" in messagelow[0:9]) and ismod:
+                                    if ("!raffle" in messagelow[0:7] or "!giveaway" in messagelow[0:9]) and ismod and \
+                                            not oncooldown("Raffles", "raffle"):
                                         custommodule = "Raffles"
                                         functionname = "raffle"
                                         cooldown_time = 5
 
                                         Raffles.func_raffle(message)
+                                        continue
 
                                     elif "!join" in messagelow[0:5]:
                                         custommodule = "Raffles"
                                         Raffles.join_raffle(userid, username, message, issub, ismod)
+                                        continue
 
                                 if enabled("Roulette"):
                                     if "!roulette" in messagelow[0:9] and not oncooldown("Roulette", "roulette"):
@@ -285,6 +297,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 20
 
                                         Roulette.roulette(username)
+                                        continue
 
                                 if enabled("Paddle"):
                                     if "!paddle" in messagelow[0:7] and not oncooldown("Paddle", "paddle"):
@@ -293,6 +306,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 20
                                         functionname = "paddle"
                                         Paddle.paddle(username, message)
+                                        continue
 
                                 if enabled("Quotes"):
                                     if "!lastquote" in messagelow[0:10] and (not oncooldown("Quotes", "last_quote") or ismod):
@@ -301,6 +315,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 0
 
                                         Quotes.last_quote()
+                                        continue
 
                                     elif "!quote" in messagelow[0:6] and (not oncooldown("Quotes", "quote") or ismod):
                                         custommodule = "Quotes"
@@ -308,54 +323,65 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 0
 
                                         Quotes.quote(message, APICalls.channel_game())
+                                        continue
 
                                 if enabled("Backseatmessage"):
                                     if ("!backseatmessage" in messagelow[0:16] or '!bsm' in messagelow[0:4]) and ismod:
                                         Backseatmessage.backseatmessage(message)
+                                        continue
 
                                 if enabled("BrokenBoner"):
                                     if "!bet" in messagelow[0:4] or "!bets" in messagelow[0:5]:
                                         custommodule = "BrokenBoner"
                                         BrokenBoner.bet(username, userid, message, ismod)
+                                        continue
 
                                     elif "!currentboner" in messagelow[0:13] and not oncooldown("BrokenBoner", "currentboner"):
                                         custommodule = "BrokenBoner"
                                         functionname = "currentboner"
                                         cooldown_time = 30
                                         BrokenBoner.currentboner()
+                                        continue
 
                                     elif "!brokenboner" in messagelow[0:12] and not oncooldown("BrokenBoner", "brokenboner"):
                                         custommodule = "BrokenBoner"
                                         functionname = "brokenboner"
                                         cooldown_time = 30
                                         BrokenBoner.brokenboner()
+                                        continue
 
                                     elif "!setboner" in messagelow[0:9] and ismod:
                                         BrokenBoner.setboner(message)
+                                        continue
 
-                                    elif "!timer" in messagelow[0:6] and (not oncooldown("BrokenBoner", "timer") or ismod):
+                                    elif "!timer" in messagelow[0:6] and not oncooldown("BrokenBoner", "timer") and ismod:
                                         custommodule = "BrokenBoner"
                                         functionname = "timer"
                                         cooldown_time = 30
                                         BrokenBoner.timer(message, ismod)
+                                        continue
 
                                     elif "!fidwins" in messagelow[0:8] and ismod:
-                                        custommodule = "BrokenBoner"
                                         BrokenBoner.fidwins()
+                                        continue
 
                                     elif "!winner" in messagelow[0:7] and ismod:
                                         custommodule = "BrokenBoner"
                                         BrokenBoner.winner(message)
+                                        continue
 
                                 if enabled("Questions"):
                                     if "!question" in messagelow[0:9] and not oncooldown("Questions", "question"):
                                         custommodule = "Questions"
                                         functionname = "question"
                                         cooldown_time = Questions.question(message, ismod)
+                                        cooldown_time = 0 # Testing purposes
+                                        continue
 
                                 if "!bot" in messagelow[0:4]:
                                     Sendmessage.send_message("This bot is made by Bastixx669. "
                                                              "Github: https://github.com/bastixx/ModularBot")
+                                    continue
 
                                 if enabled("Conversions"):
                                     if "!convert" in messagelow[0:8] and not oncooldown("Conversions", "convert"):
@@ -363,6 +389,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         functionname = "convert"
                                         cooldown_time = 5
                                         Conversions.convert(message)
+                                        continue
 
                                 if enabled("RimworldModLinker"):
                                     if "!linkmod" in messagelow[0:8] and not oncooldown("RimworldModLinker", "linkmod"):
@@ -371,12 +398,14 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 15
 
                                         RimworldModLinker.linkmod(message)
+                                        continue
 
                                 if enabled("RimworldAutomessage"):
                                     if "!rimworldmessage" in messagelow[0:15]:
                                         custommodule = "RimworldAutomessage"
                                         functionname = "setmessage"
                                         RimworldAutomessage.setmessage(message)
+                                        continue
 
                                 if enabled("SongSuggestions"):
                                     if "!suggest" in messagelow[0:8] and (not oncooldown("SongSuggestions", "suggest")or ismod):
@@ -385,15 +414,19 @@ def botinstance(channelid: str, channelname: str, pipe):
                                         cooldown_time = 5
 
                                         SongSuggestions.suggest(message)
+                                        continue
 
                                     elif "!clearsuggestions" in messagelow[0:17] and ismod:
                                         custommodule = "SongSuggestions"
+                                        functionname = "clearsuggestions"
                                         SongSuggestions.clearsuggestions()
+                                        continue
 
                                 if enabled("CustomCommands"):
                                     if "!command" in messagelow[0:8] and ismod:
                                         custommodule = "CustomCommands"
                                         CustomCommands.func_command(message)
+                                        continue
 
                                 if "!module" in messagelow[0:7] and username == 'bastixx669':
                                     arguments = message.split(" ")
@@ -421,9 +454,7 @@ def botinstance(channelid: str, channelname: str, pipe):
                                                          "Please check your command and try again.")
                             finally:
                                 if cooldown_time != 0:
-                                    # tempdict = {custommodule: {"functions": {functionname: {"next use": time.time() + cooldown_time}}}}
                                     modules[custommodule]["functions"][functionname] = {"next use": time.time() + cooldown_time}
-                                    # modules.update(tempdict)
                         else:
                             if enabled('ResponseParse') and msgtype == "PRIVMSG":
                                 responseParse.parse_response(message)

@@ -14,8 +14,10 @@ def load_questions():
         if Database.collectionexists("Questions"):
             for document in Database.getall("Questions"):
                 questions[document["id"]] = document["question"]
+        return True
     except:
-        logger.exception("")
+        logger.exception('Error loading Module. Module disabled.')
+        return False
 
 
 def question(message, ismod):
@@ -40,6 +42,7 @@ def question(message, ismod):
                 except:
                     send_message("There was an error adding this question. Please try again!")
                     logger.exception(f"Command: {message}")
+                finally:
                     cooldowntime = 5
 
             elif arguments[1] == "remove" and ismod:
@@ -55,7 +58,8 @@ def question(message, ismod):
                 except:
                     logger.exception(f"Command: {message}")
                     send_message("There was an error removing this question. Please check your command and try again.")
-                cooldowntime = 5
+                finally:
+                    cooldowntime = 5
 
             elif arguments[1] == "edit" and ismod:
                 try:
@@ -67,30 +71,31 @@ def question(message, ismod):
                 except:
                     logger.exception(f"Command: {message}")
                     send_message("There was an error editing this question. Please check your command and try again.")
-                cooldowntime = 5
+                finally:
+                    cooldowntime = 5
             else:
                 try:
                     int(arguments[1]) / 1
-                    send_message(f"{arguments[1]}: {questions[arguments[1]]}")
+                    send_message(f"{arguments[1]}: {questions[int(arguments[1])]}")
                     cooldowntime = 20
                 except ValueError:
                     send_message("Unrecognized argument. Allowed arguments are: add, remove, edit or a number.")
                     cooldowntime = 5
                 except KeyError:
-                    send_message(f"Quote {arguments[1]} does not exist!.")
+                    send_message(f"question {arguments[1]} does not exist!.")
                     cooldowntime = 5
         else:
             try:
                 if questions:
                     randomindex = random.randint(1, len(questions))
-                    randomquestion = questions[str(randomindex)]
-                    send_message(f"{randomindex}: {randomquestion}")
+                    send_message(f"{randomindex}: {questions[randomindex]}")
                 else:
                     send_message("No questions yet!")
             except:
                 logger.exception(f"Command: {message}")
                 send_message("Something went wrong, check your command.")
-            cooldowntime = 20
+            finally:
+                cooldowntime = 20
     except:
         logger.exception('')
         send_message('Something went wrong. Please check your command and try again.')

@@ -22,8 +22,9 @@ def load_raffles():
                 raffles[i]["raffleentries"][document["userid"]] = document["username"]
                 if document["haswon"]:
                     raffles[i]["rafflewinners"][document["userid"]] = document["username"]
+        return True
     except:
-        logger.exception('')
+        logger.exception('Error loading Module. Module disabled.')
         return False
 
 
@@ -106,7 +107,7 @@ def func_raffle(message):
 
         elif arguments[1] == "list":
             if len(raffles > 0):
-                send_message(f"Current raffles are: {", ".join(raffles.keys())}.")
+                send_message(f"Current raffles are: {', '.join(raffles.keys())}.")
             else:
                 send_message("There are currently no raffles going.")
 
@@ -170,10 +171,10 @@ def func_raffle(message):
         elif arguments[1] == "stats":
             raffle = " ".join(arguments[2:])
             if raffle in raffles.keys():
-                send_message(f"There are currently {len(raffles[raffle]["raffleentries"])} people in this raffle.")
+                send_message(f"There are currently {len(raffles[raffle]['raffleentries'])} people in this raffle.")
 
         elif arguments[1] == "mode":
-            send_message(f"The mode for raffle \"{raffle}\" is: {raffles[raffle]["mode"]}")
+            send_message(f"The mode for raffle \"{raffle}\" is: {raffles[raffle]['mode']}")
 
         else:
             send_message("Unknown command. Please check your message and try again.")
@@ -210,7 +211,7 @@ def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -
     try:
         mode = raffles[raffle]["mode"]
     except:
-        send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {", ".join(raffles.keys())}")
+        send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {', '.join(raffles.keys())}")
         return
 
     if mode == "sub" and issub:
@@ -235,11 +236,11 @@ def join_raffle(userid, username: str, message: str, issub: bool, ismod: bool) -
                     if not raffles[raffle]['silent']:
                         send_message(f"@{username} joined raffle: \"{raffle}\"!")
                 else:
-                    send_messagef(f"@{username} you already won this raffle!")
+                    send_message(f"@{username} you already won this raffle!")
             else:
                 send_message(f"@{username} you are already in this raffle!")
         except IndexError:
-                send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {", ".join(raffles.keys())}")
+                send_message(f"To join a raffle, use !join <raffle name>. Current raffles are: {', '.join(raffles.keys())}")
 
         except:
             logger.exception(f'message: {message}')

@@ -12,8 +12,9 @@ def load_responses():
     try:
         for document in Database.getall("Responses"):
             responsedict[document["phrase"]] = document["response"]
+        return True
     except:
-        logger.exception('')
+        logger.exception('Error loading Module. Module disabled.')
         return False
 
 

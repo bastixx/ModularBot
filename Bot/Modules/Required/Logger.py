@@ -24,11 +24,12 @@ def chatlogger(userid: str, displayname: str, message: str) -> str:
         message = unidecode(message)
 
         with open(file_path, "a+", encoding='UTF-8') as f:
-                f.write(f"{timestamp},{displayname},{userid},{message}")
+            f.write(f"{timestamp},{displayname},{userid},{message}\n")
 
         return timestamp
     except:
         logger.exception('')
+
 
 # Currently unused. Not updated yet.
 def logtofile(folder, func, line):

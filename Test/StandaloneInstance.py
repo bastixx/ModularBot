@@ -179,7 +179,7 @@ if __name__ == '__main__':
                         if line.find("PRIVMSG") != -1:
                             username, userid, message, issub, ismod = Tagger.tagprivmsg(line)
                             msgtype = "PRIVMSG"
-                            Logger.logger(userid, username, message, issub, ismod)
+                            Logger.chatlogger(userid, username, message)
                         elif line.find("CLEARCHAT") != -1:
                             Tagger.tagclearchat(line)
                             msgtype = "CLEARCHAT"
@@ -413,7 +413,7 @@ if __name__ == '__main__':
                     for l in parts:
                         if "End of /NAMES list" in l:
                             modt = True
-                            Logger.logger(0000000, '>>Bot', f'Bot ready in channel {CHANNEL.decode()}', False, True, True)
+                            Logger.chatlogger(str(0000000), '>>Bot', f'Bot ready in channel {CHANNEL.decode()}')
                             modulelist = []
                             for custommodule in modules.keys():
                                 if modules[custommodule]["config"]["enabled"]:

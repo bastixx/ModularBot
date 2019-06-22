@@ -18,8 +18,9 @@ def load_quotes():
         for document in Database.getall("Quotes"):
             quotes[document["id"]] = {"quote": document["quote"], "said_by": document["said_by"], "game": document["game"], "date": document["date"]}
 
+        return True
     except:
-        logger.exception('')
+        logger.exception('Error loading Module. Module disabled.')
         return False
 
 

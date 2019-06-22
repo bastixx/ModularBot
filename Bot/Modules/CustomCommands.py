@@ -20,9 +20,10 @@ def load_commands():
         
         timer = threading.Timer(60, check_timed_commands).start
         check_timed_commands()  # Testing purposes.
-        return customcommands
+        return True
     except:
-        logger.exception('')
+        logger.exception('Error loading Module. Module disabled.')
+        return False
 
 
 def func_command(message):
@@ -44,7 +45,7 @@ def func_command(message):
 
             elif arguments[1] == "remove":
                 commandname = arguments[2]
-                customcommands.remove(commandname)
+                customcommands.remove(commandname)  # TODO This does not work.
                 Database.deleteone("CustomCommands", {"name": commandname})
                 send_message(f"Command {commandname} removed!")
 

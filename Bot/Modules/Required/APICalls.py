@@ -1,6 +1,5 @@
 import requests
 import logging
-from Modules.Required.Errorlog import errorlog
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +71,8 @@ def channel_is_live() -> bool:
             return True
         else:
             return False
+    except KeyError:
+        return False
     except:
         logger.exception("")
         raise Exception

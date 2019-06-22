@@ -13,8 +13,9 @@ def load_deaths():
     try:
         for document in Database.getall("Deathcounter"):
             deaths[document["game"]] = document["deaths"]
+        return True
     except:
-        logger.exception('')
+        logger.exception('Error loading Module. Module disabled.')
         return False
 
 

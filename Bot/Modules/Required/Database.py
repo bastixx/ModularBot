@@ -104,7 +104,7 @@ def updateone(collection: str, dbfilter: dict, data: dict, create=False):
                     write_to_file()
                     return
         # If it gets here the item has not been found.
-        if create == True:
+        if create:
             db[collection].append(data)
     except:
         logger.exception(f"Collection: {collection}, Filter: {str(dbfilter)}, Data: {str(data)}")
