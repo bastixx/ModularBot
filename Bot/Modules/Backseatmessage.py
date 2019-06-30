@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 def load_bsmessage() -> None:
     global bsmessagestr
     global backseating
+    global bstime
+    bstime = 900
 
     backseating = False
 
@@ -27,7 +29,7 @@ def bsmessage() -> None:
     if channel_is_live():
         if backseating:
             try:
-                bstimer = threading.Timer(900, bsmessage)
+                bstimer = threading.Timer(bstime, bsmessage)
                 bstimer.start()
                 send_message(bsmessagestr)
             except:
@@ -40,8 +42,9 @@ def backseatmessage(message) -> None:
     global bstimer
     global bsmessagestr
     global backseating
-    messageparts = message.split(" ")
-    if messageparts[1] == "on":
+    global bstime
+    arguments = message.split(" ")
+    if arguments[1] == "on":
         if not backseating:
             backseating = True
             bstimer = threading.Timer(30, bsmessage)
@@ -49,16 +52,16 @@ def backseatmessage(message) -> None:
             send_message("Backseating message enabled.")
         else:
             send_message("Backseating message already enabled.")
-    elif messageparts[1] == "off":
+    elif arguments[1] == "off":
         if backseating:
             backseating = False
             bstimer.cancel()
             send_message("Backseating message disabled.")
         else:
             send_message("Backseating message already disabled.")
-    elif messageparts[1] == "set":
+    elif arguments[1] == "set":
         try:
-            newbsmessage = " ".join(messageparts[2:])
+            newbsmessage = " ".join(arguments[2:])
             bsmessagestr = newbsmessage
 
             # Empty filter will match all elements,
@@ -68,3 +71,14 @@ def backseatmessage(message) -> None:
         except:
             logger.exception(f"Message: {message}")
             send_message("There was an error changing the backseatmessage. Please try again.")
+    elif arguments[1] == "timer":
+        try:
+            if arguments[2].isdigit():
+                send_message(f"Timer changed. Changed timer from {bstime} to {str(arguments[2])} seconds")
+                bstime = arguments[2]
+            else:
+                send_message("arguments")
+        except:
+            send_message("There was an error updating the timer. Please check your command and try again.")
+            logger.exception("")
+
